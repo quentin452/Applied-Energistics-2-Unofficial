@@ -27,26 +27,24 @@ public class FalloutCopy extends Fallout {
     }
 
     @Override
-    public void getRandomFall(final IMeteoriteWorld w, final int x, final int y, final int z) {
-        final double a = Math.random();
-        if (a > SPECIFIED_BLOCK_THRESHOLD) {
+    public void getRandomFall(final double random, final IMeteoriteWorld w, final int x, final int y, final int z) {
+        if (random > SPECIFIED_BLOCK_THRESHOLD) {
             this.putter.put(w, x, y, z, this.block, this.meta);
         } else {
-            this.getOther(w, x, y, z, a);
+            this.getOther(w, x, y, z, random);
         }
     }
 
     public void getOther(final IMeteoriteWorld w, final int x, final int y, final int z, final double a) {}
 
     @Override
-    public void getRandomInset(final IMeteoriteWorld w, final int x, final int y, final int z) {
-        final double a = Math.random();
-        if (a > SPECIFIED_BLOCK_THRESHOLD) {
+    public void getRandomInset(final double random, final IMeteoriteWorld w, final int x, final int y, final int z) {
+        if (random > SPECIFIED_BLOCK_THRESHOLD) {
             this.putter.put(w, x, y, z, this.block, this.meta);
-        } else if (a > AIR_BLOCK_THRESHOLD) {
+        } else if (random > AIR_BLOCK_THRESHOLD) {
             this.putter.put(w, x, y, z, Platform.AIR_BLOCK);
         } else {
-            this.getOther(w, x, y, z, a - BLOCK_THRESHOLD_STEP);
+            this.getOther(w, x, y, z, random - BLOCK_THRESHOLD_STEP);
         }
     }
 }
