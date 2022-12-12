@@ -66,7 +66,11 @@ public class PatternHelper implements ICraftingPatternDetails, Comparable<Patter
         this.isCrafting = encodedValue.getBoolean("crafting");
 
         this.canSubstitute = encodedValue.getBoolean("substitute");
-        this.canBeSubstitute = encodedValue.getBoolean("beSubstitute");
+        if (encodedValue.hasKey("beSubstitute")) {
+            this.canBeSubstitute = encodedValue.getBoolean("beSubstitute");
+        } else {
+            this.canBeSubstitute = true;
+        }
         this.patternItem = is;
         this.pattern = AEItemStack.create(is);
 

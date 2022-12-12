@@ -26,7 +26,7 @@ public class PartPatternTerminalEx extends AbstractPartTerminal {
     private final AppEngInternalInventory pattern = new AppEngInternalInventory(this, 2);
 
     private boolean substitute = false;
-    private boolean beSubstitute = false;
+    private boolean beSubstitute = true;
     private boolean inverted = false;
     private int activePage = 0;
 
@@ -53,7 +53,11 @@ public class PartPatternTerminalEx extends AbstractPartTerminal {
         this.crafting.readFromNBT(data, "craftingGrid");
 
         this.setSubstitution(data.getBoolean("substitute"));
-        this.setCanBeSubstitution(data.getBoolean("beSubstitute"));
+        if (data.hasKey("beSubstitute")) {
+            this.setCanBeSubstitution(data.getBoolean("beSubstitute"));
+        } else {
+            this.setCanBeSubstitution(true);
+        }
         this.setInverted(data.getBoolean("inverted"));
         this.setActivePage(data.getInteger("activePage"));
     }

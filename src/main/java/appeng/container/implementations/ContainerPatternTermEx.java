@@ -69,7 +69,7 @@ public class ContainerPatternTermEx extends ContainerMEMonitorable
     public boolean substitute = false;
 
     @GuiSync(96 + (17 - 9) + 13)
-    public boolean beSubstitute = false;
+    public boolean beSubstitute = true;
 
     @GuiSync(96 + (17 - 9) + 16)
     public boolean inverted;
