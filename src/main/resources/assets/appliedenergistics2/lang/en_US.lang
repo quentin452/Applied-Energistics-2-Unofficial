@@ -271,7 +271,7 @@ gui.tooltips.appliedenergistics2.SubstitutionsDescEnabled=Allow substitutions of
 gui.tooltips.appliedenergistics2.SubstitutionsDescDisabled=Prevent substitutions of input components.
 gui.tooltips.appliedenergistics2.BeSubstitutions=Use as substitution
 gui.tooltips.appliedenergistics2.BeSubstitutionsDescEnabled=Allow crafting as substitutions of input components.
-gui.tooltips.appliedenergistics2.BeSubstitutionsDescDisabled=Prevent crafting as substitutions of input components.
+gui.tooltips.appliedenergistics2.BeSubstitutionsDescDisabled=Prevent crafting as substitutions of input components. If all patterns available for a ingredient are disabled to be substitutions, crafting simulator will treat them as if they're enabled to be substitutions.
 
 gui.tooltips.appliedenergistics2.PatternSlotConfigTitle=Switch Terminal Mode
 gui.tooltips.appliedenergistics2.PatternSlotConfigInfo=Switch slot pattern mode beween (16 -> 4) and (4 -> 16)
