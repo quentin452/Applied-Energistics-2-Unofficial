@@ -47,7 +47,7 @@ public class PartPatternTerminal extends AbstractPartTerminal {
 
     private boolean craftingMode = true;
     private boolean substitute = false;
-    private boolean beSubstitute = true;
+    private boolean beSubstitute = false;
 
     @Reflected
     public PartPatternTerminal(final ItemStack is) {
@@ -68,11 +68,7 @@ public class PartPatternTerminal extends AbstractPartTerminal {
         super.readFromNBT(data);
         this.setCraftingRecipe(data.getBoolean("craftingMode"));
         this.setSubstitution(data.getBoolean("substitute"));
-        if (data.hasKey("beSubstitute")) {
-            this.setCanBeSubstitution(data.getBoolean("beSubstitute"));
-        } else {
-            this.setCanBeSubstitution(true);
-        }
+        this.setCanBeSubstitution(data.getBoolean("beSubstitute"));
         this.pattern.readFromNBT(data, "pattern");
         this.output.readFromNBT(data, "outputList");
         this.crafting.readFromNBT(data, "craftingGrid");

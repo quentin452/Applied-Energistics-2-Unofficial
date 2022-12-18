@@ -121,12 +121,7 @@ public class ItemEncodedPattern extends AEBaseItem implements ICraftingPatternIt
         final ICraftingPatternDetails details = this.getPatternForItem(stack, player.worldObj);
         final boolean isCrafting = encodedValue.getBoolean("crafting");
         final boolean substitute = encodedValue.getBoolean("substitute");
-        final boolean beSubstitute;
-        if (encodedValue.hasKey("beSubstitute")) {
-            beSubstitute = encodedValue.getBoolean("beSubstitute");
-        } else {
-            beSubstitute = true;
-        }
+        final boolean beSubstitute = encodedValue.getBoolean("beSubstitute");
         IAEItemStack[] inItems;
         IAEItemStack[] outItems;
 
