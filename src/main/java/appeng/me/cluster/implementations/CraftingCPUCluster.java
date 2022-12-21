@@ -432,12 +432,21 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                     return false;
                 }
             } else {
-                final IAEItemStack ais = this.inventory.extractItems(g.copy(), Actionable.SIMULATE, this.machineSrc);
-                final ItemStack is = ais == null ? null : ais.getItemStack();
+                boolean found = false;
+                for (IAEItemStack fuzz : this.inventory.getItemList().findFuzzy(g, FuzzyMode.IGNORE_ALL)) {
+                    if (fuzz.getStackSize() <= 0) continue;
+                    fuzz = fuzz.copy();
+                    fuzz.setStackSize(g.getStackSize());
+                    final IAEItemStack ais = this.inventory.extractItems(fuzz, Actionable.SIMULATE, this.machineSrc);
+                    if (ais == null || ais.getStackSize() == 0) continue;
+                    final ItemStack is = ais.getItemStack();
 
-                if (is == null || is.stackSize < g.getStackSize()) {
-                    return false;
+                    if (is.stackSize == g.getStackSize()) {
+                        found = true;
+                        break;
+                    }
                 }
+                if (!found) return false;
             }
         }
 
@@ -589,16 +598,23 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                                             }
                                         }
                                     } else {
-                                        final IAEItemStack ais = this.inventory.extractItems(
-                                                input[x].copy(), Actionable.MODULATE, this.machineSrc);
-                                        final ItemStack is = ais == null ? null : ais.getItemStack();
+                                        for (IAEItemStack fuzz : this.inventory
+                                                .getItemList()
+                                                .findFuzzy(input[x], FuzzyMode.IGNORE_ALL)) {
+                                            if (fuzz.getStackSize() == 0) continue;
+                                            fuzz = fuzz.copy();
+                                            fuzz.setStackSize(input[x].getStackSize());
+                                            final IAEItemStack ais = this.inventory.extractItems(
+                                                    fuzz, Actionable.MODULATE, this.machineSrc);
+                                            final ItemStack is = ais == null ? null : ais.getItemStack();
 
-                                        if (is != null) {
-                                            this.postChange(input[x], this.machineSrc);
-                                            ic.setInventorySlotContents(x, is);
-                                            if (is.stackSize == input[x].getStackSize()) {
-                                                found = true;
-                                                continue;
+                                            if (is != null) {
+                                                this.postChange(fuzz, this.machineSrc);
+                                                ic.setInventorySlotContents(x, is);
+                                                if (is.stackSize == input[x].getStackSize()) {
+                                                    found = true;
+                                                    break;
+                                                }
                                             }
                                         }
                                     }

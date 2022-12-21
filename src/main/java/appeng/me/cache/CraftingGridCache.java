@@ -416,7 +416,7 @@ public class CraftingGridCache
             final ICraftingPatternDetails details,
             final int slotIndex,
             final World world) {
-        final ImmutableList<ICraftingPatternDetails> res;
+        ImmutableList<ICraftingPatternDetails> res;
         boolean normalMode = false;
         if (details != null && details.canSubstitute()) {
             final ImmutableList<ICraftingPatternDetails> substitutions = this.craftableItemSubstitutes.get(whatToCraft);
@@ -425,6 +425,15 @@ public class CraftingGridCache
                 normalMode = true;
             } else {
                 res = substitutions;
+            }
+        } else if (details == null) {
+            final ImmutableList<ICraftingPatternDetails> substitutions =
+                    this.craftableItemSubstitutes.getBeSubstitutePattern(whatToCraft);
+            if (substitutions.isEmpty()) {
+                res = this.craftableItems.get(whatToCraft);
+                normalMode = true;
+            } else {
+                res = this.craftableItems.get(whatToCraft);
             }
         } else {
             res = this.craftableItems.get(whatToCraft);
