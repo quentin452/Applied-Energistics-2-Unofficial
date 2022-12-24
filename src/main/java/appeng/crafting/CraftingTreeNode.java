@@ -158,23 +158,38 @@ public class CraftingTreeNode {
                 }
             }
         } else {
-            final IAEItemStack available = inv.extractItems(this.what, Actionable.MODULATE, src);
+            final Collection<IAEItemStack> itemList;
+            if (this.parent != null && this.parent.details.canSubstitute()) {
+                itemList = inv.getItemList().findFuzzy(this.what, FuzzyMode.IGNORE_ALL);
+            } else {
+                itemList = Lists.newArrayList();
 
-            if (available != null) {
-                if (!this.exhausted) {
-                    final IAEItemStack is = this.job.checkUse(available);
+                final IAEItemStack item = inv.getItemList().findPrecise(this.what);
 
-                    if (is != null) {
-                        thingsUsed.add(is.copy());
-                        this.used.add(is);
-                    }
+                if (item != null) {
+                    itemList.add(item);
                 }
+            }
+            for (IAEItemStack ias : itemList) {
+                IAEItemStack tmp = ias.copy();
+                tmp.setStackSize(what.getStackSize());
+                final IAEItemStack available = inv.extractItems(tmp, Actionable.MODULATE, src);
+                if (available != null) {
+                    if (!this.exhausted) {
+                        final IAEItemStack is = this.job.checkUse(available);
 
-                this.bytes += available.getStackSize();
-                l -= available.getStackSize();
+                        if (is != null) {
+                            thingsUsed.add(is.copy());
+                            this.used.add(is);
+                        }
+                    }
 
-                if (l == 0) {
-                    return available;
+                    this.bytes += available.getStackSize();
+                    l -= available.getStackSize();
+
+                    if (l == 0) {
+                        return available;
+                    }
                 }
             }
         }
