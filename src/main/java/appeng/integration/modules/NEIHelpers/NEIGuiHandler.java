@@ -43,7 +43,7 @@ public class NEIGuiHandler extends INEIGuiAdapter {
         return false;
     }
 
-    private String formattingText(final String displayName) {
+    protected String formattingText(final String displayName) {
         return SPECIAL_REGEX_CHARS
                 .matcher(EnumChatFormatting.getTextWithoutFormattingCodes(displayName))
                 .replaceAll("\\\\$0");
