@@ -51,4 +51,12 @@ public interface ICraftingJob {
      * @return the final output of the job.
      */
     IAEItemStack getOutput();
+
+    /**
+     * returns true if this needs more simulation.
+     *
+     * @param milli milliseconds of simulation
+     * @return true if this needs more simulation
+     */
+    boolean simulateFor(final int milli);
 }

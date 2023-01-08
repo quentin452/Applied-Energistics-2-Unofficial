@@ -28,6 +28,10 @@ public class OreListMultiMap<T> {
         return ids;
     }
 
+    public boolean isPopulated() {
+        return patternMap != null;
+    }
+
     public void put(IAEItemStack key, ICraftingPatternDetails val) {
         if (((AEItemStack) key).getDefinition() != null) {
             Collection<ICraftingPatternDetails> tmp = patternHashMap.getOrDefault(

@@ -411,6 +411,11 @@ public class CraftingGridCache
     }
 
     @Override
+    public ImmutableMap<IAEItemStack, ImmutableList<ICraftingPatternDetails>> getCraftingPatterns() {
+        return ImmutableMap.copyOf(this.craftableItems);
+    }
+
+    @Override
     public ImmutableCollection<ICraftingPatternDetails> getCraftingFor(
             final IAEItemStack whatToCraft,
             final ICraftingPatternDetails details,

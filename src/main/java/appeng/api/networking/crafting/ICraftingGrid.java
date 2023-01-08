@@ -28,6 +28,8 @@ import appeng.api.networking.IGridCache;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.data.IAEItemStack;
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.concurrent.Future;
 import net.minecraft.world.World;
@@ -43,6 +45,11 @@ public interface ICraftingGrid extends IGridCache {
      */
     ImmutableCollection<ICraftingPatternDetails> getCraftingFor(
             IAEItemStack whatToCraft, ICraftingPatternDetails details, int slot, World world);
+
+    /**
+     * @return a collection of all the crafting patterns in the system
+     */
+    ImmutableMap<IAEItemStack, ImmutableList<ICraftingPatternDetails>> getCraftingPatterns();
 
     /**
      * Begin calculating a crafting job.

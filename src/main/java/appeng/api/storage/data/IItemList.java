@@ -23,6 +23,7 @@
 
 package appeng.api.storage.data;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
@@ -77,4 +78,12 @@ public interface IItemList<StackType extends IAEStack> extends IItemContainer<St
      * resets stack sizes to 0.
      */
     void resetStatus();
+
+    default StackType[] toArray(StackType[] zeroSizedArray) {
+        ArrayList<StackType> output = new ArrayList<>(size());
+        for (StackType stack : this) {
+            output.add(stack);
+        }
+        return output.toArray(zeroSizedArray);
+    }
 }

@@ -1829,4 +1829,11 @@ public class Platform {
 
         return AEItemStack.create(slot.getStack());
     }
+
+    /**
+     * @return (a divided by b) rounded up
+     */
+    public static long ceilDiv(long a, long b) {
+        return Math.addExact(Math.addExact(a, b), 1) / b;
+    }
 }

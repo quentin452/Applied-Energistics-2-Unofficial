@@ -20,13 +20,13 @@ package appeng.hooks;
 
 import appeng.api.AEApi;
 import appeng.api.networking.IGridNode;
+import appeng.api.networking.crafting.ICraftingJob;
 import appeng.api.parts.CableRenderMode;
 import appeng.api.util.AEColor;
 import appeng.core.AEConfig;
 import appeng.core.AELog;
 import appeng.core.CommonHelper;
 import appeng.core.sync.packets.PacketPaintedEntity;
-import appeng.crafting.CraftingJob;
 import appeng.entity.EntityFloatingItem;
 import appeng.me.Grid;
 import appeng.me.NetworkList;
@@ -51,7 +51,7 @@ public class TickHandler {
 
     public static final TickHandler INSTANCE = new TickHandler();
     private final Queue<IWorldCallable<?>> serverQueue = new LinkedList<IWorldCallable<?>>();
-    private final Multimap<World, CraftingJob> craftingJobs = LinkedListMultimap.create();
+    private final Multimap<World, ICraftingJob> craftingJobs = LinkedListMultimap.create();
     private final WeakHashMap<World, Queue<IWorldCallable<?>>> callQueue =
             new WeakHashMap<World, Queue<IWorldCallable<?>>>();
     private final HandlerRep server = new HandlerRep();
@@ -163,12 +163,12 @@ public class TickHandler {
         if (ev.type == Type.WORLD && ev.phase == Phase.END) {
             final WorldTickEvent wte = (WorldTickEvent) ev;
             synchronized (this.craftingJobs) {
-                final Collection<CraftingJob> jobSet = this.craftingJobs.get(wte.world);
+                final Collection<ICraftingJob> jobSet = this.craftingJobs.get(wte.world);
                 if (!jobSet.isEmpty()) {
                     final int simTime = Math.max(1, AEConfig.instance.craftingCalculationTimePerTick / jobSet.size());
-                    final Iterator<CraftingJob> i = jobSet.iterator();
+                    final Iterator<ICraftingJob> i = jobSet.iterator();
                     while (i.hasNext()) {
-                        final CraftingJob cj = i.next();
+                        final ICraftingJob cj = i.next();
                         if (!cj.simulateFor(simTime)) {
                             i.remove();
                         }
@@ -242,7 +242,7 @@ public class TickHandler {
         // AELog.info( "processQueue Time: " + time + "ms" );
     }
 
-    public void registerCraftingSimulation(final World world, final CraftingJob craftingJob) {
+    public void registerCraftingSimulation(final World world, final ICraftingJob craftingJob) {
         synchronized (this.craftingJobs) {
             this.craftingJobs.put(world, craftingJob);
         }

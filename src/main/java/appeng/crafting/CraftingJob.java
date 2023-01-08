@@ -262,12 +262,6 @@ public class CraftingJob implements Runnable, ICraftingJob {
         return this.world;
     }
 
-    /**
-     * returns true if this needs more simulation.
-     *
-     * @param milli milliseconds of simulation
-     * @return true if this needs more simulation
-     */
     public boolean simulateFor(final int milli) {
         this.time = milli;
 
