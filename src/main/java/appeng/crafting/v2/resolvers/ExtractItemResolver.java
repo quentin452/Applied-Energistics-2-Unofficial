@@ -6,14 +6,13 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.crafting.v2.CraftingContext;
 import appeng.crafting.v2.CraftingRequest;
 import appeng.crafting.v2.CraftingTask;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import javax.annotation.Nonnull;
 
 public class ExtractItemResolver implements CraftingRequestResolver<IAEItemStack> {
     public static class ExtractItemTask extends CraftingTask {
         public final CraftingRequest<IAEItemStack> request;
+        public final List<IAEItemStack> removedFromSystem = new ArrayList<>();
 
         public ExtractItemTask(CraftingRequest<IAEItemStack> request) {
             super(CraftingTask.PRIORITY_EXTRACT); // always try to extract items first
@@ -33,6 +32,7 @@ public class ExtractItemResolver implements CraftingRequestResolver<IAEItemStack
                 final IAEItemStack extracted = context.itemModel.extractItems(
                         exactMatching.copy().setStackSize(requestSize), Actionable.MODULATE, context.actionSource);
                 request.fulfill(this, extracted, context);
+                removedFromSystem.add(extracted.copy());
             }
             // Extract fuzzy
             if (request.remainingToProcess > 0
@@ -48,10 +48,41 @@ public class ExtractItemResolver implements CraftingRequestResolver<IAEItemStack
                         final IAEItemStack extracted = context.itemModel.extractItems(
                                 candidate.copy().setStackSize(requestSize), Actionable.MODULATE, context.actionSource);
                         request.fulfill(this, extracted, context);
+                        removedFromSystem.add(extracted.copy());
                     }
                 }
             }
             return new StepOutput(Collections.emptyList());
+        }
+
+        @Override
+        public void partialRefund(CraftingContext context, long amount) {
+            // Remove fuzzy things first
+            Collections.reverse(removedFromSystem);
+            final Iterator<IAEItemStack> removedIt = removedFromSystem.iterator();
+            while (removedIt.hasNext() && amount > 0) {
+                final IAEItemStack available = removedIt.next();
+                final long availAmount = available.getStackSize();
+                if (availAmount > amount) {
+                    context.itemModel.injectItems(
+                            available.copy().setStackSize(amount), Actionable.MODULATE, context.actionSource);
+                    available.setStackSize(availAmount - amount);
+                    amount = 0;
+                } else {
+                    context.itemModel.injectItems(available, Actionable.MODULATE, context.actionSource);
+                    amount -= availAmount;
+                    removedIt.remove();
+                }
+            }
+            Collections.reverse(removedFromSystem);
+        }
+
+        @Override
+        public void fullRefund(CraftingContext context) {
+            for (IAEItemStack removed : removedFromSystem) {
+                context.itemModel.injectItems(removed, Actionable.MODULATE, context.actionSource);
+            }
+            removedFromSystem.clear();
         }
     }
 

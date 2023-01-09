@@ -56,6 +56,10 @@ public abstract class CraftingTask {
      */
     public abstract StepOutput calculateOneStep(CraftingContext context);
 
+    public abstract void partialRefund(CraftingContext context, long amount);
+
+    public abstract void fullRefund(CraftingContext context);
+
     protected CraftingTask(int priority) {
         this.priority = priority;
         this.state = State.NEEDS_MORE_WORK;

@@ -27,6 +27,16 @@ public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStac
             request.fulfill(this, request.stack.copy().setStackSize(request.remainingToProcess), context);
             return new StepOutput(Collections.emptyList());
         }
+
+        @Override
+        public void partialRefund(CraftingContext context, long amount) {
+            // no-op: items were simulated to be emitted, so there's nothing to refund
+        }
+
+        @Override
+        public void fullRefund(CraftingContext context) {
+            // no-op: items were simulated to be emitted, so there's nothing to refund
+        }
     }
 
     @Nonnull

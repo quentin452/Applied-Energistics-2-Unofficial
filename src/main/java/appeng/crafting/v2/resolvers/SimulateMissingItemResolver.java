@@ -29,6 +29,16 @@ public class SimulateMissingItemResolver<StackType extends IAEStack<StackType>>
             request.fulfill(this, request.stack.copy().setStackSize(request.remainingToProcess), context);
             return new StepOutput(Collections.emptyList());
         }
+
+        @Override
+        public void partialRefund(CraftingContext context, long amount) {
+            // no-op: items were simulated, so there's nothing to refund
+        }
+
+        @Override
+        public void fullRefund(CraftingContext context) {
+            // no-op: items were simulated, so there's nothing to refund
+        }
     }
 
     @Nonnull

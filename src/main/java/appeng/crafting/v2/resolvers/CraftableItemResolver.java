@@ -12,10 +12,21 @@ import appeng.util.Platform;
 import appeng.util.item.HashBasedItemList;
 import com.google.common.collect.ImmutableList;
 import java.util.*;
+import java.util.Map.Entry;
 import javax.annotation.Nonnull;
 import net.minecraft.world.World;
 
 public class CraftableItemResolver implements CraftingRequestResolver<IAEItemStack> {
+    public static class RequestAndPerCraftAmount {
+        public final CraftingRequest<IAEItemStack> request;
+        public final long perCraftAmount;
+
+        public RequestAndPerCraftAmount(CraftingRequest<IAEItemStack> request, long perCraftAmount) {
+            this.request = request;
+            this.perCraftAmount = perCraftAmount;
+        }
+    }
+
     public static class CraftFromPatternTask extends CraftingTask {
         public final CraftingRequest<IAEItemStack> request;
         public final ICraftingPatternDetails pattern;
@@ -27,9 +38,12 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
         // With the recursive part subtracted
         protected final IAEItemStack[] patternOutputs;
         protected final IAEItemStack matchingOutput;
-        protected final Map<IAEItemStack, CraftingRequest<IAEItemStack>> childRequests = new HashMap<>();
+        protected final Map<IAEItemStack, RequestAndPerCraftAmount> childRequests = new HashMap<>();
         protected final Map<IAEItemStack, CraftingRequest<IAEItemStack>> childRecursionRequests = new HashMap<>();
+        // byproduct injected -> amount per craft
+        protected final IdentityHashMap<IAEItemStack, Long> byproducts = new IdentityHashMap<>();
         protected boolean requestedInputs = false;
+        protected long totalCraftsDone = 0;
 
         public CraftFromPatternTask(
                 CraftingRequest<IAEItemStack> request,
@@ -120,7 +134,8 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                         maxCraftable = 0;
                     }
                 }
-                for (CraftingRequest<IAEItemStack> inputChild : childRequests.values()) {
+                for (RequestAndPerCraftAmount inputChildPair : childRequests.values()) {
+                    final CraftingRequest<IAEItemStack> inputChild = inputChildPair.request;
                     final long costPerRecipe = inputChild.stack.getStackSize() / toCraft;
                     final long available = inputChild.stack.getStackSize() - inputChild.remainingToProcess;
                     final long fullRecipes = available / costPerRecipe;
@@ -136,28 +151,32 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                 for (IAEItemStack output : patternOutputs) {
                     // add byproducts to the system
                     if (output != matchingOutput) {
-                        context.itemModel.injectItems(
-                                output.copy().setStackSize(Math.multiplyExact(maxCraftable, output.getStackSize())),
-                                Actionable.MODULATE,
-                                context.actionSource);
+                        final IAEItemStack injected =
+                                output.copy().setStackSize(Math.multiplyExact(maxCraftable, output.getStackSize()));
+                        context.itemModel.injectItems(injected, Actionable.MODULATE, context.actionSource);
+                        this.byproducts.put(injected.copy(), output.getStackSize());
                     }
                 }
+                this.totalCraftsDone = maxCraftable;
                 if (maxCraftable != toCraft) {
                     // Need to refund some items as not everything could be crafted.
-                    for (CraftingRequest<IAEItemStack> inputChild : childRequests.values()) {
+                    for (RequestAndPerCraftAmount inputChildPair : childRequests.values()) {
+                        final CraftingRequest<IAEItemStack> inputChild = inputChildPair.request;
                         final long actuallyNeeded = Math.multiplyExact(inputChild.stack.getStackSize(), maxCraftable);
                         final long produced =
                                 inputChild.stack.getStackSize() - Math.max(inputChild.remainingToProcess, 0);
                         if (produced > actuallyNeeded) {
-                            inputChild.refund(produced - actuallyNeeded, context);
+                            if (maxCraftable == 0) {
+                                inputChild.fullRefund(context);
+                            } else {
+                                inputChild.partialRefund(context, produced - actuallyNeeded);
+                            }
                         }
                     }
                     // If we couldn't craft even a single recipe, refund recursive inputs too
                     if (maxCraftable == 0) {
                         for (CraftingRequest<IAEItemStack> recChild : childRecursionRequests.values()) {
-                            final long produced =
-                                    recChild.stack.getStackSize() - Math.max(recChild.remainingToProcess, 0);
-                            recChild.refund(produced, context);
+                            recChild.fullRefund(context);
                         }
                     }
                 }
@@ -186,12 +205,46 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                             allowSimulation,
                             stack -> this.isValidSubstitute(input, stack, context.world));
                     newChildren.add(req);
-                    childRequests.put(input, req);
+                    childRequests.put(input, new RequestAndPerCraftAmount(req, input.getStackSize()));
                 }
                 requestedInputs = true;
                 state = State.NEEDS_MORE_WORK;
                 return new StepOutput(Collections.unmodifiableList(newChildren));
             }
+        }
+
+        @Override
+        public void partialRefund(CraftingContext context, long amount) {
+            if (amount >= totalCraftsDone) {
+                fullRefund(context);
+                return;
+            }
+            totalCraftsDone -= amount;
+            amount = amount / matchingOutput.getStackSize();
+            if (amount == 0) {
+                return;
+            }
+            for (RequestAndPerCraftAmount subrequest : childRequests.values()) {
+                subrequest.request.partialRefund(context, subrequest.perCraftAmount * amount);
+            }
+            for (Entry<IAEItemStack, Long> entry : byproducts.entrySet()) {
+                final IAEItemStack byproductStack = entry.getKey();
+                final long perCraft = entry.getValue();
+                context.itemModel.extractItems(
+                        byproductStack.copy().setStackSize(perCraft * amount),
+                        Actionable.MODULATE,
+                        context.actionSource);
+                entry.getKey().setStackSize(byproductStack.getStackSize() - amount * perCraft);
+            }
+        }
+
+        @Override
+        public void fullRefund(CraftingContext context) {
+            totalCraftsDone = 0;
+            childRequests.values().forEach(req -> req.request.fullRefund(context));
+            childRequests.clear();
+            childRecursionRequests.values().forEach(req -> req.fullRefund(context));
+            childRecursionRequests.clear();
         }
     }
 

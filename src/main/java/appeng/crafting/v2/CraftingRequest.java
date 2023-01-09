@@ -7,6 +7,8 @@ import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.util.item.FluidList;
 import appeng.util.item.ItemList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -39,6 +41,7 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
     public final SubstitutionMode substitutionMode;
     public final Predicate<StackType> acceptableSubstituteFn;
     public final IItemList<StackType> resolvedInputs;
+    public final List<CraftingTask> usedResolvers = new ArrayList<>();
     /**
      * Whether this request and its children can be fulfilled by simulations
      */
@@ -126,7 +129,20 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
     /**
      * Reduces the amount of items needed by {@code amount}, propagating any necessary refunds via the resolver crafting tasks.
      */
-    public void refund(long amount, CraftingContext context) {
-        // TODO
+    public void partialRefund(CraftingContext context, long amount) {
+        for (CraftingTask task : usedResolvers) {
+            task.partialRefund(context, amount);
+        }
+        final long processed = this.stack.getStackSize() - this.remainingToProcess;
+        this.stack.setStackSize(this.stack.getStackSize() - amount);
+        this.remainingToProcess = this.stack.getStackSize() - processed;
+    }
+
+    public void fullRefund(CraftingContext context) {
+        for (CraftingTask task : usedResolvers) {
+            task.fullRefund(context);
+        }
+        this.remainingToProcess = 0;
+        this.stack.setStackSize(0);
     }
 }
