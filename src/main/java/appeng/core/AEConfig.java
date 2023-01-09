@@ -124,6 +124,7 @@ public final class AEConfig extends Configuration implements IConfigurableObject
     private double WirelessBoosterRangeMultiplier = 1;
     private double WirelessBoosterExp = 1.5;
     public int levelEmitterDelay = 40;
+    public int craftingCalculatorVersion = 2;
 
     public AEConfig(final File configFile) {
         super(configFile);
@@ -235,6 +236,9 @@ public final class AEConfig extends Configuration implements IConfigurableObject
         this.quantumBridgeBackboneTransfer = this.get(
                         "debug", "EnableQuantumBridgeBackboneTransfer", this.quantumBridgeBackboneTransfer)
                 .getBoolean(this.quantumBridgeBackboneTransfer);
+        this.craftingCalculatorVersion = this.get("debug", "CraftingCalculatorVersion", this.craftingCalculatorVersion)
+                .getInt(this.craftingCalculatorVersion);
+        this.craftingCalculatorVersion = Math.max(1, Math.min(this.craftingCalculatorVersion, 2));
         this.clientSync();
 
         for (final AEFeature feature : AEFeature.values()) {

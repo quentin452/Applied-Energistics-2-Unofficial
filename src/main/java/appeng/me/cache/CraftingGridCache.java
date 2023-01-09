@@ -39,10 +39,12 @@ import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
+import appeng.core.AEConfig;
 import appeng.crafting.CraftingJob;
 import appeng.crafting.CraftingLink;
 import appeng.crafting.CraftingLinkNexus;
 import appeng.crafting.CraftingWatcher;
+import appeng.crafting.v2.CraftingJobV2;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 import appeng.me.helpers.GenericInterestManager;
 import appeng.tile.crafting.TileCraftingStorageTile;
@@ -488,9 +490,19 @@ public class CraftingGridCache
             throw new IllegalArgumentException("Invalid Crafting Job Request");
         }
 
-        final CraftingJob job = new CraftingJob(world, grid, actionSrc, slotItem, cb);
+        final ICraftingJob job;
+        switch (AEConfig.instance.craftingCalculatorVersion) {
+            case 1:
+                job = new CraftingJob(world, grid, actionSrc, slotItem, cb);
+                break;
+            case 2:
+                job = new CraftingJobV2(world, grid, actionSrc, slotItem, cb);
+                break;
+            default:
+                throw new IllegalStateException("Invalid crafting calculator version");
+        }
 
-        return CRAFTING_POOL.submit(job, (ICraftingJob) job);
+        return CRAFTING_POOL.submit(job, job);
     }
 
     @Override

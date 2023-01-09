@@ -23,10 +23,12 @@
 
 package appeng.api.networking.crafting;
 
+import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
+import appeng.crafting.MECraftingInventory;
 
-public interface ICraftingJob {
+public interface ICraftingJob extends Runnable {
 
     /**
      * @return if this job is a simulation, simulations cannot be submitted and only represent 1 possible future
@@ -59,4 +61,20 @@ public interface ICraftingJob {
      * @return true if this needs more simulation
      */
     boolean simulateFor(final int milli);
+
+    @Override
+    default void run() {}
+
+    /**
+     * @return whether this job can run on the given cluster
+     */
+    default boolean supportsCPUCluster(final ICraftingCPU cluster) {
+        return false;
+    }
+
+    /**
+     * Begins crafting on a CPU cluster
+     */
+    default void startCrafting(
+            final MECraftingInventory storage, final ICraftingCPU craftingCPUCluster, final BaseActionSource src) {}
 }

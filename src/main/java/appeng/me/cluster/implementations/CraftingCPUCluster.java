@@ -704,11 +704,11 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             return null;
         }
 
-        if (!(job instanceof CraftingJob)) {
+        if (this.isBusy() || !this.isActive() || this.availableStorage < job.getByteTotal()) {
             return null;
         }
 
-        if (this.isBusy() || !this.isActive() || this.availableStorage < job.getByteTotal()) {
+        if (!job.supportsCPUCluster(this)) {
             return null;
         }
 
@@ -718,7 +718,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
         try {
             this.waitingFor.resetStatus();
-            ((CraftingJob) job).getTree().setJob(ci, this, src);
+            job.startCrafting(ci, this, src);
             if (ci.commit(src)) {
                 this.finalOutput = job.getOutput();
                 this.waiting = false;

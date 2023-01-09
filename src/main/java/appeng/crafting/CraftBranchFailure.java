@@ -20,7 +20,7 @@ package appeng.crafting;
 
 import appeng.api.storage.data.IAEItemStack;
 
-public class CraftBranchFailure extends Exception {
+public class CraftBranchFailure extends RuntimeException {
 
     private static final long serialVersionUID = 654603652836724823L;
 

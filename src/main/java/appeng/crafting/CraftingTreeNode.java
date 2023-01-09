@@ -309,8 +309,9 @@ public class CraftingTreeNode {
     }
 
     public void setJob(
-            final MECraftingInventory storage, final CraftingCPUCluster craftingCPUCluster, final BaseActionSource src)
-            throws CraftBranchFailure {
+            final MECraftingInventory storage,
+            final CraftingCPUCluster craftingCPUCluster,
+            final BaseActionSource src) {
         for (final IAEItemStack i : this.used) {
             final IAEItemStack ex = storage.extractItems(i, Actionable.MODULATE, src);
 

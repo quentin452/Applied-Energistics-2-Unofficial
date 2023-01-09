@@ -1,13 +1,16 @@
 package appeng.crafting.v2;
 
 import appeng.api.networking.IGrid;
+import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.crafting.ICraftingCallback;
 import appeng.api.networking.crafting.ICraftingJob;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
+import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingRequest.SubstitutionMode;
 import appeng.crafting.v2.CraftingTask.State;
+import appeng.me.cluster.implementations.CraftingCPUCluster;
 import java.util.*;
 import net.minecraft.world.World;
 
@@ -31,7 +34,7 @@ public class CraftingJobV2 implements ICraftingJob {
             final ICraftingCallback callback) {
         this.context = new CraftingContext(world, meGrid, actionSource);
         this.callback = callback;
-        this.originalRequest = new CraftingRequest<>(what, SubstitutionMode.PRECISE, IAEItemStack.class);
+        this.originalRequest = new CraftingRequest<>(what, SubstitutionMode.PRECISE_FRESH, IAEItemStack.class, true);
         this.context.addRequest(this.originalRequest);
         this.context.itemModel.ignore(what);
     }
@@ -68,5 +71,21 @@ public class CraftingJobV2 implements ICraftingJob {
             state = context.doWork();
         } while (state.needsMoreWork && System.currentTimeMillis() < finishTime);
         return state.needsMoreWork;
+    }
+
+    @Override
+    public void run() {
+        // TODO
+    }
+
+    @Override
+    public boolean supportsCPUCluster(ICraftingCPU cluster) {
+        return cluster instanceof CraftingCPUCluster;
+    }
+
+    @Override
+    public void startCrafting(MECraftingInventory storage, ICraftingCPU rawCluster, BaseActionSource src) {
+        CraftingCPUCluster cluster = (CraftingCPUCluster) rawCluster;
+        // TODO
     }
 }
