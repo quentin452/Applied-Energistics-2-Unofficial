@@ -239,5 +239,13 @@ public final class CraftingContext {
                 CraftingContext context, CraftingCPUCluster cpuCluster, MECraftingInventory craftingInv) {
             // no-op
         }
+
+        @Override
+        public String toString() {
+            return "CheckOtherResolversTask{" + "myRequest="
+                    + myRequest + ", priority="
+                    + priority + ", state="
+                    + state + '}';
+        }
     }
 }

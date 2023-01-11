@@ -52,6 +52,11 @@ public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStac
                 CraftingContext context, CraftingCPUCluster cpuCluster, MECraftingInventory craftingInv) {
             cpuCluster.addEmitable(this.request.stack.copy());
         }
+
+        @Override
+        public String toString() {
+            return "EmitItemTask{" + "request=" + request + ", priority=" + priority + ", state=" + state + '}';
+        }
     }
 
     @Nonnull

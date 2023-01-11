@@ -56,6 +56,11 @@ public class SimulateMissingItemResolver<StackType extends IAEStack<StackType>>
                 CraftingContext context, CraftingCPUCluster cpuCluster, MECraftingInventory craftingInv) {
             throw new IllegalStateException("Trying to start crafting a schedule with simulated items");
         }
+
+        @Override
+        public String toString() {
+            return "ConjureItemTask{" + "request=" + request + ", priority=" + priority + ", state=" + state + '}';
+        }
     }
 
     @Nonnull

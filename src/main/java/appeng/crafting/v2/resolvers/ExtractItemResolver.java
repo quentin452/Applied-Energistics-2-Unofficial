@@ -90,7 +90,9 @@ public class ExtractItemResolver implements CraftingRequestResolver<IAEItemStack
 
         @Override
         public void populatePlan(IItemList<IAEItemStack> targetPlan) {
-            targetPlan.add(request.stack.copy());
+            for (IAEItemStack removed : removedFromSystem) {
+                targetPlan.add(removed.copy());
+            }
         }
 
         @Override
@@ -105,6 +107,15 @@ public class ExtractItemResolver implements CraftingRequestResolver<IAEItemStack
                     cpuCluster.addStorage(extracted);
                 }
             }
+        }
+
+        @Override
+        public String toString() {
+            return "ExtractItemTask{" + "request="
+                    + request + ", removedFromSystem="
+                    + removedFromSystem + ", priority="
+                    + priority + ", state="
+                    + state + '}';
         }
     }
 

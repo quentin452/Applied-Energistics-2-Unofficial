@@ -12,7 +12,7 @@ public class OreListMultiMap<T> {
     private ImmutableListMultimap<Integer, T> map;
     private final Map<Integer, Collection<ICraftingPatternDetails>> patternHashMap = new HashMap<>();
     private ImmutableListMultimap<Integer, T> patternMap;
-    private ImmutableListMultimap.Builder<Integer, T> builder;
+    private ImmutableListMultimap.Builder<Integer, T> builder = new Builder<>();
 
     private static Collection<Integer> getAEEquivalents(IAEItemStack stack) {
         AEItemStack s;

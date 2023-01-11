@@ -252,6 +252,9 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
 
         @Override
         public void populatePlan(IItemList<IAEItemStack> targetPlan) {
+            if (totalCraftsDone == 0) {
+                return;
+            }
             for (IAEItemStack output : patternOutputs) {
                 targetPlan.addRequestable(output.copy().setCountRequestable(output.getStackSize() * totalCraftsDone));
             }
@@ -261,6 +264,19 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
         public void startOnCpu(
                 CraftingContext context, CraftingCPUCluster cpuCluster, MECraftingInventory craftingInv) {
             cpuCluster.addCrafting(pattern, totalCraftsDone);
+        }
+
+        @Override
+        public String toString() {
+            return "CraftFromPatternTask{" + "request="
+                    + request + ", pattern="
+                    + pattern + ", allowSimulation="
+                    + allowSimulation + ", matchingOutput="
+                    + matchingOutput + ", requestedInputs="
+                    + requestedInputs + ", totalCraftsDone="
+                    + totalCraftsDone + ", priority="
+                    + priority + ", state="
+                    + state + '}';
         }
     }
 
