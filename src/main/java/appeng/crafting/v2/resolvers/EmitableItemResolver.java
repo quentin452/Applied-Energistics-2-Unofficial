@@ -23,10 +23,12 @@ public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStac
         @Override
         public StepOutput calculateOneStep(CraftingContext context) {
             if (request.remainingToProcess <= 0) {
+                state = State.SUCCESS;
                 return new StepOutput(Collections.emptyList());
             }
             // Assume items will be generated, triggered by the emitter
             request.fulfill(this, request.stack.copy().setStackSize(request.remainingToProcess), context);
+            state = State.SUCCESS;
             return new StepOutput(Collections.emptyList());
         }
 

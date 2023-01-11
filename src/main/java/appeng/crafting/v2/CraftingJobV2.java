@@ -15,20 +15,31 @@ import appeng.crafting.v2.resolvers.CraftingTask.State;
 import appeng.hooks.TickHandler;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import net.minecraft.world.World;
 
 /**
  * A new, self-contained implementation of the crafting calculator.
  * Does an iterative search on the crafting recipe tree.
  */
-public class CraftingJobV2 implements ICraftingJob {
+public class CraftingJobV2 implements ICraftingJob, Future<ICraftingJob> {
 
     protected volatile long totalByteCost = -1; // -1 means it needs to be recalculated
 
     protected CraftingContext context;
     protected final CraftingRequest<IAEItemStack> originalRequest;
     protected ICraftingCallback callback;
-    protected boolean finished = false;
+
+    protected enum State {
+        RUNNING,
+        FINISHED,
+        CANCELLED
+    }
+
+    protected State state = State.RUNNING;
 
     public CraftingJobV2(
             final World world,
@@ -75,29 +86,32 @@ public class CraftingJobV2 implements ICraftingJob {
 
     @Override
     public boolean simulateFor(int milli) {
-        if (finished) {
+        if (this.state != State.RUNNING) {
             return false;
         }
         final long startTime = System.currentTimeMillis();
         final long finishTime = startTime + milli;
-        State state = State.NEEDS_MORE_WORK;
+        CraftingTask.State taskState = CraftingTask.State.NEEDS_MORE_WORK;
         do {
-            state = context.doWork();
+            taskState = context.doWork();
             totalByteCost = -1;
-        } while (state.needsMoreWork && System.currentTimeMillis() < finishTime);
+        } while (taskState.needsMoreWork && System.currentTimeMillis() < finishTime && (state == State.RUNNING));
 
-        if (!state.needsMoreWork) {
+        if (!taskState.needsMoreWork) {
             getByteTotal();
-            finished = true;
-            callback.calculationComplete(this);
+            this.state = State.FINISHED;
+            if (callback != null) {
+                callback.calculationComplete(this);
+            }
         }
 
-        return state.needsMoreWork;
+        return taskState.needsMoreWork;
     }
 
     @Override
-    public void run() {
+    public Future<ICraftingJob> schedule() {
         TickHandler.INSTANCE.registerCraftingSimulation(this.context.world, this);
+        return this;
     }
 
     @Override
@@ -107,7 +121,7 @@ public class CraftingJobV2 implements ICraftingJob {
 
     @Override
     public void startCrafting(MECraftingInventory storage, ICraftingCPU rawCluster, BaseActionSource src) {
-        if (!finished) {
+        if (this.state == State.RUNNING) {
             throw new IllegalStateException(
                     "Trying to start crafting a not fully calculated job for " + originalRequest.toString());
         }
@@ -116,6 +130,52 @@ public class CraftingJobV2 implements ICraftingJob {
         List<CraftingTask> resolvedTasks = context.getResolvedTasks();
         for (CraftingTask task : resolvedTasks) {
             task.startOnCpu(context, cluster, storage);
+        }
+    }
+
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+        if (this.state != State.RUNNING) {
+            return false;
+        } else {
+            this.state = State.CANCELLED;
+            return true;
+        }
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return state == State.CANCELLED;
+    }
+
+    @Override
+    public boolean isDone() {
+        return state != State.RUNNING;
+    }
+
+    @Override
+    public CraftingJobV2 get() throws InterruptedException, ExecutionException {
+        this.simulateFor(Integer.MAX_VALUE);
+        return this;
+    }
+
+    @Override
+    public CraftingJobV2 get(long timeout, TimeUnit unit)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        try {
+            this.simulateFor((int) unit.convert(timeout, TimeUnit.MILLISECONDS));
+        } catch (Exception e) {
+            throw new ExecutionException(e);
+        }
+        switch (this.state) {
+            case RUNNING:
+                throw new TimeoutException();
+            case CANCELLED:
+                throw new InterruptedException();
+            case FINISHED:
+                return this;
+            default:
+                throw new IllegalStateException();
         }
     }
 }

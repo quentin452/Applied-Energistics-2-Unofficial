@@ -479,6 +479,13 @@ public class CraftingGridCache
         return res;
     }
 
+    /**
+     * @return The task pool for executing crafting calculations.
+     */
+    public static ExecutorService getCraftingPool() {
+        return CRAFTING_POOL;
+    }
+
     @Override
     public Future<ICraftingJob> beginCraftingJob(
             final World world,
@@ -502,7 +509,7 @@ public class CraftingGridCache
                 throw new IllegalStateException("Invalid crafting calculator version");
         }
 
-        return CRAFTING_POOL.submit(job, job);
+        return job.schedule();
     }
 
     @Override

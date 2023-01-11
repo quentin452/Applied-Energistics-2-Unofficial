@@ -23,6 +23,7 @@ public class SimulateMissingItemResolver<StackType extends IAEStack<StackType>>
 
         @Override
         public StepOutput calculateOneStep(CraftingContext context) {
+            state = State.SUCCESS;
             if (request.remainingToProcess <= 0) {
                 return new StepOutput(Collections.emptyList());
             }

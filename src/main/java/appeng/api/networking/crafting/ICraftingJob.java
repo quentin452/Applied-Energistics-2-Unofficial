@@ -27,8 +27,9 @@ import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.crafting.MECraftingInventory;
+import java.util.concurrent.Future;
 
-public interface ICraftingJob extends Runnable {
+public interface ICraftingJob {
 
     /**
      * @return if this job is a simulation, simulations cannot be submitted and only represent 1 possible future
@@ -62,8 +63,7 @@ public interface ICraftingJob extends Runnable {
      */
     boolean simulateFor(final int milli);
 
-    @Override
-    default void run() {}
+    Future<ICraftingJob> schedule();
 
     /**
      * @return whether this job can run on the given cluster

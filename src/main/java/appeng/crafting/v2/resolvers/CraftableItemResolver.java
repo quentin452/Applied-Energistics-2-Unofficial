@@ -182,6 +182,7 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                         }
                     }
                 }
+                state = State.SUCCESS;
                 return new StepOutput(Collections.emptyList());
             } else {
                 ArrayList<CraftingRequest<IAEItemStack>> newChildren = new ArrayList<>(patternInputs.length);

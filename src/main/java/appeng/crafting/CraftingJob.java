@@ -34,15 +34,17 @@ import appeng.api.storage.data.IItemList;
 import appeng.api.util.DimensionalCoord;
 import appeng.core.AELog;
 import appeng.hooks.TickHandler;
+import appeng.me.cache.CraftingGridCache;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 import com.google.common.base.Stopwatch;
 import java.util.HashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
-public class CraftingJob implements ICraftingJob {
+public class CraftingJob implements ICraftingJob, Runnable {
     private static final String LOG_CRAFTING_JOB =
             "CraftingJob (%s) issued by %s requesting [%s] using %s bytes took %s ms";
     private static final String LOG_MACHINE_SOURCE_DETAILS = "Machine[object=%s, %s]";
@@ -114,6 +116,11 @@ public class CraftingJob implements ICraftingJob {
     void addMissing(IAEItemStack what) {
         what = what.copy();
         this.missing.add(what);
+    }
+
+    @Override
+    public Future<ICraftingJob> schedule() {
+        return CraftingGridCache.getCraftingPool().submit(this, this);
     }
 
     @Override
