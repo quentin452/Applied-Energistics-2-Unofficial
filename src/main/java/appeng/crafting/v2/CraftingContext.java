@@ -7,7 +7,10 @@ import appeng.api.networking.security.BaseActionSource;
 import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
+import appeng.api.storage.data.IItemList;
 import appeng.crafting.MECraftingInventory;
+import appeng.crafting.v2.resolvers.CraftingTask;
+import appeng.me.cluster.implementations.CraftingCPUCluster;
 import appeng.util.item.OreListMultiMap;
 import com.google.common.collect.ClassToInstanceMap;
 import com.google.common.collect.ImmutableList;
@@ -25,7 +28,7 @@ public final class CraftingContext {
     public final World world;
     public final IGrid meGrid;
     public final ICraftingGrid craftingGrid;
-    public final BaseActionSource actionSource;
+    public BaseActionSource actionSource;
 
     /**
      * A working copy of the AE system's item list used for modelling what happens as crafting requests get resolved
@@ -51,6 +54,7 @@ public final class CraftingContext {
     }
 
     private final List<RequestInProcessing<?>> liveRequests = new ArrayList<>(32);
+    private final List<CraftingTask> resolvedTasks = new ArrayList<>();
     private final ArrayDeque<CraftingTask> tasksToProcess = new ArrayDeque<>(64);
     private boolean doingWork = false;
     // State at the point when the last task executed.
@@ -134,7 +138,8 @@ public final class CraftingContext {
             return finishedState;
         }
         final CraftingTask frontTask = tasksToProcess.getFirst();
-        if (frontTask.state == CraftingTask.State.SUCCESS || frontTask.state == CraftingTask.State.FAILURE) {
+        if (frontTask.getState() == CraftingTask.State.SUCCESS || frontTask.getState() == CraftingTask.State.FAILURE) {
+            resolvedTasks.add(frontTask);
             tasksToProcess.removeFirst();
             return CraftingTask.State.NEEDS_MORE_WORK;
         }
@@ -148,6 +153,7 @@ public final class CraftingContext {
             if (tasksToProcess.getFirst() != frontTask) {
                 throw new IllegalStateException("A crafting task got added to the queue without requesting more work.");
             }
+            resolvedTasks.add(frontTask);
             tasksToProcess.removeFirst();
             finishedState = CraftingTask.State.SUCCESS;
         } else if (newState == CraftingTask.State.FAILURE) {
@@ -156,6 +162,22 @@ public final class CraftingContext {
             return CraftingTask.State.FAILURE;
         }
         return tasksToProcess.isEmpty() ? CraftingTask.State.SUCCESS : CraftingTask.State.NEEDS_MORE_WORK;
+    }
+
+    /**
+     * Gets the list of tasks that have finished executing, sorted topologically (dependencies before the tasks that require them)
+     * @return An unmodifiable list of resolved tasks.
+     */
+    public List<CraftingTask> getResolvedTasks() {
+        return Collections.unmodifiableList(resolvedTasks);
+    }
+
+    /**
+     * Gets all requests that have been added to the context.
+     * @return An unmodifiable list of the requests.
+     */
+    public List<RequestInProcessing<?>> getLiveRequests() {
+        return Collections.unmodifiableList(liveRequests);
     }
 
     /**
@@ -195,6 +217,27 @@ public final class CraftingContext {
                 this.state = State.FAILURE;
             }
             return new StepOutput();
+        }
+
+        @Override
+        public void partialRefund(CraftingContext context, long amount) {
+            // no-op
+        }
+
+        @Override
+        public void fullRefund(CraftingContext context) {
+            // no-op
+        }
+
+        @Override
+        public void populatePlan(IItemList<IAEItemStack> targetPlan) {
+            // no-op
+        }
+
+        @Override
+        public void startOnCpu(
+                CraftingContext context, CraftingCPUCluster cpuCluster, MECraftingInventory craftingInv) {
+            // no-op
         }
     }
 }

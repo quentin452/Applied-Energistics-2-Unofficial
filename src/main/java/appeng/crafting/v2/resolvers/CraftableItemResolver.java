@@ -4,10 +4,12 @@ import appeng.api.config.Actionable;
 import appeng.api.config.FuzzyMode;
 import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IItemList;
+import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingContext;
 import appeng.crafting.v2.CraftingRequest;
 import appeng.crafting.v2.CraftingRequest.SubstitutionMode;
-import appeng.crafting.v2.CraftingTask;
+import appeng.me.cluster.implementations.CraftingCPUCluster;
 import appeng.util.Platform;
 import appeng.util.item.HashBasedItemList;
 import com.google.common.collect.ImmutableList;
@@ -245,6 +247,19 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
             childRequests.clear();
             childRecursionRequests.values().forEach(req -> req.fullRefund(context));
             childRecursionRequests.clear();
+        }
+
+        @Override
+        public void populatePlan(IItemList<IAEItemStack> targetPlan) {
+            for (IAEItemStack output : patternOutputs) {
+                targetPlan.addRequestable(output.copy().setCountRequestable(output.getStackSize() * totalCraftsDone));
+            }
+        }
+
+        @Override
+        public void startOnCpu(
+                CraftingContext context, CraftingCPUCluster cpuCluster, MECraftingInventory craftingInv) {
+            cpuCluster.addCrafting(pattern, totalCraftsDone);
         }
     }
 

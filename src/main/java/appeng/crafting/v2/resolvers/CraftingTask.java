@@ -1,5 +1,11 @@
-package appeng.crafting.v2;
+package appeng.crafting.v2.resolvers;
 
+import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IItemList;
+import appeng.crafting.MECraftingInventory;
+import appeng.crafting.v2.CraftingContext;
+import appeng.crafting.v2.CraftingRequest;
+import appeng.me.cluster.implementations.CraftingCPUCluster;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -59,6 +65,11 @@ public abstract class CraftingTask {
     public abstract void partialRefund(CraftingContext context, long amount);
 
     public abstract void fullRefund(CraftingContext context);
+
+    public abstract void populatePlan(IItemList<IAEItemStack> targetPlan);
+
+    public abstract void startOnCpu(
+            CraftingContext context, CraftingCPUCluster cpuCluster, MECraftingInventory craftingInv);
 
     protected CraftingTask(int priority) {
         this.priority = priority;

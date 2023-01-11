@@ -5,6 +5,7 @@ import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
+import appeng.crafting.v2.resolvers.CraftingTask;
 import appeng.util.item.FluidList;
 import appeng.util.item.ItemList;
 import java.util.ArrayList;

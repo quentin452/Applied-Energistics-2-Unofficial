@@ -3,9 +3,12 @@ package appeng.crafting.v2.resolvers;
 import appeng.api.config.Actionable;
 import appeng.api.config.FuzzyMode;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IItemList;
+import appeng.crafting.CraftBranchFailure;
+import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingContext;
 import appeng.crafting.v2.CraftingRequest;
-import appeng.crafting.v2.CraftingTask;
+import appeng.me.cluster.implementations.CraftingCPUCluster;
 import java.util.*;
 import javax.annotation.Nonnull;
 
@@ -83,6 +86,25 @@ public class ExtractItemResolver implements CraftingRequestResolver<IAEItemStack
                 context.itemModel.injectItems(removed, Actionable.MODULATE, context.actionSource);
             }
             removedFromSystem.clear();
+        }
+
+        @Override
+        public void populatePlan(IItemList<IAEItemStack> targetPlan) {
+            targetPlan.add(request.stack.copy());
+        }
+
+        @Override
+        public void startOnCpu(
+                CraftingContext context, CraftingCPUCluster cpuCluster, MECraftingInventory craftingInv) {
+            for (IAEItemStack stack : removedFromSystem) {
+                if (stack.getStackSize() > 0) {
+                    IAEItemStack extracted = craftingInv.extractItems(stack, Actionable.MODULATE, context.actionSource);
+                    if (extracted == null || extracted.getStackSize() != stack.getStackSize()) {
+                        throw new CraftBranchFailure(stack, stack.getStackSize());
+                    }
+                    cpuCluster.addStorage(extracted);
+                }
+            }
         }
     }
 

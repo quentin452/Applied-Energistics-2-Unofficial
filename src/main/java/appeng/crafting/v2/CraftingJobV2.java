@@ -8,10 +8,13 @@ import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.crafting.MECraftingInventory;
+import appeng.crafting.v2.CraftingContext.RequestInProcessing;
 import appeng.crafting.v2.CraftingRequest.SubstitutionMode;
-import appeng.crafting.v2.CraftingTask.State;
+import appeng.crafting.v2.resolvers.CraftingTask;
+import appeng.crafting.v2.resolvers.CraftingTask.State;
+import appeng.hooks.TickHandler;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
-import java.util.*;
+import java.util.List;
 import net.minecraft.world.World;
 
 /**
@@ -25,6 +28,7 @@ public class CraftingJobV2 implements ICraftingJob {
     protected CraftingContext context;
     protected final CraftingRequest<IAEItemStack> originalRequest;
     protected ICraftingCallback callback;
+    protected boolean finished = false;
 
     public CraftingJobV2(
             final World world,
@@ -48,14 +52,21 @@ public class CraftingJobV2 implements ICraftingJob {
     public long getByteTotal() {
         long byteCost = totalByteCost;
         if (byteCost < 0) {
-            // TODO
+            byteCost = 0;
+            for (RequestInProcessing<?> request : context.getLiveRequests()) {
+                byteCost += request.request.byteCost;
+            }
             totalByteCost = byteCost;
         }
         return byteCost;
     }
 
     @Override
-    public void populatePlan(IItemList<IAEItemStack> plan) {}
+    public void populatePlan(IItemList<IAEItemStack> plan) {
+        for (CraftingTask task : context.getResolvedTasks()) {
+            task.populatePlan(plan);
+        }
+    }
 
     @Override
     public IAEItemStack getOutput() {
@@ -64,18 +75,29 @@ public class CraftingJobV2 implements ICraftingJob {
 
     @Override
     public boolean simulateFor(int milli) {
+        if (finished) {
+            return false;
+        }
         final long startTime = System.currentTimeMillis();
         final long finishTime = startTime + milli;
         State state = State.NEEDS_MORE_WORK;
         do {
             state = context.doWork();
+            totalByteCost = -1;
         } while (state.needsMoreWork && System.currentTimeMillis() < finishTime);
+
+        if (!state.needsMoreWork) {
+            getByteTotal();
+            finished = true;
+            callback.calculationComplete(this);
+        }
+
         return state.needsMoreWork;
     }
 
     @Override
     public void run() {
-        // TODO
+        TickHandler.INSTANCE.registerCraftingSimulation(this.context.world, this);
     }
 
     @Override
@@ -85,7 +107,15 @@ public class CraftingJobV2 implements ICraftingJob {
 
     @Override
     public void startCrafting(MECraftingInventory storage, ICraftingCPU rawCluster, BaseActionSource src) {
+        if (!finished) {
+            throw new IllegalStateException(
+                    "Trying to start crafting a not fully calculated job for " + originalRequest.toString());
+        }
         CraftingCPUCluster cluster = (CraftingCPUCluster) rawCluster;
-        // TODO
+        context.actionSource = src;
+        List<CraftingTask> resolvedTasks = context.getResolvedTasks();
+        for (CraftingTask task : resolvedTasks) {
+            task.startOnCpu(context, cluster, storage);
+        }
     }
 }

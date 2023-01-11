@@ -1,9 +1,11 @@
 package appeng.crafting.v2.resolvers;
 
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IItemList;
+import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingContext;
 import appeng.crafting.v2.CraftingRequest;
-import appeng.crafting.v2.CraftingTask;
+import appeng.me.cluster.implementations.CraftingCPUCluster;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
@@ -36,6 +38,17 @@ public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStac
         @Override
         public void fullRefund(CraftingContext context) {
             // no-op: items were simulated to be emitted, so there's nothing to refund
+        }
+
+        @Override
+        public void populatePlan(IItemList<IAEItemStack> targetPlan) {
+            targetPlan.addRequestable(request.stack.copy());
+        }
+
+        @Override
+        public void startOnCpu(
+                CraftingContext context, CraftingCPUCluster cpuCluster, MECraftingInventory craftingInv) {
+            cpuCluster.addEmitable(this.request.stack.copy());
         }
     }
 

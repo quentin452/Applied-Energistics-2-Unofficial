@@ -3,7 +3,6 @@ package appeng.crafting.v2.resolvers;
 import appeng.api.storage.data.IAEStack;
 import appeng.crafting.v2.CraftingContext;
 import appeng.crafting.v2.CraftingRequest;
-import appeng.crafting.v2.CraftingTask;
 import java.util.List;
 import javax.annotation.Nonnull;
 
