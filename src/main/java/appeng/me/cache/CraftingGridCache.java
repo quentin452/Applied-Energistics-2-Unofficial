@@ -20,7 +20,6 @@ package appeng.me.cache;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
-import appeng.api.config.FuzzyMode;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
@@ -423,51 +422,16 @@ public class CraftingGridCache
             final ICraftingPatternDetails details,
             final int slotIndex,
             final World world) {
-        ImmutableList<ICraftingPatternDetails> res;
-        boolean normalMode = false;
-        if (details != null && details.canSubstitute()) {
-            final ImmutableList<ICraftingPatternDetails> substitutions = this.craftableItemSubstitutes.get(whatToCraft);
-            if (substitutions.isEmpty()) {
-                res = this.craftableItems.get(whatToCraft);
-                normalMode = true;
-            } else {
-                res = substitutions;
-            }
-        } else if (details == null) {
-            final ImmutableList<ICraftingPatternDetails> substitutions =
-                    this.craftableItemSubstitutes.getBeSubstitutePattern(whatToCraft);
-            if (substitutions.isEmpty()) {
-                res = this.craftableItems.get(whatToCraft);
-                normalMode = true;
-            } else {
-                res = this.craftableItems.get(whatToCraft);
-            }
-        } else {
-            res = this.craftableItems.get(whatToCraft);
-        }
+        final ImmutableList<ICraftingPatternDetails> res = this.craftableItems.get(whatToCraft);
 
         if (res == null) {
             if (details != null && details.isCraftable()) {
                 for (final IAEItemStack ais : this.craftableItems.keySet()) {
-                    final boolean perfectMatch = ais.getItem() == whatToCraft.getItem()
-                            && (!ais.getItem().getHasSubtypes() || ais.getItemDamage() == whatToCraft.getItemDamage());
-                    if (perfectMatch) {
+                    if (ais.getItem() == whatToCraft.getItem()
+                            && (!ais.getItem().getHasSubtypes()
+                                    || ais.getItemDamage() == whatToCraft.getItemDamage())) {
                         if (details.isValidItemForSlot(slotIndex, ais.getItemStack(), world)) {
                             return this.craftableItems.get(ais);
-                        }
-                    }
-                }
-                // no perfect match found, look for substitutions
-                if (details.canSubstitute() && !normalMode) {
-                    for (final Map.Entry<IAEItemStack, ImmutableList<ICraftingPatternDetails>> entry :
-                            this.craftableItems.entrySet()) {
-                        final boolean canBeASubstitute =
-                                entry.getValue().stream().anyMatch(cp -> (cp != null) && cp.canBeSubstitute());
-                        if (canBeASubstitute && entry.getKey().fuzzyComparison(whatToCraft, FuzzyMode.IGNORE_ALL)) {
-                            if (details.isValidItemForSlot(
-                                    slotIndex, entry.getKey().getItemStack(), world)) {
-                                return entry.getValue();
-                            }
                         }
                     }
                 }

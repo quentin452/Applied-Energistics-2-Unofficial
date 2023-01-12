@@ -237,13 +237,8 @@ public class CraftingTreeProcess {
 
         // more fuzzy!
         for (final IAEItemStack is : this.details.getCondensedOutputs()) {
-            // there are now two ways this craft is triggered via fuzzy
-            // perfectMatch: done due to fuzziness in damage value
-            // oredict: done through substitutes
-            // catch both of them here
-            final boolean perfectMatch = is.getItem() == what2.getItem()
-                    && (is.getItem().isDamageable() || is.getItemDamage() == what2.getItemDamage());
-            if (perfectMatch || this.details.canBeSubstitute() && is.sameOre(what2)) {
+            if (is.getItem() == what2.getItem()
+                    && (is.getItem().isDamageable() || is.getItemDamage() == what2.getItemDamage())) {
                 what2 = is.copy();
                 what2.setStackSize(is.getStackSize());
                 return what2;
