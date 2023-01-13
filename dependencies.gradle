@@ -21,4 +21,8 @@ dependencies {
     compileOnly('api:immibis:1')
 
     testCompile('junit:junit:4.12')
+    functionalTestImplementation(platform('org.junit:junit-bom:5.9.2'))
+    functionalTestImplementation('org.junit.jupiter:junit-jupiter')
+    functionalTestImplementation('org.junit.platform:junit-platform-engine')
+    functionalTestImplementation('org.junit.platform:junit-platform-launcher')
 }

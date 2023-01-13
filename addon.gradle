@@ -4,7 +4,6 @@ SourceSet functionalTestSet = null
 java {
     sourceSets {
         functionalTestSet = create("functionalTest") {
-            compileClasspath = configurations.compileClasspath
             java {
                 srcDir("src/functionalTest/java")
                 resources.srcDir("src/functionalTest/resources")
@@ -31,10 +30,10 @@ tasks.register(functionalTestSet.jarTaskName, Jar) {
 // Run tests in the default runServer/runClient configurations
 tasks.named("runServer", JavaExec).configure {
     dependsOn(functionalTestSet.jarTaskName)
-    classpath(tasks.named(functionalTestSet.jarTaskName))
+    classpath(configurations.named(functionalTestSet.runtimeClasspathConfigurationName), tasks.named(functionalTestSet.jarTaskName))
 }
 
 tasks.named("runClient", JavaExec).configure {
     dependsOn(functionalTestSet.jarTaskName)
-    classpath(tasks.named(functionalTestSet.jarTaskName))
+    classpath(configurations.named(functionalTestSet.runtimeClasspathConfigurationName), tasks.named(functionalTestSet.jarTaskName))
 }
