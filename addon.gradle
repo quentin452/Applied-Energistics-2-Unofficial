@@ -1,0 +1,40 @@
+
+SourceSet functionalTestSet = null
+
+java {
+    sourceSets {
+        functionalTestSet = create("functionalTest") {
+            compileClasspath = configurations.compileClasspath
+            java {
+                srcDir("src/functionalTest/java")
+                resources.srcDir("src/functionalTest/resources")
+            }
+        }
+    }
+}
+
+configurations { configs ->
+    // Keep all dependencies from the main mod in the functional test mod
+    named(functionalTestSet.compileClasspathConfigurationName).configure {it.extendsFrom(named("compileClasspath").get())}
+    named(functionalTestSet.runtimeClasspathConfigurationName).configure {it.extendsFrom(named("runtimeClasspath").get())}
+}
+
+tasks.register(functionalTestSet.jarTaskName, Jar) {
+    from(tasks.named(functionalTestSet.compileJavaTaskName))
+    from(tasks.named(functionalTestSet.processResourcesTaskName))
+    archiveClassifier.set("functionalTests")
+    // we don't care about the version number here, keep it stable to avoid polluting the tmp directory
+    archiveVersion.set("1.0")
+    destinationDirectory.set(new File(buildDir, "tmp"))
+}
+
+// Run tests in the default runServer/runClient configurations
+tasks.named("runServer", JavaExec).configure {
+    dependsOn(functionalTestSet.jarTaskName)
+    classpath(tasks.named(functionalTestSet.jarTaskName))
+}
+
+tasks.named("runClient", JavaExec).configure {
+    dependsOn(functionalTestSet.jarTaskName)
+    classpath(tasks.named(functionalTestSet.jarTaskName))
+}
