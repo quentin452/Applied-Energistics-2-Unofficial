@@ -241,6 +241,21 @@ public class CraftingGridCache
             provider.provideCrafting(this);
         }
 
+        setPatternsFromCraftingMethods();
+
+        this.storageGrid.postAlterationOfStoredItems(
+                StorageChannel.ITEMS, this.craftableItems.keySet(), new BaseActionSource());
+    }
+
+    /** Only for unit test usage */
+    public void setMockPatternsFromMethods() {
+        this.craftableItems.clear();
+        this.craftableItemSubstitutes.clear();
+        this.emitableItems.clear();
+        setPatternsFromCraftingMethods();
+    }
+
+    private void setPatternsFromCraftingMethods() {
         final Map<IAEItemStack, Set<ICraftingPatternDetails>> tmpCraft = new HashMap<>();
 
         // new craftables!
@@ -266,9 +281,6 @@ public class CraftingGridCache
         for (final Entry<IAEItemStack, Set<ICraftingPatternDetails>> e : tmpCraft.entrySet()) {
             this.craftableItems.put(e.getKey(), ImmutableList.copyOf(e.getValue()));
         }
-
-        this.storageGrid.postAlterationOfStoredItems(
-                StorageChannel.ITEMS, this.craftableItems.keySet(), new BaseActionSource());
     }
 
     private void updateCPUClusters() {
