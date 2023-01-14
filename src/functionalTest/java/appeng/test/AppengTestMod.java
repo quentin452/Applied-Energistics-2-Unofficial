@@ -7,6 +7,7 @@ import cpw.mods.fml.common.event.FMLServerStartedEvent;
 import java.io.File;
 import java.io.PrintWriter;
 import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import org.apache.commons.io.output.CloseShieldOutputStream;
@@ -19,7 +20,7 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
-import org.junit.platform.reporting.open.xml.OpenTestReportGeneratingListener;
+import org.junit.platform.reporting.legacy.xml.LegacyXmlReportGeneratingListener;
 
 // Most of these don't matter as this mod never gets published
 @Mod(
@@ -37,27 +38,37 @@ public class AppengTestMod {
 
     public void runTests() {
         // https://junit.org/junit5/docs/current/user-guide/#launcher-api
-        System.setProperty("junit.platform.reporting.open.xml.enabled", "true");
-        final String testsXmlOutDir = FileSystems.getDefault()
-                .getPath("./junit-out/")
-                .toAbsolutePath()
-                .toString();
-        final File testsXmlOutDirFile = new File(testsXmlOutDir);
+        System.setProperty("junit.platform.reporting.open.xml.enabled", "false");
+        final Path testsXmlOutDir =
+                FileSystems.getDefault().getPath("./junit-out/").toAbsolutePath();
+        final File testsXmlOutDirFile = testsXmlOutDir.toFile();
         testsXmlOutDirFile.mkdirs();
-        System.setProperty("junit.platform.reporting.output.dir", testsXmlOutDir);
+        {
+            File[] fileList = testsXmlOutDirFile.listFiles();
+            if (fileList != null) {
+                for (File child : fileList) {
+                    if (child.isFile() && child.getName().endsWith(".xml")) {
+                        child.delete();
+                    }
+                }
+            }
+        }
         final LauncherDiscoveryRequest discovery = LauncherDiscoveryRequestBuilder.request()
                 .selectors(DiscoverySelectors.selectPackage("appeng.test"))
                 .build();
         final SummaryGeneratingListener summaryGenerator = new SummaryGeneratingListener();
-        final OpenTestReportGeneratingListener xmlGenerator = new OpenTestReportGeneratingListener();
-        try (LauncherSession session = LauncherFactory.openSession()) {
-            final Launcher launcher = session.getLauncher();
-            final TestPlan plan = launcher.discover(discovery);
-            launcher.registerTestExecutionListeners(summaryGenerator, xmlGenerator);
-            launcher.execute(plan);
-        }
-        TestExecutionSummary summary = summaryGenerator.getSummary();
+        final TestExecutionSummary summary;
         try (PrintWriter stderrWriter = new PrintWriter(new CloseShieldOutputStream(System.err), true)) {
+            final LegacyXmlReportGeneratingListener xmlGenerator =
+                    new LegacyXmlReportGeneratingListener(testsXmlOutDir, stderrWriter);
+            try (LauncherSession session = LauncherFactory.openSession()) {
+                final Launcher launcher = session.getLauncher();
+                final TestPlan plan = launcher.discover(discovery);
+                launcher.registerTestExecutionListeners(summaryGenerator, xmlGenerator);
+                launcher.execute(plan);
+            }
+            summary = summaryGenerator.getSummary();
+
             summary.printFailuresTo(stderrWriter, 32);
             summary.printTo(stderrWriter);
             stderrWriter.flush();

@@ -195,4 +195,27 @@ public class CraftingV2Tests {
                         .setCountRequestable(8),
                 AEItemStack.create(new ItemStack(Blocks.chest, 0)).setCountRequestable(1));
     }
+
+    @Test
+    void craftChestFromMixedLogs() {
+        MockAESystem aeSystem = new MockAESystem(dummyWorld);
+        aeSystem.addStoredItem(new ItemStack(Blocks.log, 1, 0));
+        aeSystem.addStoredItem(new ItemStack(Blocks.log, 1, 1));
+        aeSystem.addStoredItem(new ItemStack(Items.gold_ingot, 64));
+        addPlankPatterns(aeSystem);
+        addFuzzyChestPattern(aeSystem);
+        // Another pattern that shouldn't match
+        addDummyGappleRecipe(aeSystem);
+        final CraftingJobV2 job = aeSystem.makeCraftingJob(new ItemStack(Blocks.chest, 1));
+        simulateJobAndCheck(job, SIMPLE_SIMULATION_TIMEOUT_MS);
+        assertFalse(job.isSimulation());
+        assertEquals(job.getOutput(), AEItemStack.create(new ItemStack(Blocks.chest, 1)));
+        assertJobPlanEquals(
+                job,
+                AEItemStack.create(new ItemStack(Blocks.log, 1, 0)),
+                AEItemStack.create(new ItemStack(Blocks.log, 1, 1)),
+                AEItemStack.create(new ItemStack(Blocks.planks, 0, 0)).setCountRequestable(4),
+                AEItemStack.create(new ItemStack(Blocks.planks, 0, 1)).setCountRequestable(4),
+                AEItemStack.create(new ItemStack(Blocks.chest, 0)).setCountRequestable(1));
+    }
 }
