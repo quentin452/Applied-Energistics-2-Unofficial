@@ -310,7 +310,8 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                 return;
             }
             for (IAEItemStack output : patternOutputs) {
-                targetPlan.addRequestable(output.copy().setCountRequestable(output.getStackSize() * totalCraftsDone));
+                targetPlan.addRequestable(
+                        output.copy().setStackSize(0).setCountRequestable(output.getStackSize() * totalCraftsDone));
             }
         }
 

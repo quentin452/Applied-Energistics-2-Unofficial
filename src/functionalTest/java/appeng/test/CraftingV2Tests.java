@@ -17,7 +17,7 @@ import net.minecraftforge.common.DimensionManager;
 import org.junit.jupiter.api.Test;
 
 public class CraftingV2Tests {
-    final World dummyWorld;
+    static World dummyWorld = null;
     final int SIMPLE_SIMULATION_TIMEOUT_MS = 100;
 
     public CraftingV2Tests() {
@@ -25,19 +25,21 @@ public class CraftingV2Tests {
             DimensionManager.registerProviderType(256, WorldProviderSurface.class, false);
             DimensionManager.registerDimension(256, 256);
         }
-        dummyWorld =
-                new WorldServer(
-                        MinecraftServer.getServer(),
-                        new DummySaveHandler(),
-                        "DummyTestWorld",
-                        256,
-                        new WorldSettings(256, GameType.SURVIVAL, false, false, WorldType.DEFAULT),
-                        MinecraftServer.getServer().theProfiler) {
-                    @Override
-                    public File getChunkSaveLocation() {
-                        return new File("dummy-ignoreme");
-                    }
-                };
+        if (dummyWorld == null) {
+            dummyWorld =
+                    new WorldServer(
+                            MinecraftServer.getServer(),
+                            new DummySaveHandler(),
+                            "DummyTestWorld",
+                            256,
+                            new WorldSettings(256, GameType.SURVIVAL, false, false, WorldType.DEFAULT),
+                            MinecraftServer.getServer().theProfiler) {
+                        @Override
+                        public File getChunkSaveLocation() {
+                            return new File("dummy-ignoreme");
+                        }
+                    };
+        }
     }
 
     private void simulateJobAndCheck(CraftingJobV2 job, int timeoutMs) {
@@ -57,6 +59,12 @@ public class CraftingV2Tests {
             assertEquals(stack.getStackSize(), matching.getStackSize(), () -> "Stack size of " + stack);
             assertEquals(
                     stack.getCountRequestable(), matching.getCountRequestable(), () -> "Requestable count of " + stack);
+            matching.setStackSize(0);
+            matching.setCountRequestable(0);
+        }
+        for (IAEItemStack planStack : plan) {
+            assertEquals(0, planStack.getStackSize(), () -> "Extra item in the plan: " + planStack);
+            assertEquals(0, planStack.getCountRequestable(), () -> "Extra item in the plan: " + planStack);
         }
     }
 
@@ -68,5 +76,28 @@ public class CraftingV2Tests {
         assertTrue(job.isSimulation());
         assertEquals(job.getOutput(), AEItemStack.create(new ItemStack(Items.stick, 13)));
         assertJobPlanEquals(job, AEItemStack.create(new ItemStack(Items.stick, 13)));
+    }
+
+    @Test
+    void simplePatternSimulation() {
+        MockAESystem aeSystem = new MockAESystem(dummyWorld);
+        // Very expensive sticks
+        aeSystem.newProcessingPattern()
+                .addInput(new ItemStack(Items.diamond, 1))
+                .addOutput(new ItemStack(Items.stick, 1))
+                .buildAndAdd();
+        // Another pattern that shouldn't match
+        aeSystem.newProcessingPattern()
+                .addInput(new ItemStack(Items.gold_ingot, 1))
+                .addOutput(new ItemStack(Items.golden_apple, 1))
+                .buildAndAdd();
+        final CraftingJobV2 job = aeSystem.makeCraftingJob(new ItemStack(Items.stick, 13));
+        simulateJobAndCheck(job, SIMPLE_SIMULATION_TIMEOUT_MS);
+        assertTrue(job.isSimulation());
+        assertEquals(job.getOutput(), AEItemStack.create(new ItemStack(Items.stick, 13)));
+        assertJobPlanEquals(
+                job,
+                AEItemStack.create(new ItemStack(Items.stick, 0)).setCountRequestable(13),
+                AEItemStack.create(new ItemStack(Items.diamond, 13)));
     }
 }
