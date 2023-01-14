@@ -100,4 +100,42 @@ public class CraftingV2Tests {
                 AEItemStack.create(new ItemStack(Items.stick, 0)).setCountRequestable(13),
                 AEItemStack.create(new ItemStack(Items.diamond, 13)));
     }
+
+    @Test
+    void noPatternWithItemsSimulation() {
+        MockAESystem aeSystem = new MockAESystem(dummyWorld);
+        aeSystem.addStoredItem(new ItemStack(Items.stick, 64));
+        aeSystem.addStoredItem(new ItemStack(Items.diamond, 64));
+        aeSystem.addStoredItem(new ItemStack(Items.gold_ingot, 64));
+        final CraftingJobV2 job = aeSystem.makeCraftingJob(new ItemStack(Items.stick, 13));
+        simulateJobAndCheck(job, SIMPLE_SIMULATION_TIMEOUT_MS);
+        assertTrue(job.isSimulation());
+        assertEquals(job.getOutput(), AEItemStack.create(new ItemStack(Items.stick, 13)));
+        assertJobPlanEquals(job, AEItemStack.create(new ItemStack(Items.stick, 13)));
+    }
+
+    @Test
+    void simplePatternWithItemsSimulation() {
+        MockAESystem aeSystem = new MockAESystem(dummyWorld);
+        aeSystem.addStoredItem(new ItemStack(Items.diamond, 64));
+        aeSystem.addStoredItem(new ItemStack(Items.gold_ingot, 64));
+        // Very expensive sticks
+        aeSystem.newProcessingPattern()
+                .addInput(new ItemStack(Items.diamond, 1))
+                .addOutput(new ItemStack(Items.stick, 1))
+                .buildAndAdd();
+        // Another pattern that shouldn't match
+        aeSystem.newProcessingPattern()
+                .addInput(new ItemStack(Items.gold_ingot, 1))
+                .addOutput(new ItemStack(Items.golden_apple, 1))
+                .buildAndAdd();
+        final CraftingJobV2 job = aeSystem.makeCraftingJob(new ItemStack(Items.stick, 13));
+        simulateJobAndCheck(job, SIMPLE_SIMULATION_TIMEOUT_MS);
+        assertFalse(job.isSimulation());
+        assertEquals(job.getOutput(), AEItemStack.create(new ItemStack(Items.stick, 13)));
+        assertJobPlanEquals(
+                job,
+                AEItemStack.create(new ItemStack(Items.stick, 0)).setCountRequestable(13),
+                AEItemStack.create(new ItemStack(Items.diamond, 13)));
+    }
 }

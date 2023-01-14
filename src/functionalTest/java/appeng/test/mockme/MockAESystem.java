@@ -1,30 +1,51 @@
 package appeng.test.mockme;
 
 import appeng.api.AEApi;
+import appeng.api.config.Actionable;
 import appeng.api.networking.crafting.ICraftingGrid;
 import appeng.api.networking.security.BaseActionSource;
+import appeng.api.networking.storage.IStorageGrid;
+import appeng.api.storage.ICellProvider;
+import appeng.api.storage.IMEInventoryHandler;
+import appeng.api.storage.StorageChannel;
+import appeng.api.storage.data.IAEItemStack;
+import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingJobV2;
 import appeng.helpers.PatternHelper;
 import appeng.me.cache.CraftingGridCache;
+import appeng.me.cache.GridStorageCache;
+import appeng.me.storage.MEPassThrough;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
 
-public class MockAESystem {
+public class MockAESystem implements ICellProvider {
     public final World world;
     public final MockGrid grid = new MockGrid();
     public final BaseActionSource dummyActionSource = new BaseActionSource();
     public final CraftingGridCache cgCache;
+    public final GridStorageCache sgCache;
     private boolean dirtyPatterns = false;
 
     public MockAESystem(World world) {
         this.world = world;
         this.cgCache = grid.getCache(ICraftingGrid.class);
+        this.sgCache = grid.getCache(IStorageGrid.class);
+        sgCache.registerCellProvider(this);
+    }
+
+    public MockAESystem addStoredItem(ItemStack stack) {
+        final IAEItemStack aeStack = AEItemStack.create(stack);
+        this.itemStorage.injectItems(aeStack, Actionable.MODULATE, dummyActionSource);
+        this.sgCache.postAlterationOfStoredItems(
+                StorageChannel.ITEMS, Collections.singletonList(aeStack), dummyActionSource);
+        return this;
     }
 
     public CraftingJobV2 makeCraftingJob(ItemStack request) {
@@ -105,5 +126,20 @@ public class MockAESystem {
             PatternHelper helper = new PatternHelper(encodedPattern, world);
             cgCache.addCraftingOption(new MockCraftingMedium(), helper);
         }
+    }
+
+    // Simulated inventories
+    private final MECraftingInventory itemStorage = new MECraftingInventory();
+    private final IMEInventoryHandler<IAEItemStack> storageHandler =
+            new MEPassThrough<>(itemStorage, StorageChannel.ITEMS);
+
+    @Override
+    public List<IMEInventoryHandler> getCellArray(StorageChannel channel) {
+        return Collections.singletonList(storageHandler);
+    }
+
+    @Override
+    public int getPriority() {
+        return 0;
     }
 }
