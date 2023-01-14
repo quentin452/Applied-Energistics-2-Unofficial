@@ -4,7 +4,9 @@ import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.event.FMLServerStartedEvent;
+import java.io.File;
 import java.io.PrintWriter;
+import java.nio.file.FileSystems;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import org.apache.commons.io.output.CloseShieldOutputStream;
@@ -17,6 +19,7 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
+import org.junit.platform.reporting.open.xml.OpenTestReportGeneratingListener;
 
 // Most of these don't matter as this mod never gets published
 @Mod(
@@ -34,17 +37,26 @@ public class AppengTestMod {
 
     public void runTests() {
         // https://junit.org/junit5/docs/current/user-guide/#launcher-api
+        System.setProperty("junit.platform.reporting.open.xml.enabled", "true");
+        final String testsXmlOutDir = FileSystems.getDefault()
+                .getPath("./junit-out/")
+                .toAbsolutePath()
+                .toString();
+        final File testsXmlOutDirFile = new File(testsXmlOutDir);
+        testsXmlOutDirFile.mkdirs();
+        System.setProperty("junit.platform.reporting.output.dir", testsXmlOutDir);
         final LauncherDiscoveryRequest discovery = LauncherDiscoveryRequestBuilder.request()
                 .selectors(DiscoverySelectors.selectPackage("appeng.test"))
                 .build();
-        final SummaryGeneratingListener listener = new SummaryGeneratingListener();
+        final SummaryGeneratingListener summaryGenerator = new SummaryGeneratingListener();
+        final OpenTestReportGeneratingListener xmlGenerator = new OpenTestReportGeneratingListener();
         try (LauncherSession session = LauncherFactory.openSession()) {
             final Launcher launcher = session.getLauncher();
             final TestPlan plan = launcher.discover(discovery);
-            launcher.registerTestExecutionListeners(listener);
+            launcher.registerTestExecutionListeners(summaryGenerator, xmlGenerator);
             launcher.execute(plan);
         }
-        TestExecutionSummary summary = listener.getSummary();
+        TestExecutionSummary summary = summaryGenerator.getSummary();
         try (PrintWriter stderrWriter = new PrintWriter(new CloseShieldOutputStream(System.err), true)) {
             summary.printFailuresTo(stderrWriter, 32);
             summary.printTo(stderrWriter);

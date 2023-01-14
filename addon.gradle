@@ -1,13 +1,12 @@
 
 SourceSet functionalTestSet = null
 
-java {
-    sourceSets {
-        functionalTestSet = create("functionalTest") {
-            java {
-                srcDir("src/functionalTest/java")
-                resources.srcDir("src/functionalTest/resources")
-            }
+sourceSets {
+    functionalTestSet = create("functionalTest") {
+        java {
+            srcDir("src/functionalTest/java")
+            resources.srcDir("src/functionalTest/resources")
+            compileClasspath += sourceSets.main.output
         }
     }
 }
@@ -19,12 +18,14 @@ configurations { configs ->
 }
 
 tasks.register(functionalTestSet.jarTaskName, Jar) {
-    from(tasks.named(functionalTestSet.compileJavaTaskName))
-    from(tasks.named(functionalTestSet.processResourcesTaskName))
+    from(functionalTestSet.output)
     archiveClassifier.set("functionalTests")
     // we don't care about the version number here, keep it stable to avoid polluting the tmp directory
     archiveVersion.set("1.0")
     destinationDirectory.set(new File(buildDir, "tmp"))
+}
+tasks.named("assemble").configure {
+    dependsOn(functionalTestSet.jarTaskName)
 }
 
 // Run tests in the default runServer/runClient configurations
