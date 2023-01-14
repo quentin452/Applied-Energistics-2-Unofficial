@@ -39,8 +39,8 @@ public class CraftingCalculations {
      * @param <StackType> {@link IAEItemStack} or {@link IAEFluidStack}
      */
     public static <StackType extends IAEStack<StackType>> void registerByteAmountAdjuster(
-            ToLongBiFunction<CraftingRequest<?>, Long> adjuster, Class<StackType> stackTypeClass) {
-        byteAmountAdjusters.put(stackTypeClass, adjuster);
+            ToLongBiFunction<CraftingRequest<StackType>, Long> adjuster, Class<StackType> stackTypeClass) {
+        byteAmountAdjusters.put(stackTypeClass, (ToLongBiFunction<CraftingRequest<?>, Long>) (Object) adjuster);
     }
 
     @SuppressWarnings("unchecked")
