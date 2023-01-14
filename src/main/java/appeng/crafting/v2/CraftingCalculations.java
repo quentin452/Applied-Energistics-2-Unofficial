@@ -11,6 +11,7 @@ import com.google.common.collect.Multimaps;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.ToLongBiFunction;
 import org.apache.logging.log4j.Level;
 
 /**
@@ -19,10 +20,27 @@ import org.apache.logging.log4j.Level;
 public class CraftingCalculations {
     private static final ListMultimap<Class<? extends IAEStack<?>>, CraftingRequestResolver<?>> providers =
             ArrayListMultimap.create(2, 8);
+    private static final ListMultimap<Class<? extends IAEStack<?>>, ToLongBiFunction<CraftingRequest<?>, Long>>
+            byteAmountAdjusters = ArrayListMultimap.create(2, 8);
 
+    /**
+     * @param provider A custom resolver that can provide potential solutions ({@link CraftingTask}) to crafting requests ({@link CraftingRequest})
+     * @param stackTypeClass {@link IAEItemStack} or {@link IAEFluidStack}
+     * @param <StackType> {@link IAEItemStack} or {@link IAEFluidStack}
+     */
     public static <StackType extends IAEStack<StackType>> void registerProvider(
             CraftingRequestResolver<StackType> provider, Class<StackType> stackTypeClass) {
         providers.put(stackTypeClass, provider);
+    }
+
+    /**
+     * @param adjuster A function that will be called when (re)-calculating the total byte cost of a request, takes in the request and the computed total bytes, and should return the new byte count
+     * @param stackTypeClass {@link IAEItemStack} or {@link IAEFluidStack}
+     * @param <StackType> {@link IAEItemStack} or {@link IAEFluidStack}
+     */
+    public static <StackType extends IAEStack<StackType>> void registerByteAmountAdjuster(
+            ToLongBiFunction<CraftingRequest<?>, Long> adjuster, Class<StackType> stackTypeClass) {
+        byteAmountAdjusters.put(stackTypeClass, adjuster);
     }
 
     @SuppressWarnings("unchecked")
@@ -47,6 +65,18 @@ public class CraftingCalculations {
         }
         allTasks.sort(CraftingTask.PRIORITY_COMPARATOR);
         return Collections.unmodifiableList(allTasks);
+    }
+
+    public static <StackType extends IAEStack<StackType>> long adjustByteCost(
+            CraftingRequest<StackType> request, long byteCost) {
+        for (final ToLongBiFunction<CraftingRequest<?>, Long> unsafeAdjuster : Multimaps.filterKeys(
+                        byteAmountAdjusters, key -> key.isAssignableFrom(request.stackTypeClass))
+                .values()) {
+            final ToLongBiFunction<CraftingRequest<StackType>, Long> adjuster =
+                    (ToLongBiFunction<CraftingRequest<StackType>, Long>) (Object) unsafeAdjuster;
+            byteCost = adjuster.applyAsLong(request, byteCost);
+        }
+        return byteCost;
     }
 
     static {

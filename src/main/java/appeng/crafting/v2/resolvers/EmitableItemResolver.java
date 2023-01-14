@@ -33,8 +33,9 @@ public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStac
         }
 
         @Override
-        public void partialRefund(CraftingContext context, long amount) {
+        public long partialRefund(CraftingContext context, long amount) {
             // no-op: items were simulated to be emitted, so there's nothing to refund
+            return amount;
         }
 
         @Override

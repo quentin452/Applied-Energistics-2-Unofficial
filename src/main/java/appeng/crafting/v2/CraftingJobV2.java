@@ -11,7 +11,6 @@ import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingContext.RequestInProcessing;
 import appeng.crafting.v2.CraftingRequest.SubstitutionMode;
 import appeng.crafting.v2.resolvers.CraftingTask;
-import appeng.crafting.v2.resolvers.CraftingTask.State;
 import appeng.hooks.TickHandler;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 import java.util.List;
@@ -65,7 +64,7 @@ public class CraftingJobV2 implements ICraftingJob, Future<ICraftingJob> {
         if (byteCost < 0) {
             byteCost = 0;
             for (RequestInProcessing<?> request : context.getLiveRequests()) {
-                byteCost += request.request.byteCost;
+                byteCost += request.request.getByteCost();
             }
             totalByteCost = byteCost;
         }

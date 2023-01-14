@@ -62,7 +62,10 @@ public abstract class CraftingTask {
      */
     public abstract StepOutput calculateOneStep(CraftingContext context);
 
-    public abstract void partialRefund(CraftingContext context, long amount);
+    /**
+     * @return The amount of actually refunded items
+     */
+    public abstract long partialRefund(CraftingContext context, long amount);
 
     public abstract void fullRefund(CraftingContext context);
 

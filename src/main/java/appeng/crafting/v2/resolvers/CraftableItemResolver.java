@@ -45,7 +45,11 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
         // byproduct injected -> amount per craft
         protected final IdentityHashMap<IAEItemStack, Long> byproducts = new IdentityHashMap<>();
         protected boolean requestedInputs = false;
-        protected long totalCraftsDone = 0;
+        protected long totalCraftsDone = 0, fulfilledAmount = 0;
+        /**
+         * If matchingOutput's stack size is greater than 1, this keeps track of how many remainder items were injected back into the context.
+         */
+        protected long matchingOutputRemainderItems = 0;
 
         public CraftFromPatternTask(
                 CraftingRequest<IAEItemStack> request,
@@ -143,19 +147,26 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                     final long fullRecipes = available / costPerRecipe;
                     maxCraftable = Math.min(maxCraftable, fullRecipes);
                 }
+                final long producedMatchingOutput = Math.multiplyExact(maxCraftable, matchingOutput.getStackSize());
+                this.matchingOutputRemainderItems = (producedMatchingOutput > this.request.remainingToProcess)
+                        ? (producedMatchingOutput - this.request.remainingToProcess)
+                        : 0;
+                this.fulfilledAmount = producedMatchingOutput - matchingOutputRemainderItems;
                 // Fulfill those recipes
-                request.fulfill(
-                        this,
-                        matchingOutput
-                                .copy()
-                                .setStackSize(Math.multiplyExact(maxCraftable, matchingOutput.getStackSize())),
-                        context);
+                request.fulfill(this, matchingOutput.copy().setStackSize(fulfilledAmount), context);
+                // Add remainder
+                if (matchingOutputRemainderItems > 0) {
+                    context.byproductsInventory.injectItems(
+                            matchingOutput.copy().setStackSize(matchingOutputRemainderItems),
+                            Actionable.MODULATE,
+                            context.actionSource);
+                }
                 for (IAEItemStack output : patternOutputs) {
                     // add byproducts to the system
                     if (output != matchingOutput) {
                         final IAEItemStack injected =
                                 output.copy().setStackSize(Math.multiplyExact(maxCraftable, output.getStackSize()));
-                        context.itemModel.injectItems(injected, Actionable.MODULATE, context.actionSource);
+                        context.byproductsInventory.injectItems(injected, Actionable.MODULATE, context.actionSource);
                         this.byproducts.put(injected.copy(), output.getStackSize());
                     }
                 }
@@ -217,37 +228,80 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
         }
 
         @Override
-        public void partialRefund(CraftingContext context, long amount) {
-            if (amount >= totalCraftsDone) {
+        public long partialRefund(CraftingContext context, long amount) {
+            final long oldTotalCrafts = this.totalCraftsDone;
+            final long oldTotalMade = this.totalCraftsDone * this.matchingOutput.getStackSize();
+            final long oldFulfilled = this.fulfilledAmount;
+            final long newFulfilled = oldFulfilled - amount;
+            final long newTotalCrafts = Platform.ceilDiv(newFulfilled, this.matchingOutput.getStackSize());
+            final long newTotalMade = newTotalCrafts * this.matchingOutput.getStackSize();
+            final long oldRemainder = this.matchingOutputRemainderItems;
+            final long newRemainder = newTotalMade - newFulfilled;
+            if (newRemainder < 0 || newRemainder > this.matchingOutput.getStackSize()) {
+                throw new IllegalStateException("Refund remainder invariant broken: " + newRemainder + " - " + this);
+            }
+            if (newTotalCrafts <= 0) {
                 fullRefund(context);
-                return;
+                return amount;
             }
-            totalCraftsDone -= amount;
-            amount = amount / matchingOutput.getStackSize();
-            if (amount == 0) {
-                return;
+            if (newRemainder != oldRemainder) {
+                if (newRemainder > oldRemainder) {
+                    context.byproductsInventory.injectItems(
+                            matchingOutput.copy().setStackSize(newRemainder - oldRemainder),
+                            Actionable.MODULATE,
+                            context.actionSource);
+                } else {
+                    context.byproductsInventory.extractItems(
+                            matchingOutput.copy().setStackSize(oldRemainder - newRemainder),
+                            Actionable.MODULATE,
+                            context.actionSource);
+                }
+                this.matchingOutputRemainderItems = newRemainder;
             }
-            for (RequestAndPerCraftAmount subrequest : childRequests.values()) {
-                subrequest.request.partialRefund(context, subrequest.perCraftAmount * amount);
+            if (newTotalCrafts != oldTotalCrafts) {
+                if (newTotalCrafts > oldTotalCrafts) {
+                    throw new IllegalStateException(
+                            "Refund total crafts invariant broken: " + newTotalCrafts + " - " + this);
+                }
+                this.totalCraftsDone = newTotalCrafts;
+                final long craftsRefunded = oldTotalCrafts - newTotalCrafts;
+                for (RequestAndPerCraftAmount subrequest : childRequests.values()) {
+                    subrequest.request.partialRefund(context, subrequest.perCraftAmount * craftsRefunded);
+                }
+                for (Entry<IAEItemStack, Long> entry : byproducts.entrySet()) {
+                    final IAEItemStack byproductStack = entry.getKey();
+                    final long perCraft = entry.getValue();
+                    context.byproductsInventory.extractItems(
+                            byproductStack.copy().setStackSize(perCraft * craftsRefunded),
+                            Actionable.MODULATE,
+                            context.actionSource);
+                    entry.getKey().setStackSize(byproductStack.getStackSize() - craftsRefunded * perCraft);
+                }
             }
-            for (Entry<IAEItemStack, Long> entry : byproducts.entrySet()) {
-                final IAEItemStack byproductStack = entry.getKey();
-                final long perCraft = entry.getValue();
-                context.itemModel.extractItems(
-                        byproductStack.copy().setStackSize(perCraft * amount),
-                        Actionable.MODULATE,
-                        context.actionSource);
-                entry.getKey().setStackSize(byproductStack.getStackSize() - amount * perCraft);
-            }
+            this.fulfilledAmount = newFulfilled;
+            return oldFulfilled - newFulfilled;
         }
 
         @Override
         public void fullRefund(CraftingContext context) {
             totalCraftsDone = 0;
+            fulfilledAmount = 0;
             childRequests.values().forEach(req -> req.request.fullRefund(context));
             childRequests.clear();
             childRecursionRequests.values().forEach(req -> req.fullRefund(context));
             childRecursionRequests.clear();
+            // extract all byproducts because they are no longer produced
+            for (IAEItemStack byproduct : byproducts.keySet()) {
+                context.byproductsInventory.extractItems(byproduct.copy(), Actionable.MODULATE, context.actionSource);
+            }
+            byproducts.clear();
+            if (this.matchingOutputRemainderItems > 0) {
+                context.byproductsInventory.extractItems(
+                        matchingOutput.copy().setStackSize(matchingOutputRemainderItems),
+                        Actionable.MODULATE,
+                        context.actionSource);
+                this.matchingOutputRemainderItems = 0;
+            }
         }
 
         @Override

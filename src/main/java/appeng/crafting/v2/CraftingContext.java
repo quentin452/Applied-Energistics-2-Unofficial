@@ -31,9 +31,15 @@ public final class CraftingContext {
     public BaseActionSource actionSource;
 
     /**
-     * A working copy of the AE system's item list used for modelling what happens as crafting requests get resolved
+     * A working copy of the AE system's item list used for modelling what happens as crafting requests get resolved.
+     * Only extract, inject into {@link CraftingContext#byproductsInventory}.
      */
     public final MECraftingInventory itemModel;
+    /**
+     * An initially blank inventory for keeping all crafting byproduct outputs in.
+     * Extract from here before extracting from {@link CraftingContext#itemModel}
+     */
+    public final MECraftingInventory byproductsInventory;
     /**
      * A cache of how many items were present at the beginning of the crafting request, do not modify
      */
@@ -71,6 +77,7 @@ public final class CraftingContext {
         this.actionSource = actionSource;
         final IStorageGrid sg = meGrid.getCache(IStorageGrid.class);
         this.itemModel = new MECraftingInventory(sg.getItemInventory(), this.actionSource, true, false, true);
+        this.byproductsInventory = new MECraftingInventory();
         this.availableCache = new MECraftingInventory(sg.getItemInventory(), this.actionSource, false, false, false);
         this.availablePatterns = craftingGrid.getCraftingPatterns();
     }
@@ -220,8 +227,9 @@ public final class CraftingContext {
         }
 
         @Override
-        public void partialRefund(CraftingContext context, long amount) {
-            // no-op
+        public long partialRefund(CraftingContext context, long amount) {
+            // no-op, does not produce/consume any stacks
+            return 0;
         }
 
         @Override

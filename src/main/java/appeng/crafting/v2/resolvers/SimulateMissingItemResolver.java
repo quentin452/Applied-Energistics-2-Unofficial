@@ -35,8 +35,9 @@ public class SimulateMissingItemResolver<StackType extends IAEStack<StackType>>
         }
 
         @Override
-        public void partialRefund(CraftingContext context, long amount) {
+        public long partialRefund(CraftingContext context, long amount) {
             // no-op: items were simulated, so there's nothing to refund
+            return amount;
         }
 
         @Override
