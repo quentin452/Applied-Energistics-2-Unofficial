@@ -8,6 +8,7 @@ import appeng.test.mockme.MockAESystem;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.ItemList;
 import java.io.File;
+import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
@@ -15,6 +16,8 @@ import net.minecraft.world.*;
 import net.minecraft.world.WorldSettings.GameType;
 import net.minecraftforge.common.DimensionManager;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class CraftingV2Tests {
     static World dummyWorld = null;
@@ -68,6 +71,13 @@ public class CraftingV2Tests {
         }
     }
 
+    private void addDummyGappleRecipe(MockAESystem aeSystem) {
+        aeSystem.newProcessingPattern()
+                .addInput(new ItemStack(Items.gold_ingot, 1))
+                .addOutput(new ItemStack(Items.golden_apple, 1))
+                .buildAndAdd();
+    }
+
     @Test
     void noPatternSimulation() {
         MockAESystem aeSystem = new MockAESystem(dummyWorld);
@@ -87,10 +97,7 @@ public class CraftingV2Tests {
                 .addOutput(new ItemStack(Items.stick, 1))
                 .buildAndAdd();
         // Another pattern that shouldn't match
-        aeSystem.newProcessingPattern()
-                .addInput(new ItemStack(Items.gold_ingot, 1))
-                .addOutput(new ItemStack(Items.golden_apple, 1))
-                .buildAndAdd();
+        addDummyGappleRecipe(aeSystem);
         final CraftingJobV2 job = aeSystem.makeCraftingJob(new ItemStack(Items.stick, 13));
         simulateJobAndCheck(job, SIMPLE_SIMULATION_TIMEOUT_MS);
         assertTrue(job.isSimulation());
@@ -125,10 +132,7 @@ public class CraftingV2Tests {
                 .addOutput(new ItemStack(Items.stick, 1))
                 .buildAndAdd();
         // Another pattern that shouldn't match
-        aeSystem.newProcessingPattern()
-                .addInput(new ItemStack(Items.gold_ingot, 1))
-                .addOutput(new ItemStack(Items.golden_apple, 1))
-                .buildAndAdd();
+        addDummyGappleRecipe(aeSystem);
         final CraftingJobV2 job = aeSystem.makeCraftingJob(new ItemStack(Items.stick, 13));
         simulateJobAndCheck(job, SIMPLE_SIMULATION_TIMEOUT_MS);
         assertFalse(job.isSimulation());
@@ -137,5 +141,58 @@ public class CraftingV2Tests {
                 job,
                 AEItemStack.create(new ItemStack(Items.stick, 0)).setCountRequestable(13),
                 AEItemStack.create(new ItemStack(Items.diamond, 13)));
+    }
+
+    private void addPlankPatterns(MockAESystem aeSystem) {
+        // Add all types of wood
+        for (int meta = 0; meta < 4; meta++) {
+            aeSystem.newCraftingPattern()
+                    .allowBeingASubstitute()
+                    .addInput(new ItemStack(Blocks.log, 1, meta))
+                    .addOutput(new ItemStack(Blocks.planks, 4, meta))
+                    .buildAndAdd();
+        }
+    }
+
+    private void addFuzzyChestPattern(MockAESystem aeSystem) {
+        aeSystem.newCraftingPattern()
+                .allowUsingSubstitutes()
+                // row 1
+                .addInput(new ItemStack(Blocks.planks, 1))
+                .addInput(new ItemStack(Blocks.planks, 1))
+                .addInput(new ItemStack(Blocks.planks, 1))
+                // row 2
+                .addInput(new ItemStack(Blocks.planks, 1))
+                .addInput(null)
+                .addInput(new ItemStack(Blocks.planks, 1))
+                // row 3
+                .addInput(new ItemStack(Blocks.planks, 1))
+                .addInput(new ItemStack(Blocks.planks, 1))
+                .addInput(new ItemStack(Blocks.planks, 1))
+                // end
+                .addOutput(new ItemStack(Blocks.chest, 1))
+                .buildAndAdd();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void craftChestFromLogs(int woodMetadata) {
+        MockAESystem aeSystem = new MockAESystem(dummyWorld);
+        aeSystem.addStoredItem(new ItemStack(Blocks.log, 64, woodMetadata));
+        aeSystem.addStoredItem(new ItemStack(Items.gold_ingot, 64));
+        addPlankPatterns(aeSystem);
+        addFuzzyChestPattern(aeSystem);
+        // Another pattern that shouldn't match
+        addDummyGappleRecipe(aeSystem);
+        final CraftingJobV2 job = aeSystem.makeCraftingJob(new ItemStack(Blocks.chest, 1));
+        simulateJobAndCheck(job, SIMPLE_SIMULATION_TIMEOUT_MS);
+        assertFalse(job.isSimulation());
+        assertEquals(job.getOutput(), AEItemStack.create(new ItemStack(Blocks.chest, 1)));
+        assertJobPlanEquals(
+                job,
+                AEItemStack.create(new ItemStack(Blocks.log, 2, woodMetadata)),
+                AEItemStack.create(new ItemStack(Blocks.planks, 0, woodMetadata))
+                        .setCountRequestable(8),
+                AEItemStack.create(new ItemStack(Blocks.chest, 0)).setCountRequestable(1));
     }
 }

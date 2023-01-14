@@ -61,6 +61,11 @@ public class MockAESystem implements ICellProvider {
         return new PatternBuilder(false);
     }
 
+    public PatternBuilder newCraftingPattern() {
+        dirtyPatterns = true;
+        return new PatternBuilder(true);
+    }
+
     public class PatternBuilder {
         public final boolean isCrafting;
         public final List<ItemStack> inputs = new ArrayList<>(9);
