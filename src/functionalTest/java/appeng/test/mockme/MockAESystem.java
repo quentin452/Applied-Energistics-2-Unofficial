@@ -82,8 +82,18 @@ public class MockAESystem implements ICellProvider {
             return this;
         }
 
+        public PatternBuilder allowUsingSubstitutes(boolean allow) {
+            this.canUseSubstitutes = allow;
+            return this;
+        }
+
         public PatternBuilder allowBeingASubstitute() {
             this.canBeSubstitute = true;
+            return this;
+        }
+
+        public PatternBuilder allowBeingASubstitute(boolean allow) {
+            this.canBeSubstitute = allow;
             return this;
         }
 
