@@ -29,8 +29,7 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
         }
     }
 
-    public static class CraftFromPatternTask extends CraftingTask {
-        public final CraftingRequest<IAEItemStack> request;
+    public static class CraftFromPatternTask extends CraftingTask<IAEItemStack> {
         public final ICraftingPatternDetails pattern;
         public final boolean allowSimulation;
         // Inputs needed to kickstart recursive crafting
@@ -56,8 +55,7 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                 ICraftingPatternDetails pattern,
                 int priority,
                 boolean allowSimulation) {
-            super(priority);
-            this.request = request;
+            super(request, priority);
             this.pattern = pattern;
             this.allowSimulation = allowSimulation;
 
@@ -196,6 +194,7 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                 state = State.SUCCESS;
                 return new StepOutput(Collections.emptyList());
             } else {
+                request.patternParents.add(this.pattern);
                 ArrayList<CraftingRequest<IAEItemStack>> newChildren = new ArrayList<>(patternInputs.length);
                 if (patternRecursionInputs.length > 0) {
                     for (IAEItemStack recInput : patternRecursionInputs) {
@@ -284,6 +283,7 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
 
         @Override
         public void fullRefund(CraftingContext context) {
+            request.patternParents.remove(this.pattern);
             totalCraftsDone = 0;
             fulfilledAmount = 0;
             childRequests.values().forEach(req -> req.request.fullRefund(context));
@@ -339,13 +339,16 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
     @Override
     public List<CraftingTask> provideCraftingRequestResolvers(
             @Nonnull CraftingRequest<IAEItemStack> request, @Nonnull CraftingContext context) {
-        ImmutableList.Builder<CraftingTask> tasks = new ImmutableList.Builder<>();
+        final ImmutableList.Builder<CraftingTask> tasks = new ImmutableList.Builder<>();
+        final Set<ICraftingPatternDetails> denyList = request.patternParents;
         final List<ICraftingPatternDetails> patterns = new ArrayList<>(context.getPrecisePatternsFor(request.stack));
+        patterns.removeAll(denyList);
         patterns.sort(Comparator.comparing(ICraftingPatternDetails::getPriority).reversed());
         // If fuzzy patterns are allowed,
         if (request.substitutionMode == SubstitutionMode.ACCEPT_FUZZY) {
             final List<ICraftingPatternDetails> fuzzyPatterns =
                     new ArrayList<>(context.getFuzzyPatternsFor(request.stack));
+            fuzzyPatterns.removeAll(denyList);
             fuzzyPatterns.sort(
                     Comparator.comparing(ICraftingPatternDetails::getPriority).reversed());
             patterns.addAll(fuzzyPatterns);

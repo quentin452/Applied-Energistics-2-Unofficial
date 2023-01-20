@@ -160,8 +160,12 @@ public final class CraftingContext {
         CraftingTask.StepOutput out = frontTask.calculateOneStep(this);
         CraftingTask.State newState = frontTask.getState();
         doingWork = false;
-        if (out.extraInputsRequired.size() > 0) {
-            out.extraInputsRequired.forEach(this::addRequest);
+        if (!out.extraInputsRequired.isEmpty()) {
+            final Set<ICraftingPatternDetails> parentPatterns = frontTask.request.patternParents;
+            out.extraInputsRequired.forEach(request -> {
+                request.patternParents.addAll(parentPatterns);
+                this.addRequest(request);
+            });
         } else if (newState == CraftingTask.State.SUCCESS) {
             if (tasksToProcess.getFirst() != frontTask) {
                 throw new IllegalStateException("A crafting task got added to the queue without requesting more work.");
@@ -211,11 +215,11 @@ public final class CraftingContext {
     /**
      * A task to call queueNextTaskOf after a resolver gets computed to check if more resolving is needed for the same request-in-processing.
      */
-    private final class CheckOtherResolversTask extends CraftingTask {
+    private final class CheckOtherResolversTask<T extends IAEStack<T>> extends CraftingTask<T> {
         private final RequestInProcessing<?> myRequest;
 
-        public CheckOtherResolversTask(RequestInProcessing<?> myRequest) {
-            super(0); // priority doesn't matter as this task is never a resolver output
+        public CheckOtherResolversTask(RequestInProcessing<T> myRequest) {
+            super(myRequest.request, 0); // priority doesn't matter as this task is never a resolver output
             this.myRequest = myRequest;
         }
 

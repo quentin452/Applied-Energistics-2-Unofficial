@@ -11,13 +11,12 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStack> {
-    public static class EmitItemTask extends CraftingTask {
-        public final CraftingRequest<IAEItemStack> request;
+    public static class EmitItemTask extends CraftingTask<IAEItemStack> {
 
         public EmitItemTask(CraftingRequest<IAEItemStack> request) {
-            super(CraftingTask.PRIORITY_CRAFTING_EMITTER); // conjure items for calculations out of thin air as a last
-            // resort
-            this.request = request;
+            super(
+                    request,
+                    CraftingTask.PRIORITY_CRAFTING_EMITTER); // conjure items for calculations out of thin air as a last
         }
 
         @Override

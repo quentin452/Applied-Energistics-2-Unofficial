@@ -13,12 +13,11 @@ import javax.annotation.Nonnull;
 
 public class SimulateMissingItemResolver<StackType extends IAEStack<StackType>>
         implements CraftingRequestResolver<StackType> {
-    public static class ConjureItemTask<StackType extends IAEStack<StackType>> extends CraftingTask {
-        public final CraftingRequest<StackType> request;
-
+    public static class ConjureItemTask<StackType extends IAEStack<StackType>> extends CraftingTask<StackType> {
         public ConjureItemTask(CraftingRequest<StackType> request) {
-            super(CraftingTask.PRIORITY_SIMULATE); // conjure items for calculations out of thin air as a last resort
-            this.request = request;
+            super(
+                    request,
+                    CraftingTask.PRIORITY_SIMULATE); // conjure items for calculations out of thin air as a last resort
         }
 
         @Override
@@ -69,7 +68,7 @@ public class SimulateMissingItemResolver<StackType extends IAEStack<StackType>>
     public List<CraftingTask> provideCraftingRequestResolvers(
             @Nonnull CraftingRequest<StackType> request, @Nonnull CraftingContext context) {
         if (request.allowSimulation) {
-            return Collections.singletonList(new ConjureItemTask<StackType>(request));
+            return Collections.singletonList(new ConjureItemTask<>(request));
         } else {
             return Collections.emptyList();
         }

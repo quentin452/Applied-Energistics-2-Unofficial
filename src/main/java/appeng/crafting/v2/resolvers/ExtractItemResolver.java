@@ -13,14 +13,12 @@ import java.util.*;
 import javax.annotation.Nonnull;
 
 public class ExtractItemResolver implements CraftingRequestResolver<IAEItemStack> {
-    public static class ExtractItemTask extends CraftingTask {
-        public final CraftingRequest<IAEItemStack> request;
+    public static class ExtractItemTask extends CraftingTask<IAEItemStack> {
         public final List<IAEItemStack> removedFromSystem = new ArrayList<>();
         public final List<IAEItemStack> removedFromByproducts = new ArrayList<>();
 
         public ExtractItemTask(CraftingRequest<IAEItemStack> request) {
-            super(CraftingTask.PRIORITY_EXTRACT); // always try to extract items first
-            this.request = request;
+            super(request, CraftingTask.PRIORITY_EXTRACT); // always try to extract items first
         }
 
         @Override

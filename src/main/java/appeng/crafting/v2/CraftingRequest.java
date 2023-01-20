@@ -1,11 +1,14 @@
 package appeng.crafting.v2;
 
+import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.crafting.v2.resolvers.CraftingTask;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import org.apache.commons.lang3.tuple.MutablePair;
 
@@ -55,6 +58,11 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
      * If the item had to be simulated (there was not enough ingredients in the system to fulfill this request in any way)
      */
     public volatile boolean wasSimulated = false;
+
+    /**
+     * A set of all patterns used to resolve this request and its parents, used for avoiding infinite recursion.
+     */
+    public final Set<ICraftingPatternDetails> patternParents = new HashSet<>();
 
     /**
      * @param stack                  The item/fluid and stack to request

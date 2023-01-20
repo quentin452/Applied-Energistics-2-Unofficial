@@ -1,6 +1,7 @@
 package appeng.crafting.v2.resolvers;
 
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingContext;
@@ -15,7 +16,7 @@ import javax.annotation.Nonnull;
  * A single action that can be performed to solve a {@link CraftingRequest}.
  * Can have multiple inputs and outputs, resolved at runtime during crafting resolution (e.g. for handling substitutions).
  */
-public abstract class CraftingTask {
+public abstract class CraftingTask<RequestStackType extends IAEStack<RequestStackType>> {
     public enum State {
         NEEDS_MORE_WORK(true),
         SUCCESS(false),
@@ -51,6 +52,7 @@ public abstract class CraftingTask {
     public static final int PRIORITY_SIMULATE_CRAFT = Integer.MIN_VALUE + 200;
     public static final int PRIORITY_SIMULATE = Integer.MIN_VALUE + 100;
 
+    public final CraftingRequest<RequestStackType> request;
     public final int priority;
     protected State state;
 
@@ -74,7 +76,8 @@ public abstract class CraftingTask {
     public abstract void startOnCpu(
             CraftingContext context, CraftingCPUCluster cpuCluster, MECraftingInventory craftingInv);
 
-    protected CraftingTask(int priority) {
+    protected CraftingTask(CraftingRequest<RequestStackType> request, int priority) {
+        this.request = request;
         this.priority = priority;
         this.state = State.NEEDS_MORE_WORK;
     }
