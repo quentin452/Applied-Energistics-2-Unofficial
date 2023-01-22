@@ -120,9 +120,6 @@ public class ExtractItemResolver implements CraftingRequestResolver<IAEItemStack
 
         @Override
         public void populatePlan(IItemList<IAEItemStack> targetPlan) {
-            for (IAEItemStack removed : removedFromByproducts) {
-                targetPlan.addRequestable(removed.copy().setCountRequestable(removed.getStackSize()));
-            }
             for (IAEItemStack removed : removedFromSystem) {
                 targetPlan.add(removed.copy());
             }
