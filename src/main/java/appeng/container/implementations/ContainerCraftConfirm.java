@@ -139,9 +139,9 @@ public class ContainerCraftConfirm extends AEBaseContainer implements ICraftingC
                 }
 
                 try {
-                    final PacketMEInventoryUpdate a = new PacketMEInventoryUpdate((byte) 0);
-                    final PacketMEInventoryUpdate b = new PacketMEInventoryUpdate((byte) 1);
-                    final PacketMEInventoryUpdate c =
+                    final PacketMEInventoryUpdate storageUpdate = new PacketMEInventoryUpdate((byte) 0);
+                    final PacketMEInventoryUpdate pendingUpdate = new PacketMEInventoryUpdate((byte) 1);
+                    final PacketMEInventoryUpdate missingUpdate =
                             this.result.isSimulation() ? new PacketMEInventoryUpdate((byte) 2) : null;
 
                     final IItemList<IAEItemStack> plan =
@@ -150,51 +150,51 @@ public class ContainerCraftConfirm extends AEBaseContainer implements ICraftingC
 
                     this.setUsedBytes(this.result.getByteTotal());
 
-                    for (final IAEItemStack out : plan) {
+                    for (final IAEItemStack plannedItem : plan) {
 
-                        IAEItemStack o = out.copy();
-                        o.reset();
-                        o.setStackSize(out.getStackSize());
+                        IAEItemStack toExtract = plannedItem.copy();
+                        toExtract.reset();
+                        toExtract.setStackSize(plannedItem.getStackSize());
 
-                        final IAEItemStack p = out.copy();
-                        p.reset();
-                        p.setStackSize(out.getCountRequestable());
+                        final IAEItemStack toCraft = plannedItem.copy();
+                        toCraft.reset();
+                        toCraft.setStackSize(plannedItem.getCountRequestable());
 
                         final IStorageGrid sg = this.getGrid().getCache(IStorageGrid.class);
                         final IMEInventory<IAEItemStack> items = sg.getItemInventory();
 
-                        IAEItemStack m = null;
-                        if (c != null && this.result.isSimulation()) {
-                            m = o.copy();
-                            o = items.extractItems(o, Actionable.SIMULATE, this.getActionSource());
+                        IAEItemStack missing = null;
+                        if (missingUpdate != null && this.result.isSimulation()) {
+                            missing = toExtract.copy();
+                            toExtract = items.extractItems(toExtract, Actionable.SIMULATE, this.getActionSource());
 
-                            if (o == null) {
-                                o = m.copy();
-                                o.setStackSize(0);
+                            if (toExtract == null) {
+                                toExtract = missing.copy();
+                                toExtract.setStackSize(0);
                             }
 
-                            m.setStackSize(m.getStackSize() - o.getStackSize());
+                            missing.setStackSize(missing.getStackSize() - toExtract.getStackSize());
                         }
 
-                        if (o.getStackSize() > 0) {
-                            a.appendItem(o);
+                        if (toExtract.getStackSize() > 0) {
+                            storageUpdate.appendItem(toExtract);
                         }
 
-                        if (p.getStackSize() > 0) {
-                            b.appendItem(p);
+                        if (toCraft.getStackSize() > 0) {
+                            pendingUpdate.appendItem(toCraft);
                         }
 
-                        if (c != null && m != null && m.getStackSize() > 0) {
-                            c.appendItem(m);
+                        if (missingUpdate != null && missing != null && missing.getStackSize() > 0) {
+                            missingUpdate.appendItem(missing);
                         }
                     }
 
-                    for (final Object g : this.crafters) {
-                        if (g instanceof EntityPlayer) {
-                            NetworkHandler.instance.sendTo(a, (EntityPlayerMP) g);
-                            NetworkHandler.instance.sendTo(b, (EntityPlayerMP) g);
-                            if (c != null) {
-                                NetworkHandler.instance.sendTo(c, (EntityPlayerMP) g);
+                    for (final Object player : this.crafters) {
+                        if (player instanceof EntityPlayer) {
+                            NetworkHandler.instance.sendTo(storageUpdate, (EntityPlayerMP) player);
+                            NetworkHandler.instance.sendTo(pendingUpdate, (EntityPlayerMP) player);
+                            if (missingUpdate != null) {
+                                NetworkHandler.instance.sendTo(missingUpdate, (EntityPlayerMP) player);
                             }
                         }
                     }

@@ -62,7 +62,7 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
     private final IItemList<IAEItemStack> pending = AEApi.instance().storage().createItemList();
     private final IItemList<IAEItemStack> missing = AEApi.instance().storage().createItemList();
 
-    private final List<IAEItemStack> visual = new ArrayList<IAEItemStack>();
+    private final List<IAEItemStack> visual = new ArrayList<>();
 
     private GuiBridge OriginalGui;
     private GuiButton cancel;
