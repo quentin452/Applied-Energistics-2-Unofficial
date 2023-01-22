@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import org.apache.commons.lang3.tuple.MutablePair;
 
 /**
  * A single requested stack (item or fluid) to craft, e.g. 32x Torches
@@ -33,6 +32,16 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
         ACCEPT_FUZZY
     }
 
+    public static class UsedResolverEntry {
+        public final CraftingTask task;
+        public final IAEStack<?> resolvedStack;
+
+        public UsedResolverEntry(CraftingTask task, IAEStack<?> resolvedStack) {
+            this.task = task;
+            this.resolvedStack = resolvedStack;
+        }
+    }
+
     public final Class<StackType> stackTypeClass;
     /**
      * An item/fluid + count representing how many need to be crafted
@@ -42,7 +51,7 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
     public final SubstitutionMode substitutionMode;
     public final Predicate<StackType> acceptableSubstituteFn;
     // (task, amount fulfilled by task)
-    public final List<MutablePair<CraftingTask, Long>> usedResolvers = new ArrayList<>();
+    public final List<UsedResolverEntry> usedResolvers = new ArrayList<>();
     /**
      * Whether this request and its children can be fulfilled by simulations
      */
@@ -135,7 +144,7 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
         this.untransformedByteCost += input.getStackSize();
         this.byteCost = CraftingCalculations.adjustByteCost(this, untransformedByteCost);
         this.remainingToProcess -= input.getStackSize();
-        this.usedResolvers.add(MutablePair.of(origin, input.getStackSize()));
+        this.usedResolvers.add(new UsedResolverEntry(origin, input.copy()));
     }
 
     /**
@@ -143,17 +152,17 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
      */
     public void partialRefund(CraftingContext context, long amount) {
         long remainingTaskAmount = amount;
-        for (MutablePair<CraftingTask, Long> task : usedResolvers) {
+        for (UsedResolverEntry resolver : usedResolvers) {
             if (remainingTaskAmount <= 0) {
                 break;
             }
-            if (task.getRight() <= 0) {
+            if (resolver.resolvedStack.getStackSize() <= 0) {
                 continue;
             }
-            final long taskRefunded =
-                    task.getLeft().partialRefund(context, Math.min(remainingTaskAmount, task.getRight()));
+            final long taskRefunded = resolver.task.partialRefund(
+                    context, Math.min(remainingTaskAmount, resolver.resolvedStack.getStackSize()));
             remainingTaskAmount -= taskRefunded;
-            task.setRight(task.getRight() - taskRefunded);
+            resolver.resolvedStack.setStackSize(resolver.resolvedStack.getStackSize() - taskRefunded);
         }
         if (remainingTaskAmount < 0) {
             throw new IllegalStateException("Refunds resulted in a negative amount of an item for request " + this);
@@ -172,13 +181,35 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
     }
 
     public void fullRefund(CraftingContext context) {
-        for (MutablePair<CraftingTask, Long> task : usedResolvers) {
-            task.getLeft().fullRefund(context);
+        for (UsedResolverEntry resolver : usedResolvers) {
+            resolver.task.fullRefund(context);
         }
         this.remainingToProcess = 0;
         this.untransformedByteCost = 0;
         this.byteCost = CraftingCalculations.adjustByteCost(this, untransformedByteCost);
         this.stack.setStackSize(0);
         this.usedResolvers.clear();
+    }
+
+    /**
+     * Gets the resolved item stack.
+     * @throws IllegalStateException if multiple item types were used to resolve the request
+     */
+    public IAEStack<?> getOneResolvedType() {
+        IAEStack<?> found = null;
+        for (UsedResolverEntry resolver : usedResolvers) {
+            if (resolver.resolvedStack.getStackSize() <= 0) {
+                continue;
+            }
+            if (found == null) {
+                found = resolver.resolvedStack.copy();
+            } else {
+                throw new IllegalStateException("Found multiple item types resolving " + this);
+            }
+        }
+        if (found == null) {
+            throw new IllegalStateException("Found no resolution for " + this);
+        }
+        return found;
     }
 }

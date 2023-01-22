@@ -8,18 +8,26 @@ import appeng.api.networking.storage.IStorageGrid;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
+import appeng.container.ContainerNull;
 import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.resolvers.CraftingTask;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
+import appeng.util.Platform;
+import appeng.util.item.AEItemStack;
 import appeng.util.item.OreListMultiMap;
 import com.google.common.collect.ClassToInstanceMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.MutableClassToInstanceMap;
+import cpw.mods.fml.common.FMLCommonHandler;
 import java.util.*;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
+import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 
 /**
  * A bundle of state for the crafting operation like the ME grid, who requested crafting, etc.
@@ -74,6 +82,7 @@ public final class CraftingContext {
     private final ImmutableMap<IAEItemStack, ImmutableList<ICraftingPatternDetails>> availablePatterns;
     private final Map<IAEItemStack, List<ICraftingPatternDetails>> precisePatternCache = new HashMap<>();
     private final OreListMultiMap<ICraftingPatternDetails> fuzzyPatternCache = new OreListMultiMap<>();
+    private final IdentityHashMap<ICraftingPatternDetails, Boolean> isPatternComplexCache = new IdentityHashMap<>();
     private final ClassToInstanceMap<Object> userCaches = MutableClassToInstanceMap.create();
 
     public CraftingContext(@Nonnull World world, @Nonnull IGrid meGrid, @Nonnull BaseActionSource actionSource) {
@@ -139,6 +148,73 @@ public final class CraftingContext {
             fuzzyPatternCache.freeze();
         }
         return fuzzyPatternCache.get(stack);
+    }
+
+    /**
+     * @return Whether the pattern has complex behavior leaving items in the crafting grid, requiring 1-by-1 simulation using a fake player
+     */
+    public boolean isPatternComplex(@Nonnull ICraftingPatternDetails pattern) {
+        if (!pattern.isCraftable()) {
+            return false;
+        }
+        final Boolean cached = isPatternComplexCache.get(pattern);
+        if (cached != null) {
+            return cached;
+        }
+
+        final IAEItemStack[] inputs = pattern.getInputs();
+        final IAEItemStack[] mcOutputs = simulateComplexCrafting(inputs, pattern);
+
+        final boolean isComplex = Arrays.stream(mcOutputs).anyMatch(Objects::nonNull);
+        isPatternComplexCache.put(pattern, isComplex);
+        return isComplex;
+    }
+
+    /**
+     * Simulates doing 1 craft with a crafting table.
+     * @param inputSlots 3x3 crafting matrix contents
+     * @return What remains in the 3x3 crafting matrix
+     */
+    public IAEItemStack[] simulateComplexCrafting(IAEItemStack[] inputSlots, ICraftingPatternDetails pattern) {
+        if (inputSlots.length > 9) {
+            throw new IllegalArgumentException(inputSlots.length + " slots supplied to a simulated crafting task");
+        }
+        final InventoryCrafting simulatedWorkbench = new InventoryCrafting(new ContainerNull(), 3, 3);
+        for (int i = 0; i < inputSlots.length; i++) {
+            simulatedWorkbench.setInventorySlotContents(i, inputSlots[i] == null ? null : inputSlots[i].getItemStack());
+        }
+        if (world instanceof WorldServer) {
+            FMLCommonHandler.instance()
+                    .firePlayerCraftingEvent(
+                            Platform.getPlayer((WorldServer) world),
+                            pattern.getOutput(simulatedWorkbench, world),
+                            simulatedWorkbench);
+        }
+        IAEItemStack[] output = new IAEItemStack[9];
+        for (int i = 0; i < output.length; i++) {
+            ItemStack mcOut = simulatedWorkbench.getStackInSlot(i);
+            if (mcOut == null || mcOut.getItem() == null || mcOut.stackSize <= 0) {
+                output[i] = null;
+                continue;
+            }
+            Item item = mcOut.getItem();
+            if (item.hasContainerItem(mcOut)) {
+                ItemStack container = item.getContainerItem(mcOut);
+                if (container == null || container.stackSize <= 0) {
+                    output[i] = null;
+                } else {
+                    output[i] = AEItemStack.create(container);
+                }
+            } else {
+                mcOut.stackSize -= 1;
+                if (mcOut.stackSize <= 0) {
+                    output[i] = null;
+                } else {
+                    output[i] = AEItemStack.create(mcOut);
+                }
+            }
+        }
+        return output;
     }
 
     /**

@@ -32,6 +32,7 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
     public static class CraftFromPatternTask extends CraftingTask<IAEItemStack> {
         public final ICraftingPatternDetails pattern;
         public final boolean allowSimulation;
+        public final boolean isComplex;
         // Inputs needed to kickstart recursive crafting
         protected final IAEItemStack[] patternRecursionInputs;
         // With the recursive part subtracted
@@ -40,6 +41,7 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
         protected final IAEItemStack[] patternOutputs;
         protected final IAEItemStack matchingOutput;
         protected final Map<IAEItemStack, RequestAndPerCraftAmount> childRequests = new HashMap<>();
+        protected final List<CraftingRequest> complexRequestPerSlot = new ArrayList<>();
         protected final Map<IAEItemStack, CraftingRequest<IAEItemStack>> childRecursionRequests = new HashMap<>();
         // byproduct injected -> amount per craft
         protected final IdentityHashMap<IAEItemStack, Long> byproducts = new IdentityHashMap<>();
@@ -54,10 +56,12 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                 CraftingRequest<IAEItemStack> request,
                 ICraftingPatternDetails pattern,
                 int priority,
-                boolean allowSimulation) {
+                boolean allowSimulation,
+                boolean isComplex) {
             super(request, priority);
             this.pattern = pattern;
             this.allowSimulation = allowSimulation;
+            this.isComplex = isComplex;
 
             HashBasedItemList pInputs = new HashBasedItemList();
             HashBasedItemList pOutputs = new HashBasedItemList();
@@ -118,6 +122,14 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
             return true;
         }
 
+        public boolean isValidSubstitute(IAEItemStack reference, IAEItemStack stack, World world, int slot) {
+            if (!pattern.isCraftable()) {
+                return true;
+            }
+            IAEItemStack[] rawInputs = pattern.getInputs();
+            return pattern.isValidItemForSlot(slot, stack.getItemStack(), world);
+        }
+
         @Override
         public StepOutput calculateOneStep(CraftingContext context) {
             if (request.remainingToProcess <= 0) {
@@ -127,7 +139,8 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
             final boolean canUseSubstitutes = pattern.canSubstitute();
             final SubstitutionMode childMode =
                     canUseSubstitutes ? SubstitutionMode.ACCEPT_FUZZY : SubstitutionMode.PRECISE;
-            final long toCraft = Platform.ceilDiv(request.remainingToProcess, matchingOutput.getStackSize());
+            final long toCraft =
+                    Platform.ceilDiv(isComplex ? 1 : request.remainingToProcess, matchingOutput.getStackSize());
 
             if (requestedInputs) {
                 // Calculate how many full recipes we could fulfill
@@ -158,6 +171,30 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                             matchingOutput.copy().setStackSize(matchingOutputRemainderItems),
                             Actionable.MODULATE,
                             context.actionSource);
+                }
+                // Add byproducts of complex recipes
+                if (isComplex && fulfilledAmount > 0) {
+                    if (maxCraftable > 1) {
+                        throw new IllegalStateException(
+                                "Complex recipe got calculated with more than 1 set of inputs at a time");
+                    }
+                    final IAEItemStack[] inputs = new IAEItemStack[9];
+                    for (int slot = 0; slot < complexRequestPerSlot.size(); slot++) {
+                        final CraftingRequest<IAEItemStack> slotRequest = complexRequestPerSlot.get(slot);
+                        if (slotRequest != null) {
+                            final IAEItemStack resolvedItem = (IAEItemStack) slotRequest.getOneResolvedType();
+                            inputs[slot] = resolvedItem;
+                        }
+                    }
+                    final IAEItemStack[] leftovers = context.simulateComplexCrafting(inputs, pattern);
+
+                    for (IAEItemStack leftover : leftovers) {
+                        if (leftover == null || leftover.getStackSize() <= 0) {
+                            continue;
+                        }
+                        context.byproductsInventory.injectItems(leftover, Actionable.MODULATE, context.actionSource);
+                        this.byproducts.put(leftover.copy(), leftover.getStackSize());
+                    }
                 }
                 for (IAEItemStack output : patternOutputs) {
                     // add byproducts to the system
@@ -196,29 +233,54 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
             } else {
                 request.patternParents.add(this.pattern);
                 ArrayList<CraftingRequest<IAEItemStack>> newChildren = new ArrayList<>(patternInputs.length);
-                if (patternRecursionInputs.length > 0) {
-                    for (IAEItemStack recInput : patternRecursionInputs) {
+                if (isComplex) {
+                    if (toCraft > 1) {
+                        throw new IllegalStateException();
+                    }
+                    final IAEItemStack[] slotInputs = pattern.getInputs();
+                    for (int slot = 0; slot < slotInputs.length; slot++) {
+                        final IAEItemStack input = slotInputs[slot];
+                        if (input == null) {
+                            complexRequestPerSlot.add(null);
+                            continue;
+                        }
+                        final long amount = Math.multiplyExact(input.getStackSize(), toCraft);
+                        final int finalSlot = slot; // for lambda capture
                         CraftingRequest<IAEItemStack> req = new CraftingRequest<>(
-                                recInput.copy(),
+                                input.copy().setStackSize(amount),
                                 childMode,
                                 IAEItemStack.class,
                                 allowSimulation,
-                                stack -> this.isValidSubstitute(recInput, stack, context.world));
+                                stack -> this.isValidSubstitute(input, stack, context.world, finalSlot));
+                        complexRequestPerSlot.add(req);
                         newChildren.add(req);
-                        childRecursionRequests.put(recInput, req);
+                        childRequests.put(input, new RequestAndPerCraftAmount(req, input.getStackSize()));
                     }
-                    state = State.NEEDS_MORE_WORK;
-                }
-                for (IAEItemStack input : patternInputs) {
-                    final long amount = Math.multiplyExact(input.getStackSize(), toCraft);
-                    CraftingRequest<IAEItemStack> req = new CraftingRequest<>(
-                            input.copy().setStackSize(amount),
-                            childMode,
-                            IAEItemStack.class,
-                            allowSimulation,
-                            stack -> this.isValidSubstitute(input, stack, context.world));
-                    newChildren.add(req);
-                    childRequests.put(input, new RequestAndPerCraftAmount(req, input.getStackSize()));
+                } else {
+                    if (patternRecursionInputs.length > 0) {
+                        for (IAEItemStack recInput : patternRecursionInputs) {
+                            CraftingRequest<IAEItemStack> req = new CraftingRequest<>(
+                                    recInput.copy(),
+                                    childMode,
+                                    IAEItemStack.class,
+                                    allowSimulation,
+                                    stack -> this.isValidSubstitute(recInput, stack, context.world));
+                            newChildren.add(req);
+                            childRecursionRequests.put(recInput, req);
+                        }
+                        state = State.NEEDS_MORE_WORK;
+                    }
+                    for (IAEItemStack input : patternInputs) {
+                        final long amount = Math.multiplyExact(input.getStackSize(), toCraft);
+                        CraftingRequest<IAEItemStack> req = new CraftingRequest<>(
+                                input.copy().setStackSize(amount),
+                                childMode,
+                                IAEItemStack.class,
+                                allowSimulation,
+                                stack -> this.isValidSubstitute(input, stack, context.world));
+                        newChildren.add(req);
+                        childRequests.put(input, new RequestAndPerCraftAmount(req, input.getStackSize()));
+                    }
                 }
                 requestedInputs = true;
                 state = State.NEEDS_MORE_WORK;
@@ -355,12 +417,26 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
         }
         int priority = CraftingTask.PRIORITY_CRAFT_OFFSET + patterns.size() - 1;
         for (ICraftingPatternDetails pattern : patterns) {
-            tasks.add(new CraftFromPatternTask(request, pattern, priority, false));
+            if (context.isPatternComplex(pattern)) {
+                for (int i = 0; i < request.remainingToProcess; i++) {
+                    tasks.add(new CraftFromPatternTask(request, pattern, priority, false, true));
+                }
+            } else {
+                tasks.add(new CraftFromPatternTask(request, pattern, priority, false, false));
+            }
             priority--;
         }
         // Fallback: use highest priority pattern to simulate if nothing else works
         if (!patterns.isEmpty()) {
-            tasks.add(new CraftFromPatternTask(request, patterns.get(0), CraftingTask.PRIORITY_SIMULATE_CRAFT, true));
+            ICraftingPatternDetails pattern = patterns.get(0);
+            if (context.isPatternComplex(pattern)) {
+                for (int i = 0; i < request.remainingToProcess; i++) {
+                    tasks.add(new CraftFromPatternTask(request, pattern, priority, false, true));
+                }
+            } else {
+                tasks.add(
+                        new CraftFromPatternTask(request, pattern, CraftingTask.PRIORITY_SIMULATE_CRAFT, true, false));
+            }
         }
         return tasks.build();
     }
