@@ -1272,7 +1272,7 @@ public class Platform {
         final double availablePower = energy.extractAEPower(
                 Math.max(stored / type_multiplier, 1), Actionable.SIMULATE, PowerMultiplier.CONFIG);
 
-        final long itemToAdd = Math.min((long) (availablePower + 0.9), stored);
+        final long itemToAdd = Math.min((long) (availablePower * type_multiplier + 0.9), stored);
 
         if (itemToAdd > 0) {
             energy.extractAEPower(Math.max(stored / type_multiplier, 1), Actionable.MODULATE, PowerMultiplier.CONFIG);
