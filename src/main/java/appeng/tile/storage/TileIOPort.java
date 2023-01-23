@@ -76,7 +76,7 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
     private static final int OUTPUT_SLOT_INDEX_CENTER_RIGHT = 9;
     private static final int OUTPUT_SLOT_INDEX_BOTTOM_LEFT = 10;
     private static final int OUTPUT_SLOT_INDEX_BOTTOM_RIGHT = 11;
-    private static final long fluid_multiplier = 1000;
+    private static final long FLUID_MULTIPLIER = 1000;
 
     private final ConfigManager manager;
 
@@ -336,7 +336,7 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
                                         energy,
                                         fluidInv,
                                         fluidNet,
-                                        ItemsToMove * fluid_multiplier,
+                                        ItemsToMove * FLUID_MULTIPLIER,
                                         StorageChannel.FLUIDS);
                             }
                         } else {
@@ -349,7 +349,7 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
                                         energy,
                                         fluidNet,
                                         fluidInv,
-                                        ItemsToMove * fluid_multiplier,
+                                        ItemsToMove * FLUID_MULTIPLIER,
                                         StorageChannel.FLUIDS);
                             }
                         }
