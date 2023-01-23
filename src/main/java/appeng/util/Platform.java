@@ -1267,13 +1267,15 @@ public class Platform {
         if (possible != null) {
             stored -= possible.getStackSize();
         }
+        long type_multiplier = input instanceof IAEFluidStack ? 1000 : 1;
 
-        final double availablePower = energy.extractAEPower(stored, Actionable.SIMULATE, PowerMultiplier.CONFIG);
+        final double availablePower = energy.extractAEPower(
+                Math.max(stored / type_multiplier, 1), Actionable.SIMULATE, PowerMultiplier.CONFIG);
 
         final long itemToAdd = Math.min((long) (availablePower + 0.9), stored);
 
         if (itemToAdd > 0) {
-            energy.extractAEPower(stored, Actionable.MODULATE, PowerMultiplier.CONFIG);
+            energy.extractAEPower(Math.max(stored / type_multiplier, 1), Actionable.MODULATE, PowerMultiplier.CONFIG);
 
             if (itemToAdd < input.getStackSize()) {
                 final long original = input.getStackSize();
