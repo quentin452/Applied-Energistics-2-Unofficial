@@ -456,6 +456,10 @@ item.appliedenergistics2.ItemBasicStorageCell.1k.name=1k ME Storage Cell
 item.appliedenergistics2.ItemBasicStorageCell.4k.name=4k ME Storage Cell
 item.appliedenergistics2.ItemBasicStorageCell.16k.name=16k ME Storage Cell
 item.appliedenergistics2.ItemBasicStorageCell.64k.name=64k ME Storage Cell
+item.appliedenergistics2.ItemAdvancedStorageCell.256k.name=256k ME Storage Cell
+item.appliedenergistics2.ItemAdvancedStorageCell.1024k.name=1024k ME Storage Cell
+item.appliedenergistics2.ItemAdvancedStorageCell.4096k.name=4096k ME Storage Cell
+item.appliedenergistics2.ItemAdvancedStorageCell.16384k.name=16384k ME Storage Cell
 item.appliedenergistics2.ItemCreativeStorageCell.name=Creative ME Storage Cell
 item.appliedenergistics2.ItemEncodedPattern.name=Encoded Pattern
 item.appliedenergistics2.ItemViewCell.name=View Cell
@@ -492,11 +496,16 @@ item.appliedenergistics2.ItemMaterial.Cell1kPart.name=1k ME Storage Component
 item.appliedenergistics2.ItemMaterial.Cell4kPart.name=4k ME Storage Component
 item.appliedenergistics2.ItemMaterial.Cell16kPart.name=16k ME Storage Component
 item.appliedenergistics2.ItemMaterial.Cell64kPart.name=64k ME Storage Component
+item.appliedenergistics2.ItemMaterial.Cell256kPart.name=256k ME Storage Component
+item.appliedenergistics2.ItemMaterial.Cell1024kPart.name=1024k ME Storage Component
+item.appliedenergistics2.ItemMaterial.Cell4096kPart.name=4096k ME Storage Component
+item.appliedenergistics2.ItemMaterial.Cell16384kPart.name=16384k ME Storage Component
 
 item.appliedenergistics2.ItemMaterial.CertusQuartzCrystal.name=Certus Quartz Crystal
 item.appliedenergistics2.ItemMaterial.CertusQuartzCrystalCharged.name=Charged Certus Quartz Crystal
 item.appliedenergistics2.ItemMaterial.CertusQuartzDust.name=Certus Quartz Dust
 item.appliedenergistics2.ItemMaterial.EmptyStorageCell.name=ME Storage Housing
+item.appliedenergistics2.ItemMaterial.EmptyAdvancedStorageCell.name=ME Advanced Storage Housing
 item.appliedenergistics2.ItemMaterial.EnderDust.name=Ender Dust
 
 item.appliedenergistics2.ItemMaterial.Flour.name=Flour

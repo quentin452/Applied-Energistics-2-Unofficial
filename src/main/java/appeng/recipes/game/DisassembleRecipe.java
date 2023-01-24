@@ -47,13 +47,17 @@ public final class DisassembleRecipe implements IRecipe {
         final IItems items = definitions.items();
         final IMaterials mats = definitions.materials();
 
-        this.cellMappings = new HashMap<IItemDefinition, IItemDefinition>(4);
-        this.nonCellMappings = new HashMap<IItemDefinition, IItemDefinition>(5);
+        this.cellMappings = new HashMap<>(8);
+        this.nonCellMappings = new HashMap<>(5);
 
         this.cellMappings.put(items.cell1k(), mats.cell1kPart());
         this.cellMappings.put(items.cell4k(), mats.cell4kPart());
         this.cellMappings.put(items.cell16k(), mats.cell16kPart());
         this.cellMappings.put(items.cell64k(), mats.cell64kPart());
+        this.cellMappings.put(items.cell256k(), mats.cell256kPart());
+        this.cellMappings.put(items.cell1024k(), mats.cell1024kPart());
+        this.cellMappings.put(items.cell4096k(), mats.cell4096kPart());
+        this.cellMappings.put(items.cell16384k(), mats.cell16384kPart());
 
         this.nonCellMappings.put(items.encodedPattern(), mats.blankPattern());
         this.nonCellMappings.put(blocks.craftingStorage1k(), mats.cell1kPart());

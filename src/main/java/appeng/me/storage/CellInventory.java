@@ -50,8 +50,8 @@ public class CellInventory implements ICellInventory {
     private final NBTTagCompound tagCompound;
     private final ISaveProvider container;
     private int maxItemTypes = 63;
-    private short storedItems = 0;
-    private int storedItemCount = 0;
+    private short storedItemTypes = 0;
+    private long storedItemCount = 0;
     private IItemList<IAEItemStack> cellItems;
     private final ItemStack cellItem;
     private IStorageCell cellType;
@@ -98,8 +98,8 @@ public class CellInventory implements ICellInventory {
 
         this.container = container;
         this.tagCompound = Platform.openNbtData(o);
-        this.storedItems = this.tagCompound.getShort(ITEM_TYPE_TAG);
-        this.storedItemCount = this.tagCompound.getInteger(ITEM_COUNT_TAG);
+        this.storedItemTypes = this.tagCompound.getShort(ITEM_TYPE_TAG);
+        this.storedItemCount = this.tagCompound.getLong(ITEM_COUNT_TAG);
         this.cellItems = null;
     }
 
@@ -220,24 +220,22 @@ public class CellInventory implements ICellInventory {
 
         if (this.canHoldNewItem()) // room for new type, and for at least one item!
         {
-            final int remainingItemCount = (int) this.getRemainingItemCount() - this.getBytesPerType() * 8;
+            final long remainingItemCount = this.getRemainingItemCount() - this.getBytesPerType() * 8L;
 
             if (remainingItemCount > 0) {
                 if (input.getStackSize() > remainingItemCount) {
-                    final ItemStack toReturn = Platform.cloneItemStack(sharedItemStack);
-                    toReturn.stackSize = sharedItemStack.stackSize - remainingItemCount;
+                    final IAEItemStack toReturn = AEItemStack.create(sharedItemStack);
+                    toReturn.decStackSize(remainingItemCount);
 
                     if (mode == Actionable.MODULATE) {
-                        final ItemStack toWrite = Platform.cloneItemStack(sharedItemStack);
-                        toWrite.stackSize = remainingItemCount;
+                        final IAEItemStack toWrite = AEItemStack.create(sharedItemStack);
+                        toWrite.setStackSize(remainingItemCount);
 
-                        this.cellItems.add(AEItemStack.create(toWrite));
-                        this.updateItemCount(toWrite.stackSize);
-
+                        this.cellItems.add(toWrite);
+                        this.updateItemCount(toWrite.getStackSize());
                         this.saveChanges();
                     }
-
-                    return AEItemStack.create(toReturn);
+                    return toReturn;
                 }
 
                 if (mode == Actionable.MODULATE) {
@@ -300,12 +298,12 @@ public class CellInventory implements ICellInventory {
 
     private void updateItemCount(final long delta) {
         this.storedItemCount += delta;
-        this.tagCompound.setInteger(ITEM_COUNT_TAG, this.storedItemCount);
+        this.tagCompound.setLong(ITEM_COUNT_TAG, this.storedItemCount);
     }
 
     private void saveChanges() {
         // cellItems.clean();
-        int itemCount = 0;
+        long itemCount = 0;
 
         // add new pretty stuff...
         int x = 0;
@@ -327,25 +325,25 @@ public class CellInventory implements ICellInventory {
              * NBTBase tagSlotCount = tagCompound.getTag( itemSlotCount[x] ); if ( tagSlotCount instanceof
              * NBTTagInt ) ((NBTTagInt) tagSlotCount).data = (int) v.getStackSize(); else
              */
-            this.tagCompound.setInteger(itemSlotCount[x], (int) v.getStackSize());
+            this.tagCompound.setLong(itemSlotCount[x], v.getStackSize());
 
             x++;
         }
 
         // NBTBase tagType = tagCompound.getTag( ITEM_TYPE_TAG );
         // NBTBase tagCount = tagCompound.getTag( ITEM_COUNT_TAG );
-        final short oldStoredItems = this.storedItems;
+        final short oldStoredItems = this.storedItemTypes;
 
         /*
          * if ( tagType instanceof NBTTagShort ) ((NBTTagShort) tagType).data = storedItems = (short) cellItems.size();
          * else
          */
-        this.storedItems = (short) this.cellItems.size();
+        this.storedItemTypes = (short) this.cellItems.size();
 
         if (this.cellItems.isEmpty()) {
             this.tagCompound.removeTag(ITEM_TYPE_TAG);
         } else {
-            this.tagCompound.setShort(ITEM_TYPE_TAG, this.storedItems);
+            this.tagCompound.setShort(ITEM_TYPE_TAG, this.storedItemTypes);
         }
 
         /*
@@ -356,7 +354,7 @@ public class CellInventory implements ICellInventory {
         if (itemCount == 0) {
             this.tagCompound.removeTag(ITEM_COUNT_TAG);
         } else {
-            this.tagCompound.setInteger(ITEM_COUNT_TAG, itemCount);
+            this.tagCompound.setLong(ITEM_COUNT_TAG, itemCount);
         }
 
         // clean any old crusty stuff...
@@ -381,17 +379,14 @@ public class CellInventory implements ICellInventory {
 
         for (int x = 0; x < types; x++) {
             final ItemStack t = ItemStack.loadItemStackFromNBT(this.tagCompound.getCompoundTag(itemSlots[x]));
-
+            final IAEItemStack ias = AEItemStack.create(t);
             if (t != null) {
-                t.stackSize = this.tagCompound.getInteger(itemSlotCount[x]);
-
-                if (t.stackSize > 0) {
-                    this.cellItems.add(AEItemStack.create(t));
+                ias.setStackSize(this.tagCompound.getInteger(itemSlotCount[x]));
+                if (ias.getStackSize() > 0) {
+                    this.cellItems.add(ias);
                 }
             }
         }
-
-        // cellItems.clean();
     }
 
     @Override
@@ -481,7 +476,7 @@ public class CellInventory implements ICellInventory {
 
     @Override
     public long getStoredItemTypes() {
-        return this.storedItems;
+        return this.storedItemTypes;
     }
 
     @Override
@@ -501,13 +496,13 @@ public class CellInventory implements ICellInventory {
 
     @Override
     public int getUnusedItemCount() {
-        final int div = (int) (this.getStoredItemCount() % 8);
+        final long div = this.getStoredItemCount() % 8;
 
         if (div == 0) {
             return 0;
         }
 
-        return 8 - div;
+        return (int) (8 - div);
     }
 
     @Override

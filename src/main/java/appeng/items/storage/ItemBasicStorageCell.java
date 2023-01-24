@@ -21,6 +21,7 @@ package appeng.items.storage;
 import appeng.api.AEApi;
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.IncludeExclude;
+import appeng.api.definitions.IItemDefinition;
 import appeng.api.exceptions.MissingDefinition;
 import appeng.api.implementations.items.IItemGroup;
 import appeng.api.implementations.items.IStorageCell;
@@ -56,12 +57,13 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.event.ForgeEventFactory;
 
-public final class ItemBasicStorageCell extends AEBaseItem implements IStorageCell, IItemGroup {
-    private final MaterialType component;
-    private final int totalBytes;
-    private final int perType;
-    private final double idleDrain;
+public class ItemBasicStorageCell extends AEBaseItem implements IStorageCell, IItemGroup {
+    protected MaterialType component;
+    protected int totalBytes;
+    protected int perType;
+    protected double idleDrain;
 
+    @SuppressWarnings("Guava")
     public ItemBasicStorageCell(final MaterialType whichCell, final int kilobytes) {
         super(Optional.of(kilobytes + "k"));
 
@@ -91,6 +93,11 @@ public final class ItemBasicStorageCell extends AEBaseItem implements IStorageCe
                 this.idleDrain = 0.0;
                 this.perType = 8;
         }
+    }
+
+    @SuppressWarnings("Guava")
+    public ItemBasicStorageCell(final Optional<String> subName) {
+        super(subName);
     }
 
     @SideOnly(Side.CLIENT)
@@ -236,6 +243,7 @@ public final class ItemBasicStorageCell extends AEBaseItem implements IStorageCe
         return stack;
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private boolean disassembleDrive(final ItemStack stack, final World world, final EntityPlayer player) {
         if (player.isSneaking()) {
             if (Platform.isClient()) {
@@ -267,12 +275,8 @@ public final class ItemBasicStorageCell extends AEBaseItem implements IStorageCe
                     }
 
                     // drop empty storage cell case
-                    for (final ItemStack storageCellStack : AEApi.instance()
-                            .definitions()
-                            .materials()
-                            .emptyStorageCell()
-                            .maybeStack(1)
-                            .asSet()) {
+                    for (final ItemStack storageCellStack :
+                            getStorageCellCase().maybeStack(1).asSet()) {
                         final ItemStack extraA = ia.addItems(storageCellStack);
                         if (extraA != null) {
                             player.dropPlayerItemWithRandomChoice(extraA, false);
@@ -288,6 +292,10 @@ public final class ItemBasicStorageCell extends AEBaseItem implements IStorageCe
             }
         }
         return false;
+    }
+
+    protected IItemDefinition getStorageCellCase() {
+        return AEApi.instance().definitions().materials().emptyStorageCell();
     }
 
     @Override

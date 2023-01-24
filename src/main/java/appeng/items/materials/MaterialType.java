@@ -113,7 +113,13 @@ public enum MaterialType {
     CardCrafting(53),
     CardPatternCapacity(54),
     CardOreFilter(55),
-    CardSuperSpeed(56);
+    CardSuperSpeed(56),
+    Cell256kPart(57, AEFeature.StorageCells),
+    Cell1024kPart(58, AEFeature.StorageCells),
+    Cell4096kPart(59, AEFeature.StorageCells),
+    Cell16384kPart(60, AEFeature.StorageCells),
+    EmptyAdvancedStorageCell(61, AEFeature.StorageCells);
+
     private final EnumSet<AEFeature> features;
     // IIcon for the material.
     @SideOnly(Side.CLIENT)

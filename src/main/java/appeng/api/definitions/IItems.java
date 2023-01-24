@@ -85,6 +85,14 @@ public interface IItems {
 
     IItemDefinition cell64k();
 
+    IItemDefinition cell256k();
+
+    IItemDefinition cell1024k();
+
+    IItemDefinition cell4096k();
+
+    IItemDefinition cell16384k();
+
     IItemDefinition spatialCell2();
 
     IItemDefinition spatialCell16();
