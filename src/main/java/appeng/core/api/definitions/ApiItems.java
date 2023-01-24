@@ -31,10 +31,7 @@ import appeng.items.misc.ItemCrystalSeed;
 import appeng.items.misc.ItemEncodedPattern;
 import appeng.items.misc.ItemPaintBall;
 import appeng.items.parts.ItemFacade;
-import appeng.items.storage.ItemBasicStorageCell;
-import appeng.items.storage.ItemCreativeStorageCell;
-import appeng.items.storage.ItemSpatialStorageCell;
-import appeng.items.storage.ItemViewCell;
+import appeng.items.storage.*;
 import appeng.items.tools.ToolBiometricCard;
 import appeng.items.tools.ToolMemoryCard;
 import appeng.items.tools.ToolNetworkTool;
@@ -77,6 +74,10 @@ public final class ApiItems implements IItems {
     private final IItemDefinition cell4k;
     private final IItemDefinition cell16k;
     private final IItemDefinition cell64k;
+    private final IItemDefinition cell256k;
+    private final IItemDefinition cell1024k;
+    private final IItemDefinition cell4096k;
+    private final IItemDefinition cell16384k;
 
     private final IItemDefinition spatialCell2;
     private final IItemDefinition spatialCell16;
@@ -134,6 +135,13 @@ public final class ApiItems implements IItems {
         this.cell4k = constructor.registerItemDefinition(new ItemBasicStorageCell(MaterialType.Cell4kPart, 4));
         this.cell16k = constructor.registerItemDefinition(new ItemBasicStorageCell(MaterialType.Cell16kPart, 16));
         this.cell64k = constructor.registerItemDefinition(new ItemBasicStorageCell(MaterialType.Cell64kPart, 64));
+        this.cell256k = constructor.registerItemDefinition(new ItemAdvancedStorageCell(MaterialType.Cell256kPart, 256));
+        this.cell1024k =
+                constructor.registerItemDefinition(new ItemAdvancedStorageCell(MaterialType.Cell1024kPart, 1024));
+        this.cell4096k =
+                constructor.registerItemDefinition(new ItemAdvancedStorageCell(MaterialType.Cell4096kPart, 4096));
+        this.cell16384k =
+                constructor.registerItemDefinition(new ItemAdvancedStorageCell(MaterialType.Cell16384kPart, 16384));
 
         this.spatialCell2 = constructor.registerItemDefinition(new ItemSpatialStorageCell(2));
         this.spatialCell16 = constructor.registerItemDefinition(new ItemSpatialStorageCell(16));
@@ -294,6 +302,26 @@ public final class ApiItems implements IItems {
     @Override
     public IItemDefinition cell64k() {
         return this.cell64k;
+    }
+
+    @Override
+    public IItemDefinition cell256k() {
+        return this.cell256k;
+    }
+
+    @Override
+    public IItemDefinition cell1024k() {
+        return this.cell1024k;
+    }
+
+    @Override
+    public IItemDefinition cell4096k() {
+        return this.cell4096k;
+    }
+
+    @Override
+    public IItemDefinition cell16384k() {
+        return this.cell16384k;
     }
 
     @Override

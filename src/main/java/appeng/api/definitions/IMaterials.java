@@ -81,6 +81,16 @@ public interface IMaterials {
 
     IItemDefinition emptyStorageCell();
 
+    IItemDefinition cell256kPart();
+
+    IItemDefinition cell1024kPart();
+
+    IItemDefinition cell4096kPart();
+
+    IItemDefinition cell16384kPart();
+
+    IItemDefinition emptyAdvancedStorageCell();
+
     IItemDefinition cardRedstone();
 
     IItemDefinition cardSpeed();

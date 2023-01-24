@@ -64,6 +64,11 @@ public final class ApiMaterials implements IMaterials {
     private final IItemDefinition cell16kPart;
     private final IItemDefinition cell64kPart;
     private final IItemDefinition emptyStorageCell;
+    private final IItemDefinition cell256kPart;
+    private final IItemDefinition cell1024kPart;
+    private final IItemDefinition cell4096kPart;
+    private final IItemDefinition cell16384kPart;
+    private final IItemDefinition emptyAdvancedStorageCell;
 
     private final IItemDefinition cardRedstone;
     private final IItemDefinition cardSpeed;
@@ -155,6 +160,12 @@ public final class ApiMaterials implements IMaterials {
         this.cell64kPart = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.Cell64kPart));
         this.emptyStorageCell =
                 new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.EmptyStorageCell));
+        this.cell256kPart = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.Cell256kPart));
+        this.cell1024kPart = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.Cell1024kPart));
+        this.cell4096kPart = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.Cell4096kPart));
+        this.cell16384kPart = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.Cell16384kPart));
+        this.emptyAdvancedStorageCell =
+                new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.EmptyAdvancedStorageCell));
 
         this.cardRedstone = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.CardRedstone));
         this.cardSpeed = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.CardSpeed));
@@ -335,6 +346,31 @@ public final class ApiMaterials implements IMaterials {
     @Override
     public IItemDefinition emptyStorageCell() {
         return this.emptyStorageCell;
+    }
+
+    @Override
+    public IItemDefinition cell256kPart() {
+        return this.cell256kPart;
+    }
+
+    @Override
+    public IItemDefinition cell1024kPart() {
+        return this.cell1024kPart;
+    }
+
+    @Override
+    public IItemDefinition cell4096kPart() {
+        return this.cell4096kPart;
+    }
+
+    @Override
+    public IItemDefinition cell16384kPart() {
+        return this.cell16384kPart;
+    }
+
+    @Override
+    public IItemDefinition emptyAdvancedStorageCell() {
+        return this.emptyAdvancedStorageCell;
     }
 
     @Override
