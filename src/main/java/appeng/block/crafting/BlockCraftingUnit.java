@@ -53,7 +53,7 @@ public class BlockCraftingUnit extends AEBaseTileBlock {
     @Override
     @SideOnly(Side.CLIENT)
     protected RenderBlockCraftingCPU<? extends BlockCraftingUnit, ? extends TileCraftingTile> getRenderer() {
-        return new RenderBlockCraftingCPU<BlockCraftingUnit, TileCraftingTile>();
+        return new RenderBlockCraftingCPU<>();
     }
 
     @Override
@@ -138,7 +138,6 @@ public class BlockCraftingUnit extends AEBaseTileBlock {
         } else if (is.getItemDamage() == 3) {
             return "tile.appliedenergistics2.BlockCraftingAccelerator16x";
         }
-
         return this.getItemUnlocalizedName(is);
     }
 

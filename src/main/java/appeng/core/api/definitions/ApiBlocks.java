@@ -23,10 +23,7 @@ import appeng.api.definitions.IBlocks;
 import appeng.api.definitions.ITileDefinition;
 import appeng.api.util.IOrientableBlock;
 import appeng.block.AEBaseSlabBlock;
-import appeng.block.crafting.BlockCraftingMonitor;
-import appeng.block.crafting.BlockCraftingStorage;
-import appeng.block.crafting.BlockCraftingUnit;
-import appeng.block.crafting.BlockMolecularAssembler;
+import appeng.block.crafting.*;
 import appeng.block.grindstone.BlockCrank;
 import appeng.block.grindstone.BlockGrinder;
 import appeng.block.misc.*;
@@ -102,6 +99,10 @@ public final class ApiBlocks implements IBlocks {
     private final ITileDefinition craftingStorage4k;
     private final ITileDefinition craftingStorage16k;
     private final ITileDefinition craftingStorage64k;
+    private final ITileDefinition craftingStorage256k;
+    private final ITileDefinition craftingStorage1024k;
+    private final ITileDefinition craftingStorage4096k;
+    private final ITileDefinition craftingStorage16384k;
     private final ITileDefinition craftingMonitor;
     private final ITileDefinition molecularAssembler;
     private final ITileDefinition lightDetector;
@@ -188,6 +189,10 @@ public final class ApiBlocks implements IBlocks {
         this.craftingStorage4k = new WrappedDamageItemDefinition(this.craftingStorage1k, 1);
         this.craftingStorage16k = new WrappedDamageItemDefinition(this.craftingStorage1k, 2);
         this.craftingStorage64k = new WrappedDamageItemDefinition(this.craftingStorage1k, 3);
+        this.craftingStorage256k = constructor.registerTileDefinition(new BlockAdvancedCraftingStorage());
+        this.craftingStorage1024k = new WrappedDamageItemDefinition(this.craftingStorage256k, 1);
+        this.craftingStorage4096k = new WrappedDamageItemDefinition(this.craftingStorage256k, 2);
+        this.craftingStorage16384k = new WrappedDamageItemDefinition(this.craftingStorage256k, 3);
         this.craftingMonitor = constructor.registerTileDefinition(new BlockCraftingMonitor());
         this.molecularAssembler = constructor.registerTileDefinition(new BlockMolecularAssembler());
         this.lightDetector = constructor.registerTileDefinition(lightDetector);
@@ -538,6 +543,26 @@ public final class ApiBlocks implements IBlocks {
     @Override
     public ITileDefinition craftingStorage64k() {
         return this.craftingStorage64k;
+    }
+
+    @Override
+    public ITileDefinition craftingStorage256k() {
+        return this.craftingStorage256k;
+    }
+
+    @Override
+    public ITileDefinition craftingStorage1024k() {
+        return this.craftingStorage1024k;
+    }
+
+    @Override
+    public ITileDefinition craftingStorage4096k() {
+        return this.craftingStorage4096k;
+    }
+
+    @Override
+    public ITileDefinition craftingStorage16384k() {
+        return this.craftingStorage16384k;
     }
 
     @Override

@@ -48,7 +48,7 @@ public final class DisassembleRecipe implements IRecipe {
         final IMaterials mats = definitions.materials();
 
         this.cellMappings = new HashMap<>(8);
-        this.nonCellMappings = new HashMap<>(5);
+        this.nonCellMappings = new HashMap<>(9);
 
         this.cellMappings.put(items.cell1k(), mats.cell1kPart());
         this.cellMappings.put(items.cell4k(), mats.cell4kPart());
@@ -64,6 +64,10 @@ public final class DisassembleRecipe implements IRecipe {
         this.nonCellMappings.put(blocks.craftingStorage4k(), mats.cell4kPart());
         this.nonCellMappings.put(blocks.craftingStorage16k(), mats.cell16kPart());
         this.nonCellMappings.put(blocks.craftingStorage64k(), mats.cell64kPart());
+        this.nonCellMappings.put(blocks.craftingStorage256k(), mats.cell256kPart());
+        this.nonCellMappings.put(blocks.craftingStorage1024k(), mats.cell1024kPart());
+        this.nonCellMappings.put(blocks.craftingStorage4096k(), mats.cell4096kPart());
+        this.nonCellMappings.put(blocks.craftingStorage16384k(), mats.cell16384kPart());
     }
 
     @Override

@@ -20,6 +20,8 @@ package appeng.tile.crafting;
 
 import appeng.api.AEApi;
 import appeng.api.definitions.IBlocks;
+import appeng.block.crafting.BlockAdvancedCraftingStorage;
+import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 
 public class TileCraftingStorageTile extends TileCraftingTile {
@@ -49,6 +51,30 @@ public class TileCraftingStorageTile extends TileCraftingTile {
                     return stack;
                 }
                 break;
+            case 256:
+                for (final ItemStack stack :
+                        blocks.craftingStorage256k().maybeStack(1).asSet()) {
+                    return stack;
+                }
+                break;
+            case 1024:
+                for (final ItemStack stack :
+                        blocks.craftingStorage1024k().maybeStack(1).asSet()) {
+                    return stack;
+                }
+                break;
+            case 4096:
+                for (final ItemStack stack :
+                        blocks.craftingStorage4096k().maybeStack(1).asSet()) {
+                    return stack;
+                }
+                break;
+            case 16384:
+                for (final ItemStack stack :
+                        blocks.craftingStorage16384k().maybeStack(1).asSet()) {
+                    return stack;
+                }
+                break;
         }
 
         return super.getItemFromTile(obj);
@@ -69,17 +95,19 @@ public class TileCraftingStorageTile extends TileCraftingTile {
         if (this.worldObj == null || this.notLoaded()) {
             return 0;
         }
+        Block block = this.worldObj.getBlock(this.xCoord, this.yCoord, this.zCoord);
+        int blockMultiplier = block instanceof BlockAdvancedCraftingStorage ? 256 : 1;
 
         switch (this.worldObj.getBlockMetadata(this.xCoord, this.yCoord, this.zCoord) & 3) {
             default:
             case 0:
-                return 1024;
+                return KILO_SCALAR * blockMultiplier;
             case 1:
-                return 4 * 1024;
+                return 4 * KILO_SCALAR * blockMultiplier;
             case 2:
-                return 16 * 1024;
+                return 16 * KILO_SCALAR * blockMultiplier;
             case 3:
-                return 64 * 1024;
+                return 64 * KILO_SCALAR * blockMultiplier;
         }
     }
 }
