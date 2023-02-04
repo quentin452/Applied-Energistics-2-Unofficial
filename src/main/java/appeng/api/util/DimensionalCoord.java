@@ -13,6 +13,10 @@
 
 package appeng.api.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
@@ -65,6 +69,56 @@ public class DimensionalCoord extends WorldCoord {
 
     public boolean isEqual(final DimensionalCoord c) {
         return this.x == c.x && this.y == c.y && this.z == c.z && c.w == this.w;
+    }
+
+    public void writeToNBT(final NBTTagCompound tag) {
+        NBTTagCompound data = new NBTTagCompound();
+        data.setInteger("dim", this.getDimension());
+        data.setInteger("x", this.x);
+        data.setInteger("y", this.y);
+        data.setInteger("z", this.z);
+        tag.setTag("pos", data);
+    }
+
+    public static void writeToNBT(final NBTTagCompound tag, List<DimensionalCoord> list) {
+        int i = 0;
+        for (DimensionalCoord d : list) {
+            NBTTagCompound data = new NBTTagCompound();
+            data.setInteger("dim", d.getDimension());
+            data.setInteger("x", d.x);
+            data.setInteger("y", d.y);
+            data.setInteger("z", d.z);
+            tag.setTag("pos#" + i, data);
+            i++;
+        }
+    }
+
+    public static DimensionalCoord readFromNBT(final NBTTagCompound tag) {
+        if (tag.hasKey("pos")) {
+            NBTTagCompound data = tag.getCompoundTag("pos");
+            return new DimensionalCoord(
+                    data.getInteger("x"),
+                    data.getInteger("y"),
+                    data.getInteger("z"),
+                    data.getInteger("dim"));
+        }
+        return null;
+    }
+
+    public static List<DimensionalCoord> readAsListFromNBT(final NBTTagCompound tag) {
+        List<DimensionalCoord> list = new ArrayList<>();
+        int i = 0;
+        while (tag.hasKey("pos#" + i)) {
+            NBTTagCompound data = tag.getCompoundTag("pos#" + i);
+            list.add(
+                    new DimensionalCoord(
+                            data.getInteger("x"),
+                            data.getInteger("y"),
+                            data.getInteger("z"),
+                            data.getInteger("dim")));
+            i++;
+        }
+        return list;
     }
 
     @Override

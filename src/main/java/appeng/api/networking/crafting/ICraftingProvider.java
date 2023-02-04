@@ -13,6 +13,8 @@
 
 package appeng.api.networking.crafting;
 
+import net.minecraft.tileentity.TileEntity;
+
 import appeng.api.networking.events.MENetworkCraftingPatternChange;
 
 /**
@@ -27,4 +29,6 @@ public interface ICraftingProvider extends ICraftingMedium {
      * @param craftingTracker crafting helper
      */
     void provideCrafting(ICraftingProviderHelper craftingTracker);
+
+    TileEntity getTile();
 }

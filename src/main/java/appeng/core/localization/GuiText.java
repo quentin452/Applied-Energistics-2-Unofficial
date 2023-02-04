@@ -189,6 +189,7 @@ public enum GuiText {
     OreFilterLabel,
 
     HoldShiftForTooltip,
+    HoldShiftClick_HIGHLIGHT_INTERFACE,
 
     // Used in a ME Interface when no appropriate TileEntity was detected near it
     Nothing,
