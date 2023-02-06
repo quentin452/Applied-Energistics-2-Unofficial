@@ -10,6 +10,7 @@
 
 package appeng.me.cluster.implementations;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.IntStream;
@@ -75,7 +76,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     private final LinkedList<TileCraftingTile> storage = new LinkedList<TileCraftingTile>();
     private final LinkedList<TileCraftingMonitorTile> status = new LinkedList<TileCraftingMonitorTile>();
     private final HashMap<IMEMonitorHandlerReceiver<IAEItemStack>, Object> listeners = new HashMap<IMEMonitorHandlerReceiver<IAEItemStack>, Object>();
-    private final HashMap<Integer, List<DimensionalCoord>> providers = new HashMap<>();
+    private final HashMap<IAEItemStack, List<DimensionalCoord>> providers = new HashMap<>();
     private ICraftingLink myLastLink;
     private String myName = "";
     private boolean isDestroyed = false;
@@ -629,11 +630,13 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
                             for (final IAEItemStack out : details.getCondensedOutputs()) {
                                 this.postChange(out, this.machineSrc);
-                                providers.computeIfAbsent(out.hashCode(), k -> new ArrayList<DimensionalCoord>());
-                                List<DimensionalCoord> list = providers.get(out.hashCode());
+                                providers.computeIfAbsent(out, k -> new ArrayList<DimensionalCoord>());
+                                List<DimensionalCoord> list = providers.get(out);
                                 if (m instanceof ICraftingProvider) {
-                                    if (!list.contains(new DimensionalCoord(((ICraftingProvider) m).getTile())))
-                                        list.add(new DimensionalCoord(((ICraftingProvider) m).getTile()));
+                                    TileEntity tile = this.getTile(m);
+                                    if (tile == null) continue;
+                                    if (!list.contains(new DimensionalCoord(tile)))
+                                        list.add(new DimensionalCoord(tile));
                                 }
                                 this.waitingFor.add(out.copy());
                                 this.postCraftingStatusChange(out.copy());
@@ -920,7 +923,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
     public IAEItemStack getItemStack(final IAEItemStack what, final CraftingItemList storage2) {
         IAEItemStack is;
-        ItemStack tmp;
+        ItemStack itemStack;
         switch (storage2) {
             case STORAGE:
                 is = this.inventory.getItemList().findPrecise(what);
@@ -928,11 +931,11 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             case ACTIVE:
                 is = this.waitingFor.findPrecise(what);
                 if (is != null) {
-                    tmp = is.getItemStack();
-                    NBTTagCompound data = Platform.openNbtData(tmp);
-                    DimensionalCoord.writeToNBT(data, this.providers.getOrDefault(is.hashCode(), new ArrayList<>()));
-                    tmp.setTagCompound(data);
-                    is = AEApi.instance().storage().createItemStack(tmp);
+                    itemStack = is.getItemStack();
+                    NBTTagCompound data = Platform.openNbtData(itemStack);
+                    DimensionalCoord.writeListToNBT(data, this.providers.getOrDefault(is, new ArrayList<>()));
+                    itemStack.setTagCompound(data);
+                    is = AEApi.instance().storage().createItemStack(itemStack);
                     is.setStackSize(this.waitingFor.findPrecise(what).getStackSize());
                 }
                 break;
@@ -950,15 +953,15 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
                             long stackSize = is.getStackSize() + ais.getStackSize() * t.getValue().value;
                             if (cache != null) {
                                 List<ICraftingMedium> craftingProviders = cache.getMediums(t.getKey());
-                                tmp = is.getItemStack();
-                                NBTTagCompound data = Platform.openNbtData(tmp);
+                                itemStack = is.getItemStack();
+                                NBTTagCompound data = Platform.openNbtData(itemStack);
                                 List<DimensionalCoord> dimensionalCoords = new ArrayList<>();
                                 for (ICraftingMedium craftingProvider : craftingProviders) {
-                                    TileEntity tile = ((ICraftingProvider) craftingProvider).getTile();
-                                    dimensionalCoords.add(new DimensionalCoord(tile));
+                                    final TileEntity tile = this.getTile(craftingProvider);
+                                    if (tile != null) dimensionalCoords.add(new DimensionalCoord(tile));
                                 }
-                                DimensionalCoord.writeToNBT(data, dimensionalCoords);
-                                is = AEApi.instance().storage().createItemStack(tmp);
+                                DimensionalCoord.writeListToNBT(data, dimensionalCoords);
+                                is = AEApi.instance().storage().createItemStack(itemStack);
                                 is.setStackSize(stackSize);
                             }
                         }
@@ -1007,10 +1010,10 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         data.setLong("remainingItemCount", this.getRemainingItemCount());
 
         list = new NBTTagList();
-        for (final Entry<Integer, List<DimensionalCoord>> e : this.providers.entrySet()) {
+        for (final Entry<IAEItemStack, List<DimensionalCoord>> e : this.providers.entrySet()) {
             NBTTagCompound tmp = new NBTTagCompound();
-            tmp.setInteger("item", e.getKey());
-            DimensionalCoord.writeToNBT(tmp, e.getValue());
+            tmp.setTag("item", this.writeItem(e.getKey()));
+            DimensionalCoord.writeListToNBT(tmp, e.getValue());
             list.appendTag(tmp);
         }
         data.setTag("providers", list);
@@ -1093,7 +1096,9 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         list = data.getTagList("providers", 10);
         for (int x = 0; x < list.tagCount(); x++) {
             final NBTTagCompound pro = list.getCompoundTagAt(x);
-            this.providers.put(pro.getInteger("item"), DimensionalCoord.readAsListFromNBT(pro));
+            this.providers.put(
+                    AEItemStack.loadItemStackFromNBT(pro.getCompoundTag("item")),
+                    DimensionalCoord.readAsListFromNBT(pro));
         }
     }
 
@@ -1182,6 +1187,16 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     @Override
     public long getStartItemCount() {
         return this.startItemCount;
+    }
+
+    private TileEntity getTile(ICraftingMedium craftingProvider) {
+        try {
+            Method method = craftingProvider.getClass().getDeclaredMethod("getTile");
+            return (TileEntity) method.invoke(craftingProvider);
+        } catch (Exception ignored) {
+            return null;
+        }
+
     }
 
     private static class TaskProgress {

@@ -20,27 +20,28 @@ public class HighlighterHandler {
     }
 
     private static void renderHilightedBlock(RenderWorldLastEvent event) {
-        List<DimensionalCoord> list = BlockPosHighlighter.getHighlightedBlock();
+        List<DimensionalCoord> list = BlockPosHighlighter.getHighlightedBlocks();
         if (list.isEmpty()) {
             return;
         }
         Minecraft mc = Minecraft.getMinecraft();
         int dimension = mc.theWorld.provider.dimensionId;
         long time = System.currentTimeMillis();
-        for (DimensionalCoord c : list) {
-            if (time > BlockPosHighlighter.getExpireHighlight() || dimension != c.getDimension()) {
-                BlockPosHighlighter.clear();
-                return;
-            }
 
-            if (((time / 500) & 1) == 0) {
-                return;
-            }
+        EntityPlayerSP p = mc.thePlayer;
+        double doubleX = p.lastTickPosX + (p.posX - p.lastTickPosX) * event.partialTicks;
+        double doubleY = p.lastTickPosY + (p.posY - p.lastTickPosY) * event.partialTicks;
+        double doubleZ = p.lastTickPosZ + (p.posZ - p.lastTickPosZ) * event.partialTicks;
 
-            EntityPlayerSP p = mc.thePlayer;
-            double doubleX = p.lastTickPosX + (p.posX - p.lastTickPosX) * event.partialTicks;
-            double doubleY = p.lastTickPosY + (p.posY - p.lastTickPosY) * event.partialTicks;
-            double doubleZ = p.lastTickPosZ + (p.posZ - p.lastTickPosZ) * event.partialTicks;
+        if (((time / 500) & 1) == 0) {
+            return;
+        }
+        if (time > BlockPosHighlighter.getExpireHighlight()) BlockPosHighlighter.clear();
+        for (DimensionalCoord c : list.toArray(new DimensionalCoord[0])) {
+            if (dimension != c.getDimension()) {
+                BlockPosHighlighter.remove(c);
+                if (BlockPosHighlighter.getHighlightedBlocks().isEmpty()) return;
+            }
 
             GL11.glPushMatrix();
             GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);

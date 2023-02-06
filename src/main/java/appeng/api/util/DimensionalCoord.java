@@ -71,38 +71,33 @@ public class DimensionalCoord extends WorldCoord {
         return this.x == c.x && this.y == c.y && this.z == c.z && c.w == this.w;
     }
 
-    public void writeToNBT(final NBTTagCompound tag) {
-        NBTTagCompound data = new NBTTagCompound();
-        data.setInteger("dim", this.getDimension());
-        data.setInteger("x", this.x);
-        data.setInteger("y", this.y);
-        data.setInteger("z", this.z);
-        tag.setTag("pos", data);
+    private static void writeToNBT(final NBTTagCompound data, int x, int y, int z, int dimId) {
+        data.setInteger("dim", dimId);
+        data.setInteger("x", x);
+        data.setInteger("y", y);
+        data.setInteger("z", z);
     }
 
-    public static void writeToNBT(final NBTTagCompound tag, List<DimensionalCoord> list) {
+    public void writeToNBT(final NBTTagCompound data) {
+        writeToNBT(data, this.x, this.y, this.z, this.dimId);
+    }
+
+    public static void writeListToNBT(final NBTTagCompound tag, List<DimensionalCoord> list) {
         int i = 0;
         for (DimensionalCoord d : list) {
             NBTTagCompound data = new NBTTagCompound();
-            data.setInteger("dim", d.getDimension());
-            data.setInteger("x", d.x);
-            data.setInteger("y", d.y);
-            data.setInteger("z", d.z);
+            writeToNBT(data, d.x, d.y, d.z, d.dimId);
             tag.setTag("pos#" + i, data);
             i++;
         }
     }
 
-    public static DimensionalCoord readFromNBT(final NBTTagCompound tag) {
-        if (tag.hasKey("pos")) {
-            NBTTagCompound data = tag.getCompoundTag("pos");
-            return new DimensionalCoord(
-                    data.getInteger("x"),
-                    data.getInteger("y"),
-                    data.getInteger("z"),
-                    data.getInteger("dim"));
-        }
-        return null;
+    public static DimensionalCoord readFromNBT(final NBTTagCompound data) {
+        return new DimensionalCoord(
+                data.getInteger("x"),
+                data.getInteger("y"),
+                data.getInteger("z"),
+                data.getInteger("dim"));
     }
 
     public static List<DimensionalCoord> readAsListFromNBT(final NBTTagCompound tag) {
@@ -110,12 +105,7 @@ public class DimensionalCoord extends WorldCoord {
         int i = 0;
         while (tag.hasKey("pos#" + i)) {
             NBTTagCompound data = tag.getCompoundTag("pos#" + i);
-            list.add(
-                    new DimensionalCoord(
-                            data.getInteger("x"),
-                            data.getInteger("y"),
-                            data.getInteger("z"),
-                            data.getInteger("dim")));
+            list.add(readFromNBT(data));
             i++;
         }
         return list;
