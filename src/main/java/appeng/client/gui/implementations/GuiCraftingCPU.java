@@ -372,6 +372,7 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource {
             if (!l.isEmpty()) l.remove(0);
             lineList.addAll(l);
             if (this.hoveredNbtStack == null || this.hoveredNbtStack.getItem() != is.getItem()) {
+                this.hoveredNbtStack = is;
                 try {
                     NetworkHandler.instance.sendToServer(
                             new PacketCraftingItemInterface(AEApi.instance().storage().createItemStack(is)));
