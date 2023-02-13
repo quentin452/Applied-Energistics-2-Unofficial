@@ -932,13 +932,21 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
     public IAEItemStack getItemStack(final IAEItemStack what, final CraftingItemList storage2) {
         IAEItemStack is;
-
+        ItemStack itemStack;
         switch (storage2) {
             case STORAGE:
                 is = this.inventory.getItemList().findPrecise(what);
                 break;
             case ACTIVE:
                 is = this.waitingFor.findPrecise(what);
+                if (is != null) {
+                    itemStack = is.getItemStack();
+                    NBTTagCompound data = Platform.openNbtData(itemStack);
+                    DimensionalCoord.writeListToNBT(data, this.providers.getOrDefault(is, new ArrayList<>()));
+                    itemStack.setTagCompound(data);
+                    is = AEApi.instance().storage().createItemStack(itemStack);
+                    is.setStackSize(this.waitingFor.findPrecise(what).getStackSize());
+                }
                 break;
             case PENDING:
                 CraftingGridCache cache = null;

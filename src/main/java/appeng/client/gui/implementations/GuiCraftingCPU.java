@@ -393,6 +393,7 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource {
                 lineList.add(GuiText.HoldShiftClick_HIGHLIGHT_INTERFACE.getLocal());
             }
         } else {
+            this.hoveredNbtStack = null;
             lineList.add(GuiText.HoldShiftForTooltip.getLocal());
         }
     }
