@@ -10,7 +10,7 @@ dependencies {
     compileOnly('com.github.GTNewHorizons:Jabba:1.2.21:dev') {transitive = false}
     compileOnly('com.github.GTNewHorizons:inventory-tweaks:1.5.15:api') {transitive = false}
     compileOnly('com.github.GTNewHorizons:OpenComputers:1.7.5.32-GTNH:api') {transitive = false}
-    compile('com.github.GTNewHorizons:waila:1.5.21:dev') {transitive = false}
+    compileOnly('com.github.GTNewHorizons:waila:1.5.21:dev') {transitive = false}
     compileOnly('com.github.GTNewHorizons:Railcraft:9.13.10:api') {transitive = false}
 
     compileOnly('net.industrial-craft:industrialcraft-2:2.2.828-experimental:api')
