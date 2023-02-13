@@ -76,7 +76,8 @@ public class AppEngPacketHandlerBase {
 
         PACKET_NEI_DRAG(PacketNEIDragClick.class),
 
-        PACKET_PATTERN_VALUE(PacketPatternValueSet.class);
+        PACKET_PATTERN_VALUE(PacketPatternValueSet.class),
+        PACKET_CRAFTING_ITEM_INTERFACE(PacketCraftingItemInterface.class);
 
         private final Class<? extends AppEngPacket> packetClass;
         private final Constructor<? extends AppEngPacket> packetConstructor;

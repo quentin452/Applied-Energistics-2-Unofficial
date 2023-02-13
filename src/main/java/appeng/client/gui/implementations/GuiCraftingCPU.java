@@ -46,6 +46,7 @@ import appeng.core.localization.GuiColors;
 import appeng.core.localization.GuiText;
 import appeng.core.localization.PlayerMessages;
 import appeng.core.sync.network.NetworkHandler;
+import appeng.core.sync.packets.PacketCraftingItemInterface;
 import appeng.core.sync.packets.PacketValueConfig;
 import appeng.util.Platform;
 import appeng.util.ReadableNumberConverter;
@@ -86,6 +87,7 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource {
     private GuiButton cancel;
     private int tooltip = -1;
     private ItemStack hoveredStack;
+    private ItemStack hoveredNbtStack;
 
     public GuiCraftingCPU(final InventoryPlayer inventoryPlayer, final Object te) {
         this(new ContainerCraftingCPU(inventoryPlayer, te));
@@ -123,8 +125,8 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource {
 
     @Override
     protected void mouseClicked(final int xCoord, final int yCoord, final int btn) {
-        if (hoveredStack != null && isShiftKeyDown()) {
-            NBTTagCompound data = Platform.openNbtData(hoveredStack);
+        if (this.hoveredNbtStack != null && isShiftKeyDown()) {
+            NBTTagCompound data = Platform.openNbtData(this.hoveredNbtStack);
             WorldCoord blockPos2 = new WorldCoord(
                     (int) mc.thePlayer.posX,
                     (int) mc.thePlayer.posY,
@@ -369,19 +371,26 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource {
             List l = is.getTooltip(this.mc.thePlayer, this.mc.gameSettings.advancedItemTooltips);
             if (!l.isEmpty()) l.remove(0);
             lineList.addAll(l);
-            NBTTagCompound data = Platform.openNbtData(is);
-            List<DimensionalCoord> blocks = DimensionalCoord.readAsListFromNBT(data);
-            if (blocks.isEmpty()) return;
-            for (DimensionalCoord blockPos : blocks) {
-                lineList.add(
-                        String.format(
-                                "Dim:%s X:%s Y:%s Z:%s",
-                                blockPos.getDimension(),
-                                blockPos.x,
-                                blockPos.y,
-                                blockPos.z));
+            if (this.hoveredNbtStack == null || this.hoveredNbtStack.getItem() != is.getItem()) {
+                try {
+                    NetworkHandler.instance.sendToServer(
+                            new PacketCraftingItemInterface(AEApi.instance().storage().createItemStack(is)));
+                } catch (Exception ignored) {}
+            } else {
+                NBTTagCompound data = Platform.openNbtData(this.hoveredNbtStack);
+                List<DimensionalCoord> blocks = DimensionalCoord.readAsListFromNBT(data);
+                if (blocks.isEmpty()) return;
+                for (DimensionalCoord blockPos : blocks) {
+                    lineList.add(
+                            String.format(
+                                    "Dim:%s X:%s Y:%s Z:%s",
+                                    blockPos.getDimension(),
+                                    blockPos.x,
+                                    blockPos.y,
+                                    blockPos.z));
+                }
+                lineList.add(GuiText.HoldShiftClick_HIGHLIGHT_INTERFACE.getLocal());
             }
-            lineList.add(GuiText.HoldShiftClick_HIGHLIGHT_INTERFACE.getLocal());
         } else {
             lineList.add(GuiText.HoldShiftForTooltip.getLocal());
         }
@@ -391,6 +400,10 @@ public class GuiCraftingCPU extends AEBaseGui implements ISortSource {
     public void drawBG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
         this.bindTexture("guis/craftingcpu.png");
         this.drawTexturedModalRect(offsetX, offsetY, 0, 0, this.xSize, this.ySize);
+    }
+
+    public void postUpdate(IAEItemStack is) {
+        this.hoveredNbtStack = is.getItemStack();
     }
 
     public void postUpdate(final List<IAEItemStack> list, final byte ref) {
