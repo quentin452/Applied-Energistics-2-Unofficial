@@ -16,6 +16,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -33,6 +34,7 @@ import appeng.api.parts.ISimplifiedBundle;
 import appeng.api.storage.IMEInventory;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.util.WorldCoord;
+import appeng.block.crafting.BlockAdvanceCraftingUnit;
 import appeng.me.cluster.IAECluster;
 import appeng.me.cluster.IAEMultiBlock;
 import appeng.me.cluster.implementations.CraftingCPUCalculator;
@@ -99,9 +101,20 @@ public class TileCraftingTile extends AENetworkTile implements IAEMultiBlock, IP
                 .contains(this.worldObj.getBlockMetadata(this.xCoord, this.yCoord, this.zCoord) & 3);
     }
 
+    public int getAcceleratorScaleFactor(Block blockType) {
+        if (blockType instanceof BlockAdvanceCraftingUnit) {
+            return ACCELERATOR_SCALE_FACTOR * 16;
+        } else {
+            return ACCELERATOR_SCALE_FACTOR;
+        }
+    }
+
     public int acceleratorValue() {
         int meta = this.worldObj.getBlockMetadata(this.xCoord, this.yCoord, this.zCoord) & 3;
-        return (int) Math.pow(ACCELERATOR_SCALE_FACTOR, meta - 1);
+        return (int) Math.pow(
+                this.getAcceleratorScaleFactor(
+                        this.worldObj.getTileEntity(this.xCoord, this.yCoord, this.zCoord).getBlockType()),
+                meta - 1);
     }
 
     @Override
