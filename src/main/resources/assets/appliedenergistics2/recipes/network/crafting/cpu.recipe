@@ -25,6 +25,34 @@ shapeless=
     -> ae2:BlockCraftingUnit:3
 
 shapeless=
+    ae2:BlockCraftingUnit:3
+    ae2:BlockCraftingUnit:3
+    ae2:BlockCraftingUnit:3
+    ae2:BlockCraftingUnit:3
+    -> ae2:BlockAdvanceCraftingUnit:0
+
+shapeless=
+    ae2:BlockAdvanceCraftingUnit:0
+    ae2:BlockAdvanceCraftingUnit:0
+    ae2:BlockAdvanceCraftingUnit:0
+    ae2:BlockAdvanceCraftingUnit:0
+    -> ae2:BlockAdvanceCraftingUnit:1
+
+shapeless=
+    ae2:BlockAdvanceCraftingUnit:1
+    ae2:BlockAdvanceCraftingUnit:1
+    ae2:BlockAdvanceCraftingUnit:1
+    ae2:BlockAdvanceCraftingUnit:1
+    -> ae2:BlockAdvanceCraftingUnit:2
+
+shapeless=
+    ae2:BlockAdvanceCraftingUnit:2
+    ae2:BlockAdvanceCraftingUnit:2
+    ae2:BlockAdvanceCraftingUnit:2
+    ae2:BlockAdvanceCraftingUnit:2
+    -> ae2:BlockAdvanceCraftingUnit:3
+
+shapeless=
     ae2:BlockCraftingUnit:0
     ae2:ItemPart.StorageMonitor
     -> ae2:BlockCraftingMonitor
