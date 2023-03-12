@@ -85,7 +85,7 @@ public class TileChest extends AENetworkPowerTile
         this.config.registerSetting(Settings.SORT_BY, SortOrder.NAME);
         this.config.registerSetting(Settings.VIEW_MODE, ViewItems.ALL);
         this.config.registerSetting(Settings.SORT_DIRECTION, SortDir.ASCENDING);
-
+        this.config.registerSetting(Settings.TYPE_FILTER, TypeFilter.ALL);
         this.setInternalPublicPowerStorage(true);
         this.setInternalPowerFlow(AccessRestriction.WRITE);
     }
