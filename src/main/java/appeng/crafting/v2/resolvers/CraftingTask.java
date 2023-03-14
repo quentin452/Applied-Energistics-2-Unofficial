@@ -1,5 +1,6 @@
 package appeng.crafting.v2.resolvers;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -12,13 +13,16 @@ import appeng.api.storage.data.IItemList;
 import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingContext;
 import appeng.crafting.v2.CraftingRequest;
+import appeng.crafting.v2.CraftingRequest.UsedResolverEntry;
+import appeng.crafting.v2.CraftingTreeSerializer;
+import appeng.crafting.v2.ITreeSerializable;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 
 /**
  * A single action that can be performed to solve a {@link CraftingRequest}. Can have multiple inputs and outputs,
  * resolved at runtime during crafting resolution (e.g. for handling substitutions).
  */
-public abstract class CraftingTask<RequestStackType extends IAEStack<RequestStackType>> {
+public abstract class CraftingTask<RequestStackType extends IAEStack<RequestStackType>> implements ITreeSerializable {
 
     public enum State {
 
@@ -88,8 +92,32 @@ public abstract class CraftingTask<RequestStackType extends IAEStack<RequestStac
         this.state = State.NEEDS_MORE_WORK;
     }
 
+    @SuppressWarnings({ "unchecked", "unused" })
+    protected CraftingTask(CraftingTreeSerializer serializer, ITreeSerializable parent) throws IOException {
+        this.request = ((UsedResolverEntry<RequestStackType>) parent).parent;
+        this.priority = serializer.getBuffer().readInt();
+        this.state = serializer.readEnum(State.class);
+    }
+
+    @Override
+    public List<? extends ITreeSerializable> serializeTree(CraftingTreeSerializer serializer) throws IOException {
+        serializer.getBuffer().writeInt(priority);
+        serializer.writeEnum(state);
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void loadChildren(List<ITreeSerializable> children) throws IOException {}
+
     public State getState() {
         return state;
+    }
+
+    /**
+     * @return Localized tooltip text for the crafting tree gui
+     */
+    public String getTooltipText() {
+        return toString();
     }
 
     /**

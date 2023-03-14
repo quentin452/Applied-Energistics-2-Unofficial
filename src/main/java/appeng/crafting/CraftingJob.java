@@ -15,7 +15,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 
 import appeng.api.AEApi;
@@ -93,8 +92,6 @@ public class CraftingJob implements ICraftingJob, Runnable {
     IAEItemStack checkUse(final IAEItemStack available) {
         return this.availableCheck.extractItems(available, Actionable.MODULATE, this.actionSrc);
     }
-
-    public void writeToNBT(final NBTTagCompound out) {}
 
     void addTask(IAEItemStack what, final long crafts, final ICraftingPatternDetails details, final int depth) {
         if (crafts > 0) {

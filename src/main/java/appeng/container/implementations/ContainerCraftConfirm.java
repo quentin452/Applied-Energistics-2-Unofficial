@@ -45,8 +45,10 @@ import appeng.container.interfaces.ICraftingCPUSelectorContainer;
 import appeng.core.AELog;
 import appeng.core.sync.GuiBridge;
 import appeng.core.sync.network.NetworkHandler;
+import appeng.core.sync.packets.PacketCraftingTreeData;
 import appeng.core.sync.packets.PacketMEInventoryUpdate;
 import appeng.core.sync.packets.PacketSwitchGuis;
+import appeng.crafting.v2.CraftingJobV2;
 import appeng.helpers.WirelessTerminalGuiObject;
 import appeng.parts.reporting.PartCraftingTerminal;
 import appeng.parts.reporting.PartPatternTerminal;
@@ -184,12 +186,22 @@ public class ContainerCraftConfirm extends AEBaseContainer implements ICraftingC
                         }
                     }
 
+                    final PacketCraftingTreeData treeUpdate;
+                    if (this.result instanceof CraftingJobV2) {
+                        treeUpdate = new PacketCraftingTreeData((CraftingJobV2) this.result);
+                    } else {
+                        treeUpdate = null;
+                    }
                     for (final Object player : this.crafters) {
-                        if (player instanceof EntityPlayer) {
-                            NetworkHandler.instance.sendTo(storageUpdate, (EntityPlayerMP) player);
-                            NetworkHandler.instance.sendTo(pendingUpdate, (EntityPlayerMP) player);
+                        if (player instanceof EntityPlayerMP) {
+                            EntityPlayerMP playerMP = (EntityPlayerMP) player;
+                            NetworkHandler.instance.sendTo(storageUpdate, playerMP);
+                            NetworkHandler.instance.sendTo(pendingUpdate, playerMP);
                             if (missingUpdate != null) {
-                                NetworkHandler.instance.sendTo(missingUpdate, (EntityPlayerMP) player);
+                                NetworkHandler.instance.sendTo(missingUpdate, playerMP);
+                            }
+                            if (treeUpdate != null) {
+                                NetworkHandler.instance.sendTo(treeUpdate, playerMP);
                             }
                         }
                     }

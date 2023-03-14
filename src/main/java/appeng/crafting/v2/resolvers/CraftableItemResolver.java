@@ -1,7 +1,9 @@
 package appeng.crafting.v2.resolvers;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 
@@ -17,20 +19,24 @@ import appeng.api.storage.data.IItemList;
 import appeng.core.AEConfig;
 import appeng.core.AELog;
 import appeng.core.features.AEFeature;
+import appeng.core.localization.GuiText;
 import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingContext;
 import appeng.crafting.v2.CraftingRequest;
 import appeng.crafting.v2.CraftingRequest.SubstitutionMode;
+import appeng.crafting.v2.CraftingTreeSerializer;
+import appeng.crafting.v2.ITreeSerializable;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.HashBasedItemList;
 
 import com.google.common.collect.ImmutableList;
+import io.netty.buffer.ByteBuf;
 
 public class CraftableItemResolver implements CraftingRequestResolver<IAEItemStack> {
 
-    public static class RequestAndPerCraftAmount {
+    public static class RequestAndPerCraftAmount implements ITreeSerializable {
 
         public final CraftingRequest<IAEItemStack> request;
         public final long perCraftAmount;
@@ -38,6 +44,29 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
         public RequestAndPerCraftAmount(CraftingRequest<IAEItemStack> request, long perCraftAmount) {
             this.request = request;
             this.perCraftAmount = perCraftAmount;
+        }
+
+        @SuppressWarnings({ "unchecked", "unused" })
+        public RequestAndPerCraftAmount(CraftingTreeSerializer serializer, ITreeSerializable parent)
+                throws IOException {
+            this.perCraftAmount = serializer.getBuffer().readLong();
+            this.request = new CraftingRequest<>(serializer, parent);
+        }
+
+        @Override
+        public List<? extends ITreeSerializable> serializeTree(CraftingTreeSerializer serializer) throws IOException {
+            serializer.getBuffer().writeLong(this.perCraftAmount);
+            return request.serializeTree(serializer);
+        }
+
+        @Override
+        public void loadChildren(List<ITreeSerializable> children) throws IOException {
+            request.loadChildren(children);
+        }
+
+        @Override
+        public ITreeSerializable getSerializationParent() {
+            return request;
         }
     }
 
@@ -53,6 +82,7 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
         // With the recursive part subtracted
         protected final IAEItemStack[] patternOutputs;
         protected final IAEItemStack matchingOutput;
+        public IAEItemStack craftingMachine;
         protected final ArrayList<RequestAndPerCraftAmount> childRequests = new ArrayList<>();
         protected final ArrayList<CraftingRequest> complexRequestPerSlot = new ArrayList<>();
         protected final Map<IAEItemStack, CraftingRequest<IAEItemStack>> childRecursionRequests = new HashMap<>();
@@ -76,6 +106,21 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
             HashBasedItemList pInputs = new HashBasedItemList();
             HashBasedItemList pOutputs = new HashBasedItemList();
             HashBasedItemList pRecInputs = new HashBasedItemList();
+            calculatePatternIO(pattern, pInputs, pOutputs, pRecInputs);
+            this.patternInputs = pInputs.toArray(new IAEItemStack[0]);
+            this.patternOutputs = pOutputs.toArray(new IAEItemStack[0]);
+            this.patternRecursionInputs = pRecInputs.toArray(new IAEItemStack[0]);
+            IAEItemStack foundMatchingOutput = Arrays.stream(patternOutputs).filter(this::isOutputSameAs).findFirst()
+                    .orElse(null);
+            if (foundMatchingOutput == null) {
+                state = State.FAILURE;
+                throw new IllegalStateException("Invalid pattern crafting step for " + request);
+            }
+            this.matchingOutput = foundMatchingOutput;
+        }
+
+        private static void calculatePatternIO(ICraftingPatternDetails pattern, HashBasedItemList pInputs,
+                HashBasedItemList pOutputs, HashBasedItemList pRecInputs) {
             Arrays.stream(pattern.getInputs()).filter(Objects::nonNull).forEach(pInputs::add);
             Arrays.stream(pattern.getOutputs()).filter(Objects::nonNull).forEach(pOutputs::add);
             for (IAEItemStack output : pOutputs) {
@@ -94,21 +139,63 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                     }
                 }
             }
+        }
+
+        @SuppressWarnings("unused")
+        public CraftFromPatternTask(CraftingTreeSerializer serializer, ITreeSerializable parent) throws IOException {
+            super(serializer, parent);
+            final ByteBuf buffer = serializer.getBuffer();
+
+            this.pattern = serializer.readPattern();
+            this.allowSimulation = buffer.readBoolean();
+            this.isComplex = buffer.readBoolean();
+            this.matchingOutput = serializer.readItemStack();
+            this.craftingMachine = serializer.readItemStack();
+            this.totalCraftsDone = buffer.readLong();
+
+            HashBasedItemList pInputs = new HashBasedItemList();
+            HashBasedItemList pOutputs = new HashBasedItemList();
+            HashBasedItemList pRecInputs = new HashBasedItemList();
+            calculatePatternIO(pattern, pInputs, pOutputs, pRecInputs);
             this.patternInputs = pInputs.toArray(new IAEItemStack[0]);
             this.patternOutputs = pOutputs.toArray(new IAEItemStack[0]);
             this.patternRecursionInputs = pRecInputs.toArray(new IAEItemStack[0]);
-            IAEItemStack foundMatchingOutput = null;
-            for (final IAEItemStack patternOutput : patternOutputs) {
-                if (isOutputSameAs(patternOutput)) {
-                    foundMatchingOutput = patternOutput;
-                    break;
+        }
+
+        @Override
+        public List<? extends ITreeSerializable> serializeTree(CraftingTreeSerializer serializer) throws IOException {
+            super.serializeTree(serializer);
+            final ByteBuf buffer = serializer.getBuffer();
+            serializer.writePattern(pattern);
+            buffer.writeBoolean(allowSimulation);
+            buffer.writeBoolean(isComplex);
+            serializer.writeItemStack(matchingOutput);
+            serializer.writeItemStack(craftingMachine);
+            buffer.writeLong(totalCraftsDone);
+            return this.childRequests;
+        }
+
+        @Override
+        public void loadChildren(List<ITreeSerializable> children) throws IOException {
+            for (ITreeSerializable child : children) {
+                if (!(child instanceof RequestAndPerCraftAmount)) {
+                    throw new UnsupportedOperationException(
+                            "Invalid craftable request child type: " + child.getClass());
                 }
+                this.childRequests.add((RequestAndPerCraftAmount) child);
             }
-            if (foundMatchingOutput == null) {
-                state = State.FAILURE;
-                throw new IllegalStateException("Invalid pattern crafting step for " + request);
-            }
-            this.matchingOutput = foundMatchingOutput;
+        }
+
+        public List<CraftingRequest<IAEItemStack>> getChildRequests() {
+            return childRequests.stream().map(r -> r.request).collect(Collectors.toList());
+        }
+
+        public long getTotalCraftsDone() {
+            return totalCraftsDone;
+        }
+
+        public IAEItemStack getCraftingMachine() {
+            return craftingMachine;
         }
 
         public boolean isOutputSameAs(IAEItemStack otherStack) {
@@ -239,6 +326,15 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                         }
                     }
                 }
+                if (totalCraftsDone > 0) {
+                    for (RequestAndPerCraftAmount inputChildPair : childRequests) {
+                        if (inputChildPair.request.wasSimulated) {
+                            this.request.wasSimulated = true;
+                        }
+                    }
+                }
+                // Determine an icon for the crafting plan
+                this.craftingMachine = context.getCrafterIconForPattern(this.pattern);
                 state = State.SUCCESS;
                 return new StepOutput(Collections.emptyList());
             } else {
@@ -424,6 +520,18 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                     + ", state="
                     + state
                     + '}';
+        }
+
+        @Override
+        public String getTooltipText() {
+            return GuiText.Crafting.getLocal() + "\n "
+                    + GuiText.Crafts.getLocal()
+                    + ": "
+                    + totalCraftsDone
+                    + "\n "
+                    + GuiText.Interface.getLocal()
+                    + ": "
+                    + Platform.getItemDisplayName(craftingMachine);
         }
     }
 

@@ -12,8 +12,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 
+import appeng.api.AEApi;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingGrid;
+import appeng.api.networking.crafting.ICraftingMedium;
 import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.networking.storage.IStorageGrid;
@@ -21,8 +23,11 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.container.ContainerNull;
+import appeng.core.AEConfig;
 import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.resolvers.CraftingTask;
+import appeng.crafting.v2.resolvers.CraftingTask.State;
+import appeng.me.cache.CraftingGridCache;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
@@ -91,6 +96,7 @@ public final class CraftingContext {
     private CraftingTask.State finishedState = CraftingTask.State.FAILURE;
     private final ImmutableMap<IAEItemStack, ImmutableList<ICraftingPatternDetails>> availablePatterns;
     private final Map<IAEItemStack, List<ICraftingPatternDetails>> precisePatternCache = new HashMap<>();
+    private final Map<ICraftingPatternDetails, IAEItemStack> crafterIconCache = new HashMap<>();
     private final OreListMultiMap<ICraftingPatternDetails> fuzzyPatternCache = new OreListMultiMap<>();
     private final IdentityHashMap<ICraftingPatternDetails, Boolean> isPatternComplexCache = new IdentityHashMap<>();
     private final ClassToInstanceMap<Object> userCaches = MutableClassToInstanceMap.create();
@@ -133,6 +139,21 @@ public final class CraftingContext {
             throw new IllegalStateException("No resolvers available for request " + request.toString());
         }
         queueNextTaskOf(processing, true);
+    }
+
+    public IAEItemStack getCrafterIconForPattern(@Nonnull ICraftingPatternDetails pattern) {
+        return crafterIconCache.computeIfAbsent(pattern, ignored -> {
+            if (craftingGrid instanceof CraftingGridCache) {
+                final List<ICraftingMedium> mediums = ((CraftingGridCache) craftingGrid).getMediums(pattern);
+                for (ICraftingMedium medium : mediums) {
+                    ItemStack stack = medium.getCrafterIcon();
+                    if (stack != null) {
+                        return AEItemStack.create(stack);
+                    }
+                }
+            }
+            return AEItemStack.create(AEApi.instance().definitions().blocks().iface().maybeStack(1).orNull());
+        });
     }
 
     public List<ICraftingPatternDetails> getPrecisePatternsFor(@Nonnull IAEItemStack stack) {
@@ -237,6 +258,15 @@ public final class CraftingContext {
     public CraftingTask.State doWork() {
         if (tasksToProcess.isEmpty()) {
             return finishedState;
+        }
+        if (resolvedTasks.size() > AEConfig.instance.maxCraftingSteps) {
+            this.finishedState = State.FAILURE;
+            for (CraftingTask task : tasksToProcess) {
+                if (task.request != null) {
+                    task.request.incomplete = true;
+                }
+            }
+            throw new CraftingStepLimitExceeded();
         }
         final CraftingTask frontTask = tasksToProcess.getFirst();
         if (frontTask.getState() == CraftingTask.State.SUCCESS || frontTask.getState() == CraftingTask.State.FAILURE) {

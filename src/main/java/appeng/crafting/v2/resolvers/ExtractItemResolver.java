@@ -1,5 +1,6 @@
 package appeng.crafting.v2.resolvers;
 
+import java.io.IOException;
 import java.util.*;
 
 import javax.annotation.Nonnull;
@@ -8,11 +9,15 @@ import appeng.api.config.Actionable;
 import appeng.api.config.FuzzyMode;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
+import appeng.core.localization.GuiText;
 import appeng.crafting.CraftBranchFailure;
 import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingContext;
 import appeng.crafting.v2.CraftingRequest;
+import appeng.crafting.v2.CraftingTreeSerializer;
+import appeng.crafting.v2.ITreeSerializable;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
+import appeng.util.Platform;
 
 public class ExtractItemResolver implements CraftingRequestResolver<IAEItemStack> {
 
@@ -24,6 +29,24 @@ public class ExtractItemResolver implements CraftingRequestResolver<IAEItemStack
         public ExtractItemTask(CraftingRequest<IAEItemStack> request) {
             super(request, CraftingTask.PRIORITY_EXTRACT); // always try to extract items first
         }
+
+        @SuppressWarnings("unused")
+        public ExtractItemTask(CraftingTreeSerializer serializer, ITreeSerializable parent) throws IOException {
+            super(serializer, parent);
+            serializer.readList(removedFromSystem, serializer::readItemStack);
+            serializer.readList(removedFromByproducts, serializer::readItemStack);
+        }
+
+        @Override
+        public List<? extends ITreeSerializable> serializeTree(CraftingTreeSerializer serializer) throws IOException {
+            super.serializeTree(serializer);
+            serializer.writeList(removedFromSystem, serializer::writeItemStack);
+            serializer.writeList(removedFromByproducts, serializer::writeItemStack);
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void loadChildren(List<ITreeSerializable> children) throws IOException {}
 
         @Override
         public StepOutput calculateOneStep(CraftingContext context) {
@@ -162,6 +185,42 @@ public class ExtractItemResolver implements CraftingRequestResolver<IAEItemStack
                     + ", state="
                     + state
                     + '}';
+        }
+
+        @Override
+        public String getTooltipText() {
+            long removedCount = 0, removedTypes = 0;
+            final StringBuilder itemList = new StringBuilder();
+            for (IAEItemStack stack : removedFromSystem) {
+                if (stack != null) {
+                    removedCount += stack.getStackSize();
+                    removedTypes++;
+                    itemList.append("\n ");
+                    itemList.append(stack);
+                    itemList.append(" (");
+                    itemList.append(Platform.getItemDisplayName(stack));
+                    itemList.append(')');
+                }
+            }
+            for (IAEItemStack stack : removedFromByproducts) {
+                if (stack != null) {
+                    removedCount += stack.getStackSize();
+                    removedTypes++;
+                    itemList.append("\n ");
+                    itemList.append(stack);
+                    itemList.append(" (");
+                    itemList.append(Platform.getItemDisplayName(stack));
+                    itemList.append(')');
+                }
+            }
+
+            return GuiText.StoredItems.getLocal() + ": "
+                    + removedCount
+                    + "\n "
+                    + GuiText.StoredStacks.getLocal()
+                    + ": "
+                    + removedTypes
+                    + itemList;
         }
     }
 

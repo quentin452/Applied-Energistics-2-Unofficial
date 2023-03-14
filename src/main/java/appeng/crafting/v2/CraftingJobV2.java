@@ -1,5 +1,6 @@
 package appeng.crafting.v2;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -24,18 +25,22 @@ import appeng.crafting.v2.CraftingRequest.SubstitutionMode;
 import appeng.crafting.v2.resolvers.CraftingTask;
 import appeng.hooks.TickHandler;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
+import cpw.mods.fml.common.network.ByteBufUtils;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * A new, self-contained implementation of the crafting calculator. Does an iterative search on the crafting recipe
  * tree.
  */
-public class CraftingJobV2 implements ICraftingJob, Future<ICraftingJob> {
+public class CraftingJobV2 implements ICraftingJob, Future<ICraftingJob>, ITreeSerializable {
 
     protected volatile long totalByteCost = -1; // -1 means it needs to be recalculated
 
     protected CraftingContext context;
-    protected final CraftingRequest<IAEItemStack> originalRequest;
+    public CraftingRequest<IAEItemStack> originalRequest;
     protected ICraftingCallback callback;
+    protected String errorMessage = "";
 
     protected enum State {
         RUNNING,
@@ -52,6 +57,65 @@ public class CraftingJobV2 implements ICraftingJob, Future<ICraftingJob> {
         this.originalRequest = new CraftingRequest<>(what, SubstitutionMode.PRECISE_FRESH, IAEItemStack.class, true);
         this.context.addRequest(this.originalRequest);
         this.context.itemModel.ignore(what);
+    }
+
+    public CraftingJobV2(CraftingTreeSerializer serializer, ITreeSerializable parent) throws IOException {
+        this.totalByteCost = serializer.getBuffer().readLong();
+        this.state = serializer.readEnum(State.class);
+        this.errorMessage = ByteBufUtils.readUTF8String(serializer.getBuffer());
+        this.originalRequest = new CraftingRequest<>(serializer, this);
+    }
+
+    public static CraftingJobV2 deserialize(World world, ByteBuf buffer) {
+        if (buffer.readableBytes() < 1) {
+            return null;
+        }
+        final CraftingTreeSerializer serializer = new CraftingTreeSerializer(world, buffer);
+        final ITreeSerializable rawJob;
+        try {
+            rawJob = serializer.readSerializableAndQueueChildren(null);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        if (!(rawJob instanceof CraftingJobV2)) {
+            throw new UnsupportedOperationException("Invalid job type deserialized: " + rawJob.getClass());
+        }
+        final CraftingJobV2 job = (CraftingJobV2) rawJob;
+        while (serializer.hasWork()) {
+            try {
+                serializer.doWork();
+            } catch (IndexOutOfBoundsException e) {
+                // can not serialize any more items, cut off the tree
+                AELog.warn(e, "Ran out of assigned space for crafting tree serialization");
+                serializer.doBestEffortWork();
+                break;
+            }
+        }
+        return job;
+    }
+
+    public ByteBuf serialize() {
+        try {
+            final CraftingTreeSerializer serializer = new CraftingTreeSerializer(context.world);
+            try {
+                serializer.writeSerializableAndQueueChildren(this);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            while (serializer.hasWork()) {
+                try {
+                    serializer.doWork();
+                } catch (IndexOutOfBoundsException e) {
+                    // can not serialize any more items, cut off the tree
+                    AELog.warn(e, "Ran out of assigned space for crafting tree serialization");
+                    break;
+                }
+            }
+            return serializer.getBuffer().slice();
+        } catch (Exception e) {
+            AELog.error(e, "Could not serialize the crafting job");
+            return Unpooled.buffer(0);
+        }
     }
 
     @Override
@@ -72,11 +136,39 @@ public class CraftingJobV2 implements ICraftingJob, Future<ICraftingJob> {
         return byteCost;
     }
 
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
     @Override
     public void populatePlan(IItemList<IAEItemStack> plan) {
         for (CraftingTask task : context.getResolvedTasks()) {
             task.populatePlan(plan);
         }
+    }
+
+    @Override
+    public List<? extends ITreeSerializable> serializeTree(CraftingTreeSerializer serializer) throws IOException {
+        if (this.state == State.RUNNING) {
+            throw new IllegalStateException("Can't serialize a running crafting simulation");
+        }
+        if (this.originalRequest == null) {
+            throw new IllegalStateException("Can't serialize a null request");
+        }
+        serializer.getBuffer().writeLong(getByteTotal());
+        serializer.writeEnum(state);
+        ByteBufUtils.writeUTF8String(serializer.getBuffer(), errorMessage);
+        return originalRequest.serializeTree(serializer);
+    }
+
+    @Override
+    public ITreeSerializable getSerializationParent() {
+        return originalRequest;
+    }
+
+    @Override
+    public void loadChildren(List<ITreeSerializable> children) throws IOException {
+        originalRequest.loadChildren(children);
     }
 
     @Override
@@ -99,6 +191,7 @@ public class CraftingJobV2 implements ICraftingJob, Future<ICraftingJob> {
             } while (taskState.needsMoreWork && System.currentTimeMillis() < finishTime && (state == State.RUNNING));
         } catch (Exception e) {
             AELog.error(e, "Error while simulating crafting for " + originalRequest);
+            errorMessage = e.toString();
             this.state = State.CANCELLED;
             if (callback != null) {
                 callback.calculationComplete(this);

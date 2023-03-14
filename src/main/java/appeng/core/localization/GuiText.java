@@ -32,6 +32,7 @@ public enum GuiText {
     Interface,
     Config,
     StoredItems,
+    StoredStacks,
     Patterns,
     ImportBus,
     ExportBus,
@@ -136,6 +137,7 @@ public enum GuiText {
     Cancel,
     ETA,
     ETAFormat,
+    SwitchCraftingSimulationDisplayMode,
 
     FromStorage,
     ToCraft,
@@ -150,6 +152,10 @@ public enum GuiText {
     CoProcessors,
     Simulation,
     Missing,
+    CraftingStepLimitExceeded,
+    NoCraftingTreeReceived,
+    RequestedItem,
+    SimulationIncomplete,
 
     InterfaceTerminal,
     NoCraftingCPUs,

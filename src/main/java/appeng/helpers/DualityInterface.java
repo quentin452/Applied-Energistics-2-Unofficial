@@ -28,6 +28,7 @@ import net.minecraftforge.common.util.ForgeDirection;
 
 import appeng.api.AEApi;
 import appeng.api.config.*;
+import appeng.api.crafting.ICraftingIconProvider;
 import appeng.api.implementations.ICraftingPatternItem;
 import appeng.api.implementations.IUpgradeableHost;
 import appeng.api.implementations.tiles.ICraftingMachine;
@@ -1017,12 +1018,14 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
         this.craftingTracker.jobStateChange(link);
     }
 
-    public String getTermName() {
+    @Override
+    public ItemStack getCrafterIcon() {
         final TileEntity hostTile = this.iHost.getTileEntity();
         final World hostWorld = hostTile.getWorldObj();
 
+        String customName = null;
         if (((ICustomNameObject) this.iHost).hasCustomName()) {
-            return ((ICustomNameObject) this.iHost).getCustomName();
+            customName = ((ICustomNameObject) this.iHost).getCustomName();
         }
 
         final EnumSet<ForgeDirection> possibleDirections = this.iHost.getTargets();
@@ -1044,6 +1047,10 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
                 } catch (final GridAccessException e) {
                     continue;
                 }
+            }
+
+            if (directedTile instanceof ICraftingIconProvider) {
+                return ((ICraftingIconProvider) directedTile).getMachineCraftingIcon();
             }
 
             final InventoryAdaptor adaptor = InventoryAdaptor.getAdaptor(directedTile, direction.getOpposite());
@@ -1093,17 +1100,33 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
                 }
 
                 if (what.getItem() != null) {
-                    return what.getUnlocalizedName();
+                    if (customName != null) {
+                        what.setStackDisplayName(customName);
+                    }
+                    return what;
                 }
 
                 final Item item = Item.getItemFromBlock(directedBlock);
-                if (item == null) {
-                    return directedBlock.getUnlocalizedName();
+                if (item != null) {
+                    return new ItemStack(item);
                 }
             }
         }
 
-        return "Nothing";
+        return null;
+    }
+
+    public String getTermName() {
+        if (((ICustomNameObject) this.iHost).hasCustomName()) {
+            return ((ICustomNameObject) this.iHost).getCustomName();
+        }
+
+        final ItemStack item = getCrafterIcon();
+        if (item != null) {
+            return item.getUnlocalizedName();
+        } else {
+            return "Nothing";
+        }
     }
 
     public long getSortValue() {

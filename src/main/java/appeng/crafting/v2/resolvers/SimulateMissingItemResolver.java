@@ -1,5 +1,6 @@
 package appeng.crafting.v2.resolvers;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -8,9 +9,12 @@ import javax.annotation.Nonnull;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
+import appeng.core.localization.GuiText;
 import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingContext;
 import appeng.crafting.v2.CraftingRequest;
+import appeng.crafting.v2.CraftingTreeSerializer;
+import appeng.crafting.v2.ITreeSerializable;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 
 public class SimulateMissingItemResolver<StackType extends IAEStack<StackType>>
@@ -24,6 +28,23 @@ public class SimulateMissingItemResolver<StackType extends IAEStack<StackType>>
             super(request, CraftingTask.PRIORITY_SIMULATE); // conjure items for calculations out of thin air as a last
                                                             // resort
         }
+
+        @SuppressWarnings("unused")
+        public ConjureItemTask(CraftingTreeSerializer serializer, ITreeSerializable parent) throws IOException {
+            super(serializer, parent);
+
+            fulfilled = serializer.getBuffer().readLong();
+        }
+
+        @Override
+        public List<? extends ITreeSerializable> serializeTree(CraftingTreeSerializer serializer) throws IOException {
+            super.serializeTree(serializer);
+            serializer.getBuffer().writeLong(fulfilled);
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void loadChildren(List<ITreeSerializable> children) throws IOException {}
 
         @Override
         public StepOutput calculateOneStep(CraftingContext context) {
@@ -77,6 +98,11 @@ public class SimulateMissingItemResolver<StackType extends IAEStack<StackType>>
                     + ", state="
                     + state
                     + '}';
+        }
+
+        @Override
+        public String getTooltipText() {
+            return GuiText.Simulation.getLocal() + "\n " + GuiText.Missing.getLocal() + ": " + fulfilled;
         }
     }
 

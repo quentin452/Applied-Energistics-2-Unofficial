@@ -1,5 +1,6 @@
 package appeng.crafting.v2.resolvers;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -7,9 +8,12 @@ import javax.annotation.Nonnull;
 
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
+import appeng.core.localization.GuiText;
 import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingContext;
 import appeng.crafting.v2.CraftingRequest;
+import appeng.crafting.v2.CraftingTreeSerializer;
+import appeng.crafting.v2.ITreeSerializable;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 
 public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStack> {
@@ -22,6 +26,23 @@ public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStac
             super(request, CraftingTask.PRIORITY_CRAFTING_EMITTER); // conjure items for calculations out of thin air as
                                                                     // a last
         }
+
+        @SuppressWarnings("unused")
+        public EmitItemTask(CraftingTreeSerializer serializer, ITreeSerializable parent) throws IOException {
+            super(serializer, parent);
+
+            fulfilled = serializer.getBuffer().readLong();
+        }
+
+        @Override
+        public List<? extends ITreeSerializable> serializeTree(CraftingTreeSerializer serializer) throws IOException {
+            super.serializeTree(serializer);
+            serializer.getBuffer().writeLong(fulfilled);
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void loadChildren(List<ITreeSerializable> children) throws IOException {}
 
         @Override
         public StepOutput calculateOneStep(CraftingContext context) {
@@ -73,6 +94,11 @@ public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStac
                     + ", state="
                     + state
                     + '}';
+        }
+
+        @Override
+        public String getTooltipText() {
+            return GuiText.LevelEmitter.getLocal() + ": " + fulfilled;
         }
     }
 

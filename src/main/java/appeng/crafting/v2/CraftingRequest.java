@@ -1,9 +1,7 @@
 package appeng.crafting.v2;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 import java.util.function.Predicate;
 
 import appeng.api.networking.crafting.ICraftingPatternDetails;
@@ -11,15 +9,17 @@ import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.core.AELog;
+import appeng.core.localization.GuiText;
 import appeng.crafting.v2.resolvers.CraftingTask;
 import appeng.util.item.AEItemStack;
+import io.netty.buffer.ByteBuf;
 
 /**
  * A single requested stack (item or fluid) to craft, e.g. 32x Torches
  *
  * @param <StackType> Should be {@link IAEItemStack} or {@link appeng.api.storage.data.IAEFluidStack}
  */
-public class CraftingRequest<StackType extends IAEStack<StackType>> {
+public class CraftingRequest<StackType extends IAEStack<StackType>> implements ITreeSerializable {
 
     public enum SubstitutionMode {
         /**
@@ -37,14 +37,35 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
         ACCEPT_FUZZY
     }
 
-    public static class UsedResolverEntry {
+    public static class UsedResolverEntry<T extends IAEStack<T>> implements ITreeSerializable {
 
-        public final CraftingTask task;
-        public final IAEStack<?> resolvedStack;
+        public final CraftingRequest<T> parent;
+        public CraftingTask<T> task;
+        public final IAEStack<T> resolvedStack;
 
-        public UsedResolverEntry(CraftingTask task, IAEStack<?> resolvedStack) {
+        public UsedResolverEntry(CraftingRequest<T> parent, CraftingTask<T> task, IAEStack<T> resolvedStack) {
+            this.parent = parent;
             this.task = task;
             this.resolvedStack = resolvedStack;
+        }
+
+        @SuppressWarnings("unchecked")
+        public UsedResolverEntry(CraftingTreeSerializer serializer, ITreeSerializable parent) throws IOException {
+            this.parent = (CraftingRequest<T>) parent;
+            this.resolvedStack = (IAEStack<T>) serializer.readStack();
+            this.task = null; // to be filled by loadChildren
+        }
+
+        @Override
+        public List<? extends ITreeSerializable> serializeTree(CraftingTreeSerializer serializer) throws IOException {
+            serializer.writeStack(resolvedStack);
+            return Collections.singletonList(task);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public void loadChildren(List<ITreeSerializable> children) throws IOException {
+            task = Objects.requireNonNull((CraftingTask<T>) children.iterator().next());
         }
     }
 
@@ -57,7 +78,7 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
     public final SubstitutionMode substitutionMode;
     public final Predicate<StackType> acceptableSubstituteFn;
     // (task, amount fulfilled by task)
-    public final List<UsedResolverEntry> usedResolvers = new ArrayList<>();
+    public final List<UsedResolverEntry<StackType>> usedResolvers = new ArrayList<>();
     /**
      * Whether this request and its children can be fulfilled by simulations
      */
@@ -74,11 +95,57 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
      * way)
      */
     public volatile boolean wasSimulated = false;
+    public boolean incomplete = false;
 
     /**
      * A set of all patterns used to resolve this request and its parents, used for avoiding infinite recursion.
      */
     public final Set<ICraftingPatternDetails> patternParents = new HashSet<>();
+
+    @Override
+    public List<? extends ITreeSerializable> serializeTree(CraftingTreeSerializer serializer) throws IOException {
+        final ByteBuf buffer = serializer.getBuffer();
+        serializer.writeStack(stack);
+        serializer.writeEnum(substitutionMode);
+        buffer.writeBoolean(allowSimulation);
+        buffer.writeLong(remainingToProcess);
+        buffer.writeLong(byteCost);
+        buffer.writeLong(untransformedByteCost);
+        buffer.writeBoolean(wasSimulated);
+        buffer.writeBoolean(incomplete);
+        return usedResolvers;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void loadChildren(List<ITreeSerializable> children) throws IOException {
+        for (ITreeSerializable child : children) {
+            usedResolvers.add((UsedResolverEntry<StackType>) child);
+        }
+    }
+
+    @SuppressWarnings({ "unchecked", "unused" })
+    public CraftingRequest(CraftingTreeSerializer serializer, ITreeSerializable parent) throws IOException {
+        final ByteBuf buffer = serializer.getBuffer();
+        stack = (StackType) serializer.readStack();
+        if (stack == null) {
+            stackTypeClass = (Class<StackType>) IAEItemStack.class;
+        } else if (stack instanceof IAEItemStack) {
+            stackTypeClass = (Class<StackType>) IAEItemStack.class;
+        } else if (stack instanceof IAEFluidStack) {
+            stackTypeClass = (Class<StackType>) IAEFluidStack.class;
+        } else {
+            throw new UnsupportedOperationException("Unknown stack type " + stack.getClass());
+        }
+        substitutionMode = serializer.readEnum(SubstitutionMode.class);
+        allowSimulation = buffer.readBoolean();
+        remainingToProcess = buffer.readLong();
+        byteCost = buffer.readLong();
+        untransformedByteCost = buffer.readLong();
+        wasSimulated = buffer.readBoolean();
+        incomplete = buffer.readBoolean();
+        acceptableSubstituteFn = x -> true;
+    }
 
     /**
      * @param stack                  The item/fluid and stack to request
@@ -107,7 +174,7 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
      */
     public CraftingRequest(StackType request, SubstitutionMode substitutionMode, Class<StackType> stackTypeClass,
             boolean allowSimulation) {
-        this(request, substitutionMode, stackTypeClass, allowSimulation, stack -> true);
+        this(request, substitutionMode, stackTypeClass, allowSimulation, x -> true);
         if (substitutionMode == SubstitutionMode.ACCEPT_FUZZY) {
             throw new IllegalArgumentException("Fuzzy requests must have a substitution-valid predicate");
         }
@@ -120,20 +187,25 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
         return byteCost;
     }
 
-    @Override
-    public String toString() {
-        String readableName = "";
+    private String getReadableStackName() {
+        String readableName = "?";
         if (stack instanceof AEItemStack) {
             try {
-                readableName = "<" + ((AEItemStack) stack).getDisplayName() + ">";
+                readableName = ((AEItemStack) stack).getDisplayName();
             } catch (Exception e) {
                 AELog.warn(e, "Trying to obtain display name for " + stack);
                 readableName = "<EXCEPTION>";
             }
         }
+        return readableName;
+    }
+
+    @Override
+    public String toString() {
         return "CraftingRequest{request=" + stack
-                + readableName
-                + ", substitutionMode="
+                + "<"
+                + getReadableStackName()
+                + ">, substitutionMode="
                 + substitutionMode
                 + ", remainingToProcess="
                 + remainingToProcess
@@ -141,7 +213,30 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
                 + byteCost
                 + ", wasSimulated="
                 + wasSimulated
+                + ", incomplete="
+                + incomplete
                 + '}';
+    }
+
+    public String getTooltipText() {
+        return GuiText.RequestedItem.getLocal() + ": "
+                + getReadableStackName()
+                + "\n "
+                + GuiText.Substitute.getLocal()
+                + " "
+                + ((substitutionMode == SubstitutionMode.ACCEPT_FUZZY) ? GuiText.Yes.getLocal() : GuiText.No.getLocal())
+                + "\n "
+                + GuiText.BytesUsed.getLocal()
+                + ": "
+                + byteCost
+                + "\n "
+                + GuiText.Simulation.getLocal()
+                + ": "
+                + (wasSimulated ? GuiText.Yes.getLocal() : GuiText.No.getLocal())
+                + "\n "
+                + GuiText.SimulationIncomplete.getLocal()
+                + ": "
+                + (incomplete ? GuiText.Yes.getLocal() : GuiText.No.getLocal());
     }
 
     /**
@@ -162,7 +257,7 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> {
         this.untransformedByteCost += input.getStackSize();
         this.byteCost = CraftingCalculations.adjustByteCost(this, untransformedByteCost);
         this.remainingToProcess -= input.getStackSize();
-        this.usedResolvers.add(new UsedResolverEntry(origin, input.copy()));
+        this.usedResolvers.add(new UsedResolverEntry(this, origin, input.copy()));
     }
 
     /**

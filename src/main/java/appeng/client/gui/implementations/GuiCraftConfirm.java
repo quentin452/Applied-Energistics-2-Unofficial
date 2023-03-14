@@ -25,9 +25,7 @@ import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.client.gui.AEBaseGui;
-import appeng.client.gui.widgets.GuiCraftingCPUTable;
-import appeng.client.gui.widgets.GuiScrollbar;
-import appeng.client.gui.widgets.ICraftingCPUTableHolder;
+import appeng.client.gui.widgets.*;
 import appeng.container.implementations.ContainerCraftConfirm;
 import appeng.container.implementations.CraftingCPUStatus;
 import appeng.core.AELog;
@@ -37,6 +35,7 @@ import appeng.core.sync.GuiBridge;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketSwitchGuis;
 import appeng.core.sync.packets.PacketValueConfig;
+import appeng.crafting.v2.CraftingJobV2;
 import appeng.helpers.WirelessTerminalGuiObject;
 import appeng.integration.modules.NEI;
 import appeng.parts.reporting.PartCraftingTerminal;
@@ -50,35 +49,72 @@ import com.google.common.base.Joiner;
 
 public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolder {
 
+    public enum DisplayMode {
+
+        LIST,
+        TREE;
+
+        public DisplayMode next() {
+            switch (this) {
+                case LIST:
+                    return TREE;
+                case TREE:
+                    return LIST;
+                default:
+                    throw new IllegalArgumentException(this.toString());
+            }
+        }
+
+        public int getYSize() {
+            switch (this) {
+                case LIST:
+                    return 206;
+                case TREE:
+                    return 238;
+                default:
+                    throw new IllegalArgumentException(this.toString());
+            }
+        }
+    }
+
     private final ContainerCraftConfirm ccc;
     private final GuiCraftingCPUTable cpuTable;
+    private final GuiCraftingTree craftingTree;
 
     private final int rows = 5;
 
     private final IItemList<IAEItemStack> storage = AEApi.instance().storage().createItemList();
     private final IItemList<IAEItemStack> pending = AEApi.instance().storage().createItemList();
     private final IItemList<IAEItemStack> missing = AEApi.instance().storage().createItemList();
+    private CraftingJobV2 jobTree = null;
 
     private final List<IAEItemStack> visual = new ArrayList<>();
+
+    private DisplayMode displayMode = DisplayMode.LIST;
 
     private GuiBridge OriginalGui;
     private GuiButton cancel;
     private GuiButton start;
     private GuiButton selectCPU;
+    private GuiTabButton switchDisplayMode;
     private int tooltip = -1;
     private ItemStack hoveredStack;
+
+    final GuiScrollbar scrollbar;
 
     public GuiCraftConfirm(final InventoryPlayer inventoryPlayer, final ITerminalHost te) {
         super(new ContainerCraftConfirm(inventoryPlayer, te));
         this.xSize = 238;
-        this.ySize = 206;
+        this.ySize = displayMode.getYSize();
 
-        final GuiScrollbar scrollbar = new GuiScrollbar();
+        scrollbar = new GuiScrollbar();
         this.setScrollBar(scrollbar);
 
         this.cpuTable = new GuiCraftingCPUTable(this, ((ContainerCraftConfirm) inventorySlots).cpuTable);
 
         this.ccc = (ContainerCraftConfirm) this.inventorySlots;
+
+        this.craftingTree = new GuiCraftingTree(this, 9, 19, 203, 192);
 
         if (te instanceof WirelessTerminalGuiObject) {
             this.OriginalGui = GuiBridge.GUI_WIRELESS_TERM;
@@ -114,6 +150,8 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
     public void initGui() {
         super.initGui();
 
+        this.setScrollBar();
+
         this.start = new GuiButton(
                 0,
                 this.guiLeft + 162,
@@ -142,6 +180,15 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 20,
                 GuiText.Cancel.getLocal());
         this.buttonList.add(this.cancel);
+
+        this.switchDisplayMode = new GuiTabButton(
+                this.guiLeft + this.xSize - 25,
+                this.guiTop - 4,
+                13 * 16 + 3,
+                GuiText.SwitchCraftingSimulationDisplayMode.getLocal(),
+                itemRender);
+        this.switchDisplayMode.setHideEdge(1);
+        this.buttonList.add(this.switchDisplayMode);
     }
 
     @Override
@@ -157,8 +204,23 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 this.start.enabled = false;
             }
         }
-        this.selectCPU.enabled = !this.isSimulation();
 
+        this.selectCPU.enabled = (displayMode == DisplayMode.LIST) && !this.isSimulation();
+        this.selectCPU.visible = (displayMode == DisplayMode.LIST);
+
+        super.drawScreen(mouseX, mouseY, btn);
+
+        switch (displayMode) {
+            case LIST:
+                drawListScreen(mouseX, mouseY, btn);
+                break;
+            case TREE:
+                drawTreeScreen(mouseX, mouseY, btn);
+                break;
+        }
+    }
+
+    private void drawListScreen(final int mouseX, final int mouseY, final float btn) {
         final int gx = (this.width - this.xSize) / 2;
         final int gy = (this.height - this.ySize) / 2;
 
@@ -185,8 +247,10 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 x = 0;
             }
         }
+    }
 
-        super.drawScreen(mouseX, mouseY, btn);
+    private void drawTreeScreen(final int mouseX, final int mouseY, final float btn) {
+        this.craftingTree.drawTooltip(mouseX, mouseY);
     }
 
     private void updateCPUButtonText() {
@@ -218,14 +282,31 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
 
         final long BytesUsed = this.ccc.getUsedBytes();
         final String byteUsed = NumberFormat.getInstance().format(BytesUsed);
-        final String Add = BytesUsed > 0 ? (byteUsed + ' ' + GuiText.BytesUsed.getLocal())
-                : GuiText.CalculatingWait.getLocal();
+        final String bannerText;
+        if (jobTree != null && !jobTree.getErrorMessage().isEmpty()) {
+            bannerText = jobTree.getErrorMessage();
+        } else if (BytesUsed > 0) {
+            bannerText = (byteUsed + ' ' + GuiText.BytesUsed.getLocal());
+        } else {
+            bannerText = GuiText.CalculatingWait.getLocal();
+        }
         this.fontRendererObj.drawString(
-                GuiText.CraftingPlan.getLocal() + " - " + Add,
+                GuiText.CraftingPlan.getLocal() + " - " + bannerText,
                 8,
                 7,
                 GuiColors.CraftConfirmCraftingPlan.getColor());
 
+        switch (displayMode) {
+            case LIST:
+                drawListFG(offsetX, offsetY, mouseX, mouseY);
+                break;
+            case TREE:
+                drawTreeFG(offsetX, offsetY, mouseX, mouseY);
+                break;
+        }
+    }
+
+    private void drawListFG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
         String dsp = null;
 
         if (this.isSimulation()) {
@@ -388,19 +469,55 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
         }
     }
 
+    private void drawTreeFG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
+        final CraftingJobV2 jobTree = this.jobTree;
+        if (jobTree == null) {
+            this.drawTooltip(16, 48, 0, GuiText.NoCraftingTreeReceived.getLocal());
+            return;
+        }
+        if (jobTree.getOutput() == null) {
+            this.drawTooltip(16, 48, 0, GuiText.Nothing.getLocal());
+            return;
+        }
+
+        craftingTree.setRequest(jobTree.originalRequest);
+
+        craftingTree.draw(mouseX, mouseY);
+    }
+
     @Override
     public void drawBG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
         cpuTable.drawBG(offsetX, offsetY);
         this.setScrollBar();
-        this.bindTexture("guis/craftingreport.png");
+
+        switch (displayMode) {
+            case LIST:
+                this.bindTexture("guis/craftingreport.png");
+                break;
+            case TREE:
+                this.bindTexture("guis/craftingtree.png");
+                break;
+        }
         this.drawTexturedModalRect(offsetX, offsetY, 0, 0, this.xSize, this.ySize);
     }
 
     private void setScrollBar() {
-        final int size = this.visual.size();
+        switch (displayMode) {
+            case LIST:
+                if (getScrollBar() == null) {
+                    setScrollBar(scrollbar);
+                }
+                final int size = this.visual.size();
 
-        this.getScrollBar().setTop(19).setLeft(218).setHeight(114);
-        this.getScrollBar().setRange(0, (size + 2) / 3 - this.rows, 1);
+                this.getScrollBar().setTop(19).setLeft(218).setHeight(114);
+                this.getScrollBar().setRange(0, (size + 2) / 3 - this.rows, 1);
+                break;
+            case TREE:
+                if (getScrollBar() != null) {
+                    setScrollBar(null);
+                }
+                break;
+        }
     }
 
     public void postUpdate(final List<IAEItemStack> list, final byte ref) {
@@ -436,6 +553,10 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
         }
         this.sortItems();
         this.setScrollBar();
+    }
+
+    public void setJobTree(CraftingJobV2 jobTree) {
+        this.jobTree = jobTree;
     }
 
     Comparator<IAEItemStack> comparator = (i1, i2) -> {
@@ -544,6 +665,12 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
             switchToOriginalGUI();
         }
 
+        if (btn == this.switchDisplayMode) {
+            this.displayMode = this.displayMode.next();
+            this.ySize = displayMode.getYSize();
+            this.setWorldAndResolution(mc, width, height);
+        }
+
         if (btn == this.start) {
             try {
                 NetworkHandler.instance.sendToServer(new PacketValueConfig("Terminal.Start", "Start"));
@@ -579,6 +706,11 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
     protected void mouseClickMove(int x, int y, int c, long d) {
         super.mouseClickMove(x, y, c, d);
         cpuTable.mouseClickMove(x - guiLeft, y - guiTop);
+    }
+
+    @Override
+    protected void mouseMovedOrUp(int mouseX, int mouseY, int state) {
+        super.mouseMovedOrUp(mouseX, mouseY, state);
     }
 
     @Override

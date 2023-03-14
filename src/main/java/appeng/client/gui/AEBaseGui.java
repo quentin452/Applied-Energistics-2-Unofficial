@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.RenderHelper;
@@ -914,5 +915,65 @@ public abstract class AEBaseGui extends GuiContainer {
         } else {
             lineList.add(GuiText.HoldShiftForTooltip.getLocal());
         }
+    }
+
+    // Accessors for protected GUI methods to make them reusable in widget classes
+
+    public FontRenderer getFontRenderer() {
+        return fontRendererObj;
+    }
+
+    @Override
+    public void drawHorizontalLine(int startX, int endX, int y, int color) {
+        super.drawHorizontalLine(startX, endX, y, color);
+    }
+
+    @Override
+    public void drawVerticalLine(int x, int startY, int endY, int color) {
+        super.drawVerticalLine(x, startY, endY, color);
+    }
+
+    @Override
+    public void drawGradientRect(int left, int top, int right, int bottom, int startColor, int endColor) {
+        super.drawGradientRect(left, top, right, bottom, startColor, endColor);
+    }
+
+    @Override
+    public void renderToolTip(ItemStack itemIn, int x, int y) {
+        super.renderToolTip(itemIn, x, y);
+    }
+
+    @Override
+    public void drawCreativeTabHoveringText(String tabName, int mouseX, int mouseY) {
+        super.drawCreativeTabHoveringText(tabName, mouseX, mouseY);
+    }
+
+    public void drawHoveringText(List textLines, int x, int y) {
+        super.func_146283_a(textLines, x, y);
+    }
+
+    @Override
+    public void drawHoveringText(List textLines, int x, int y, FontRenderer font) {
+        super.drawHoveringText(textLines, x, y, font);
+    }
+
+    public boolean isMouseOverRect(int left, int top, int right, int bottom, int pointX, int pointY) {
+        return super.func_146978_c(left, top, right, bottom, pointX, pointY);
+    }
+
+    public int getGuiLeft() {
+        return guiLeft;
+    }
+
+    public int getGuiTop() {
+        return guiTop;
+    }
+
+    public int getXSize() {
+        return xSize;
+    }
+
+    public int getYSize() {
+        return ySize;
     }
 }
