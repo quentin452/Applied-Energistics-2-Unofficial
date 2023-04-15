@@ -10,8 +10,6 @@
 
 package appeng.parts;
 
-import static net.minecraftforge.common.util.Constants.NBT.TAG_COMPOUND;
-
 import java.io.IOException;
 import java.util.*;
 
@@ -21,15 +19,11 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
-import net.minecraftforge.fluids.Fluid;
-import net.minecraftforge.fluids.FluidRegistry;
-import net.minecraftforge.fluids.FluidStack;
 
 import appeng.api.AEApi;
 import appeng.api.config.YesNo;
@@ -38,7 +32,6 @@ import appeng.api.implementations.parts.IPartCable;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.parts.*;
-import appeng.api.storage.data.IAEItemStack;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEColor;
 import appeng.api.util.DimensionalCoord;
@@ -51,9 +44,6 @@ import appeng.integration.IntegrationType;
 import appeng.integration.abstraction.ICLApi;
 import appeng.me.GridConnection;
 import appeng.util.Platform;
-import appeng.util.item.AEItemStack;
-import cpw.mods.fml.common.Loader;
-import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
@@ -838,66 +828,6 @@ public class CableBusContainer extends CableBusStorage implements AEMultiTile, I
         throw new IllegalStateException("Uhh Bad Part (" + part + ") on Side.");
     }
 
-    // spotless:off
-    static final int[] FILTER_MAP = {0,  9, 18, 27, 36, 45,
-                                     1, 10, 19, 28, 37, 46,
-                                     2, 11, 20, 29, 38, 47,
-                                     3, 12, 21, 30, 39, 48,
-                                     4, 13, 22, 31, 40, 49,
-                                     5, 14, 23, 32, 41, 50,
-                                     6, 15, 24, 33, 42, 51,
-                                     7, 16, 25, 34, 43, 52,
-                                     8, 17, 26, 35, 44, 53};
-    //spotless:on
-    private NBTTagCompound[] covertEC2Part(NBTTagCompound part, NBTTagCompound data) {
-        NBTTagCompound[] tmp = new NBTTagCompound[2];
-        if (Loader.isModLoaded("extracells") && Loader.isModLoaded("ae2fc")) {
-            ItemStack item = ItemStack.loadItemStackFromNBT(part);
-            ItemStack ec2part = new ItemStack(GameRegistry.findItem("extracells", "part.base"), 1, 2);
-            if (Platform.isSameItem(item, ec2part)) {
-                ItemStack fc2part = new ItemStack(GameRegistry.findItem("ae2fc", "part_fluid_storage_bus"), 1, 0);
-                tmp[0] = fc2part.writeToNBT(new NBTTagCompound());
-                NBTTagCompound data_new = new NBTTagCompound();
-                data_new.setTag("part", data.getCompoundTag("node").getCompoundTag("node0"));
-                data_new.setInteger("priority", data.getInteger("priority"));
-                data_new.setString("ACCESS", data.getString("access"));
-                NBTTagCompound fluid_filter = new NBTTagCompound();
-                NBTTagList upgrades = data.getTagList("upgradeInventory", TAG_COMPOUND);
-                NBTTagCompound upgradeNew = new NBTTagCompound();
-                upgradeNew.setTag("#0", upgrades.getCompoundTagAt(0));
-                upgradeNew.setTag("#1", new NBTTagCompound());
-                upgradeNew.setTag("#2", new NBTTagCompound());
-                upgradeNew.setTag("#3", new NBTTagCompound());
-                upgradeNew.setTag("#4", new NBTTagCompound());
-                data_new.setTag("upgrades", upgradeNew);
-                for (int slot = 0; slot < 54; slot++) {
-                    NBTTagCompound fluid_slot = new NBTTagCompound();
-                    String ec2fluid_key = "FilterFluid#" + slot;
-                    Fluid fluid = FluidRegistry.getFluid(data.getString(ec2fluid_key));
-                    if (fluid != null) {
-                        ItemStack fc2packet = new ItemStack(GameRegistry.findItem("ae2fc", "fluid_packet"), 1, 0);
-                        NBTTagCompound fluid_info = new NBTTagCompound();
-                        NBTTagCompound fluid_info2 = new NBTTagCompound();
-                        fluid_info.setBoolean("DisplayOnly", true);
-                        FluidStack fluidStack = new FluidStack(fluid, 1000);
-                        fluidStack.writeToNBT(fluid_info2);
-                        fluid_info.setTag("FluidStack", fluid_info2);
-                        fc2packet.setTagCompound(fluid_info);
-                        IAEItemStack ae_stack = AEItemStack.create(fc2packet);
-                        ae_stack.writeToNBT(fluid_slot);
-                    }
-                    fluid_filter.setTag("#" + FILTER_MAP[slot], fluid_slot);
-                }
-                data_new.setTag("config", fluid_filter);
-                tmp[1] = data_new;
-                return tmp;
-            }
-        }
-        tmp[0] = part;
-        tmp[1] = data;
-        return tmp;
-    }
-
     public void readFromNBT(final NBTTagCompound data) {
         if (data.hasKey("hasRedstone")) {
             this.hasRedstone = YesNo.values()[data.getInteger("hasRedstone")];
@@ -908,9 +838,6 @@ public class CableBusContainer extends CableBusStorage implements AEMultiTile, I
 
             NBTTagCompound def = data.getCompoundTag("def:" + side.ordinal());
             NBTTagCompound extra = data.getCompoundTag("extra:" + side.ordinal());
-            NBTTagCompound[] covert = covertEC2Part(def, extra);
-            def = covert[0];
-            extra = covert[1];
             if (def != null && extra != null) {
                 IPart p = this.getPart(side);
                 ItemStack iss = ItemStack.loadItemStackFromNBT(def);
@@ -919,6 +846,10 @@ public class CableBusContainer extends CableBusStorage implements AEMultiTile, I
                     IPart part = ((IPartItem) iss.getItem()).createPartFromItemStack(iss);
                     if (part instanceof IPartDeprecated) {
                         def = ((IPartDeprecated) part).transformPart(def);
+                        if (def == null) {
+                            // handle null case as "void part"
+                            continue;
+                        }
                         extra = ((IPartDeprecated) part).transformNBT(extra);
                     }
                     iss = ItemStack.loadItemStackFromNBT(def);
