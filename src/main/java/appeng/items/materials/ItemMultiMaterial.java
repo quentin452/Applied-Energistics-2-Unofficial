@@ -144,6 +144,8 @@ public final class ItemMultiMaterial extends AEBaseItem implements IStorageCompo
                 return Upgrades.INVERTER;
             case CardCrafting:
                 return Upgrades.CRAFTING;
+            case CardPatternRefiller:
+                return Upgrades.PATTERN_REFILLER;
             default:
                 return null;
         }

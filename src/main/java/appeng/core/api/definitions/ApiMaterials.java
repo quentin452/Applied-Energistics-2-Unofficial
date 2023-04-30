@@ -72,6 +72,7 @@ public final class ApiMaterials implements IMaterials {
     private final IItemDefinition cardInverter;
     private final IItemDefinition cardCrafting;
     private final IItemDefinition cardOreFilter;
+    private final IItemDefinition cardPatternRefiller;
     private final IItemDefinition enderDust;
     private final IItemDefinition flour;
     private final IItemDefinition goldDust;
@@ -170,6 +171,8 @@ public final class ApiMaterials implements IMaterials {
         this.cardInverter = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.CardInverter));
         this.cardCrafting = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.CardCrafting));
         this.cardOreFilter = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.CardOreFilter));
+        this.cardPatternRefiller = new DamagedItemDefinition(
+                itemMultiMaterial.createMaterial(MaterialType.CardPatternRefiller));
 
         this.enderDust = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.EnderDust));
         this.flour = new DamagedItemDefinition(itemMultiMaterial.createMaterial(MaterialType.Flour));
@@ -514,5 +517,10 @@ public final class ApiMaterials implements IMaterials {
     @Override
     public IItemDefinition blankPattern() {
         return this.blankPattern;
+    }
+
+    @Override
+    public IItemDefinition cardPatternRefiller() {
+        return this.cardPatternRefiller;
     }
 }

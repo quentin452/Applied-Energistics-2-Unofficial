@@ -621,6 +621,7 @@ public class GuiMEMonitorable extends AEBaseMEGui implements ISortSource, IConfi
         if (this.viewCell) {
             int rw = 33;
             int rh = 14 + myCurrentViewCells.length * 18;
+            if (monitorableContainer.isAPatternTerminal()) rh += 21;
 
             if (rw <= 0 || rh <= 0 || tw <= 0 || th <= 0) {
                 return false;

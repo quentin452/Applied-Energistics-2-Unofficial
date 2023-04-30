@@ -682,6 +682,10 @@ public final class Registration {
         // Inscriber
         Upgrades.SPEED.registerItem(blocks.inscriber(), 3);
 
+        // Terminals
+        Upgrades.PATTERN_REFILLER.registerItem(parts.patternTerminal(), 1);
+        Upgrades.PATTERN_REFILLER.registerItem(parts.patternTerminalEx(), 1);
+
         for (final Item wirelessTerminalItem : items.wirelessTerminal().maybeItem().asSet()) {
             registries.wireless().registerWirelessHandler((IWirelessTermHandler) wirelessTerminalItem);
         }

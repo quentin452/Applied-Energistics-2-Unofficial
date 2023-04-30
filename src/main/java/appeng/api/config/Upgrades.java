@@ -40,7 +40,8 @@ public enum Upgrades {
     SUPERSPEED(1),
     INVERTER(1),
     PATTERN_CAPACITY(1),
-    ORE_FILTER(1);
+    ORE_FILTER(1),
+    PATTERN_REFILLER(0);
 
     /**
      * @deprecated use {@link Upgrades#getTier()}

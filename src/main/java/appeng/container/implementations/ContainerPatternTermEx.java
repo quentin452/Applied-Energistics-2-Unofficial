@@ -150,6 +150,7 @@ public class ContainerPatternTermEx extends ContainerMEMonitorable
                 getPlayerInv().player.entityDropItem(output, 0);
             }
             this.patternSlotOUT.putStack(null);
+            if (getPatternTerminal().hasRefillerUpgrade()) refillBlankPatterns(patternSlotIN);
         }
     }
 
@@ -186,6 +187,7 @@ public class ContainerPatternTermEx extends ContainerMEMonitorable
                 output = encodedPatternStack;
                 this.patternSlotOUT.putStack(output);
             }
+            if (getPatternTerminal().hasRefillerUpgrade()) refillBlankPatterns(patternSlotIN);
         }
 
         // encode the slot.
@@ -409,5 +411,9 @@ public class ContainerPatternTermEx extends ContainerMEMonitorable
             }
             this.detectAndSendChanges();
         }
+    }
+
+    public boolean isAPatternTerminal() {
+        return true;
     }
 }

@@ -141,4 +141,6 @@ public interface IMaterials {
     IItemDefinition cardPatternCapacity();
 
     IItemDefinition cardOreFilter();
+
+    IItemDefinition cardPatternRefiller();
 }

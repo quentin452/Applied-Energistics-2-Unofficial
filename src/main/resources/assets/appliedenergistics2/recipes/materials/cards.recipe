@@ -45,3 +45,7 @@ shaped=
     ae2:ItemMaterial.Cell16kPart ae2:BlockInterface _,
     _ _ _
     -> ae2:ItemMaterial.CardPatternCapacity
+
+shapeless=
+    ae2:ItemMaterial.BasicCard ae2:ItemPart.ImportBus ae2:ItemMaterial.BlankPattern
+    -> ae2:ItemMaterial.CardPatternRefiller

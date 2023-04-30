@@ -19,12 +19,14 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.ICrafting;
+import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import appeng.api.AEApi;
 import appeng.api.config.*;
+import appeng.api.implementations.IUpgradeableHost;
 import appeng.api.implementations.guiobjects.IPortableCell;
 import appeng.api.implementations.tiles.IMEChest;
 import appeng.api.implementations.tiles.IViewCellStorage;
@@ -46,6 +48,7 @@ import appeng.api.util.IConfigurableObject;
 import appeng.container.AEBaseContainer;
 import appeng.container.guisync.GuiSync;
 import appeng.container.slot.SlotRestrictedInput;
+import appeng.container.slot.SlotRestrictedInput.PlacableItemType;
 import appeng.core.AELog;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketMEInventoryUpdate;
@@ -55,6 +58,7 @@ import appeng.me.helpers.ChannelPowerSrc;
 import appeng.util.ConfigManager;
 import appeng.util.IConfigManagerHost;
 import appeng.util.Platform;
+import appeng.util.item.AEItemStack;
 
 public class ContainerMEMonitorable extends AEBaseContainer
         implements IConfigManagerHost, IConfigurableObject, IMEMonitorHandlerReceiver<IAEItemStack> {
@@ -140,6 +144,16 @@ public class ContainerMEMonitorable extends AEBaseContainer
                 this.cellView[y].setAllowEdit(this.canAccessViewCells);
                 this.addSlotToContainer(this.cellView[y]);
             }
+        }
+        if (isAPatternTerminal()) {
+            SlotRestrictedInput patternRefiller = new SlotRestrictedInput(
+                    PlacableItemType.UPGRADES,
+                    ((IUpgradeableHost) monitorable).getInventoryByName("upgrades"),
+                    0,
+                    206,
+                    5 * 18 + 11,
+                    this.getInventoryPlayer());
+            addSlotToContainer(patternRefiller);
         }
 
         if (bindInventory) {
@@ -364,5 +378,28 @@ public class ContainerMEMonitorable extends AEBaseContainer
 
     public void setGui(@Nonnull final IConfigManagerHost gui) {
         this.gui = gui;
+    }
+
+    public boolean isAPatternTerminal() {
+        return false;
+    }
+
+    // to avoid duplicating this method in 2 pattern terminals
+    protected void refillBlankPatterns(Slot slot) {
+        ItemStack blanks = slot.getStack();
+        int blanksToRefill = 64;
+        if (blanks != null) blanksToRefill -= blanks.stackSize;
+        if (blanksToRefill <= 0) return;
+        final AEItemStack request = AEItemStack
+                .create(AEApi.instance().definitions().materials().blankPattern().maybeStack(blanksToRefill).get());
+        final IAEItemStack extracted = Platform
+                .poweredExtraction(this.getPowerSource(), this.getCellInventory(), request, this.getActionSource());
+        if (extracted != null) {
+            if (blanks != null) blanks.stackSize += extracted.getStackSize();
+            else {
+                blanks = extracted.getItemStack();
+            }
+            slot.putStack(blanks);
+        }
     }
 }
