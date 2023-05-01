@@ -11,10 +11,7 @@
 package appeng.parts;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import net.minecraft.client.renderer.RenderBlocks;
 import net.minecraft.crash.CrashReportCategory;
@@ -31,6 +28,8 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+
+import com.google.common.base.Preconditions;
 
 import appeng.api.AEApi;
 import appeng.api.config.Upgrades;
@@ -55,9 +54,6 @@ import appeng.parts.networking.PartCable;
 import appeng.tile.inventory.AppEngInternalAEInventory;
 import appeng.util.Platform;
 import appeng.util.SettingsFrom;
-
-import com.google.common.base.Preconditions;
-
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import io.netty.buffer.ByteBuf;
@@ -421,7 +417,7 @@ public abstract class AEBasePart implements IPart, IGridProxyable, IActionHost, 
                 x,
                 y,
                 z,
-                this.side.flag,
+                getSideIndexFromDirection(this.side),
                 player.getEntityWorld());
         if (event.isCanceled()) return false;
 
@@ -440,7 +436,7 @@ public abstract class AEBasePart implements IPart, IGridProxyable, IActionHost, 
                 x,
                 y,
                 z,
-                this.side.flag,
+                getSideIndexFromDirection(this.side),
                 player.getEntityWorld());
         if (event.isCanceled()) return false;
 
@@ -498,5 +494,12 @@ public abstract class AEBasePart implements IPart, IGridProxyable, IActionHost, 
 
     public void setRenderCache(final ISimplifiedBundle renderCache) {
         this.renderCache = renderCache;
+    }
+
+    private static int getSideIndexFromDirection(ForgeDirection direction) {
+        if (direction == ForgeDirection.UNKNOWN || direction == null) {
+            return -1;
+        }
+        return direction.ordinal();
     }
 }
