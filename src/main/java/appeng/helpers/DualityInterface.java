@@ -1052,6 +1052,9 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
             if (directedTile instanceof ICraftingIconProvider) {
                 final ItemStack icon = ((ICraftingIconProvider) directedTile).getMachineCraftingIcon();
                 if (icon != null) {
+                    if (customName != null) {
+                        icon.setStackDisplayName(customName);
+                    }
                     return icon;
                 }
             }
@@ -1111,7 +1114,11 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
 
                 final Item item = Item.getItemFromBlock(directedBlock);
                 if (item != null) {
-                    return new ItemStack(item);
+                    final ItemStack icon = new ItemStack(item);
+                    if (customName != null) {
+                        icon.setStackDisplayName(customName);
+                    }
+                    return icon;
                 }
             }
         }
