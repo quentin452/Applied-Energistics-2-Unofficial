@@ -1050,7 +1050,10 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
             }
 
             if (directedTile instanceof ICraftingIconProvider) {
-                return ((ICraftingIconProvider) directedTile).getMachineCraftingIcon();
+                final ItemStack icon = ((ICraftingIconProvider) directedTile).getMachineCraftingIcon();
+                if (icon != null) {
+                    return icon;
+                }
             }
 
             final InventoryAdaptor adaptor = InventoryAdaptor.getAdaptor(directedTile, direction.getOpposite());
