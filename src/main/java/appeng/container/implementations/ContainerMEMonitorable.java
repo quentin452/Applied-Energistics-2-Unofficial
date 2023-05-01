@@ -78,6 +78,7 @@ public class ContainerMEMonitorable extends AEBaseContainer
     private IConfigManagerHost gui;
     private IConfigManager serverCM;
     private IGridNode networkNode;
+    protected SlotRestrictedInput patternRefiller = null;
 
     public ContainerMEMonitorable(final InventoryPlayer ip, final ITerminalHost monitorable) {
         this(ip, monitorable, true);
@@ -146,7 +147,7 @@ public class ContainerMEMonitorable extends AEBaseContainer
             }
         }
         if (isAPatternTerminal()) {
-            SlotRestrictedInput patternRefiller = new SlotRestrictedInput(
+            patternRefiller = new SlotRestrictedInput(
                     PlacableItemType.UPGRADES,
                     ((IUpgradeableHost) monitorable).getInventoryByName("upgrades"),
                     0,

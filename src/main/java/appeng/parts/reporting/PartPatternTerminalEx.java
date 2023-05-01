@@ -40,6 +40,8 @@ public class PartPatternTerminalEx extends AbstractPartTerminal {
 
     @Override
     public void getDrops(final List<ItemStack> drops, final boolean wrenched) {
+        super.getDrops(drops, wrenched);
+
         for (final ItemStack is : this.pattern) {
             if (is != null) {
                 drops.add(is);
