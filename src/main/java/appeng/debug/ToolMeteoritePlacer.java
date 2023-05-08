@@ -46,8 +46,8 @@ public class ToolMeteoritePlacer extends AEBaseItem {
             return false;
         }
 
-        final MeteoritePlacer mp = new MeteoritePlacer(new StandardWorld(world), System.currentTimeMillis(), x, y, z);
-        final boolean worked = mp.spawnMeteoriteCenter();
+        final MeteoritePlacer mp = new MeteoritePlacer();
+        final boolean worked = mp.spawnMeteorite(new StandardWorld(world), x, y, z);
 
         if (!worked) {
             player.addChatMessage(new ChatComponentText("Un-suitable Location."));
