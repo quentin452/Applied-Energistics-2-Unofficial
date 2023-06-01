@@ -22,12 +22,14 @@ import net.minecraft.item.ItemStack;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
+import appeng.api.AEApi;
 import appeng.api.config.*;
 import appeng.api.implementations.guiobjects.IPortableCell;
 import appeng.api.implementations.tiles.IMEChest;
 import appeng.api.implementations.tiles.IViewCellStorage;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IDisplayRepo;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
 import appeng.client.ActionKey;
@@ -66,7 +68,7 @@ public class GuiMEMonitorable extends AEBaseMEGui implements ISortSource, IConfi
     public static int craftingGridOffsetY;
 
     private static String memoryText = "";
-    private final ItemRepo repo;
+    private final IDisplayRepo repo;
     private final int offsetX = 9;
     private final int MAGIC_HEIGHT_NUMBER = 114 + 1;
     private final int lowerTextureOffset = 0;
@@ -265,7 +267,7 @@ public class GuiMEMonitorable extends AEBaseMEGui implements ISortSource, IConfi
                             this.configSrc.getSetting(Settings.VIEW_MODE)));
             offset += 20;
         }
-        if (ItemRepo.getFilter().containsKey(TypeFilter.FLUIDS)) {
+        if (!AEApi.instance().registries().itemDisplay().getItemFilters().isEmpty()) {
             this.buttonList.add(
                     this.typeFilter = new GuiImgButton(
                             this.guiLeft - 18,
@@ -512,7 +514,7 @@ public class GuiMEMonitorable extends AEBaseMEGui implements ISortSource, IConfi
 
     @Override
     public void updateScreen() {
-        this.repo.setPower(this.monitorableContainer.isPowered());
+        this.repo.setPowered(this.monitorableContainer.isPowered());
         super.updateScreen();
     }
 

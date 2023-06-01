@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
@@ -28,8 +27,6 @@ import appeng.core.localization.GuiText;
 import codechicken.lib.gui.GuiDraw;
 import codechicken.nei.NEIServerUtils;
 import codechicken.nei.PositionedStack;
-import codechicken.nei.api.IOverlayHandler;
-import codechicken.nei.api.IRecipeOverlayRenderer;
 import codechicken.nei.recipe.TemplateRecipeHandler;
 
 /**
@@ -106,21 +103,6 @@ public class NEIInscriberRecipeHandler extends TemplateRecipeHandler {
         GL11.glColor4f(1, 1, 1, 1);
         GuiDraw.changeTexture(this.getGuiTexture());
         GuiDraw.drawTexturedModalRect(0, 0, 5, 11, 166, 75);
-    }
-
-    @Override
-    public boolean hasOverlay(final GuiContainer gui, final Container container, final int recipe) {
-        return false;
-    }
-
-    @Override
-    public IRecipeOverlayRenderer getOverlayRenderer(final GuiContainer gui, final int recipe) {
-        return null;
-    }
-
-    @Override
-    public IOverlayHandler getOverlayHandler(final GuiContainer gui, final int recipe) {
-        return null;
     }
 
     @Override

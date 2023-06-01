@@ -17,7 +17,6 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
@@ -31,8 +30,6 @@ import appeng.core.localization.GuiText;
 import codechicken.lib.gui.GuiDraw;
 import codechicken.nei.NEIServerUtils;
 import codechicken.nei.PositionedStack;
-import codechicken.nei.api.IOverlayHandler;
-import codechicken.nei.api.IRecipeOverlayRenderer;
 import codechicken.nei.recipe.TemplateRecipeHandler;
 
 public class NEIGrinderRecipeHandler extends TemplateRecipeHandler {
@@ -131,21 +128,6 @@ public class NEIGrinderRecipeHandler extends TemplateRecipeHandler {
                 }
             }
         }
-    }
-
-    @Override
-    public boolean hasOverlay(final GuiContainer gui, final Container container, final int recipe) {
-        return false;
-    }
-
-    @Override
-    public IRecipeOverlayRenderer getOverlayRenderer(final GuiContainer gui, final int recipe) {
-        return null;
-    }
-
-    @Override
-    public IOverlayHandler getOverlayHandler(final GuiContainer gui, final int recipe) {
-        return null;
     }
 
     @Override
