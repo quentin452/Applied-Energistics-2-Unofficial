@@ -713,20 +713,29 @@ public abstract class AEBaseGui extends GuiContainer {
             return;
         }
 
-        if (isShiftKeyDown()) {
-            this.mouseWheelEvent(x, y, wheel);
-        } else if (this.getScrollBar() != null) {
-            final GuiScrollbar scrollBar = this.getScrollBar();
+        if (!this.mouseWheelEvent(x, y, wheel)) {
+            if (this.getScrollBar() != null) {
+                final GuiScrollbar scrollBar = this.getScrollBar();
 
-            if (x > this.guiLeft && y - this.guiTop > scrollBar.getTop()
-                    && x <= this.guiLeft + this.xSize
-                    && y - this.guiTop <= scrollBar.getTop() + scrollBar.getHeight()) {
-                this.getScrollBar().wheel(wheel);
+                if (x > this.guiLeft && y - this.guiTop > scrollBar.getTop()
+                        && x <= this.guiLeft + this.xSize
+                        && y - this.guiTop <= scrollBar.getTop() + scrollBar.getHeight()) {
+                    this.getScrollBar().wheel(wheel);
+                }
             }
         }
     }
 
-    private void mouseWheelEvent(final int x, final int y, final int wheel) {
+    /**
+     * @param x     Current mouse X coordinate
+     * @param y     Current mouse Y coordinate
+     * @param wheel Wheel movement normalized to units of 1
+     * @return If the event was handled
+     */
+    protected boolean mouseWheelEvent(final int x, final int y, final int wheel) {
+        if (!isShiftKeyDown()) {
+            return false;
+        }
         final Slot slot = this.getSlot(x, y);
         if (slot instanceof SlotME) {
             final IAEItemStack item = ((SlotME) slot).getAEStack();
@@ -741,6 +750,7 @@ public abstract class AEBaseGui extends GuiContainer {
                 }
             }
         }
+        return true;
     }
 
     protected boolean enableSpaceClicking() {

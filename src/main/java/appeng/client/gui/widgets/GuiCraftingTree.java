@@ -289,12 +289,23 @@ public class GuiCraftingTree {
         }
     }
 
-    private float DRAG_SPEED = 2.0f;
+    private float zoomLevel = 1.0f;
     private float lastDragX = Float.NEGATIVE_INFINITY;
     private float lastDragY = Float.NEGATIVE_INFINITY;
     private boolean wasLmbPressed;
 
     private Node tooltipNode;
+
+    public void onMouseWheel(int mouseX, int mouseY, int wheel) {
+        mouseX -= widgetX;
+        mouseY -= widgetY;
+        final float oldZoom = zoomLevel;
+        zoomLevel *= (float) Math.pow(1.4, wheel);
+        zoomLevel = MathHelper.clamp_float(zoomLevel, 0.1f, 8.0f);
+        // Zoom into the mouse cursor position, instead of top-left corner
+        scrollX += mouseX / oldZoom - mouseX / zoomLevel;
+        scrollY += mouseY / oldZoom - mouseY / zoomLevel;
+    }
 
     public void draw(int guiMouseX, int guiMouseY) {
         if (request == null) {
@@ -317,19 +328,27 @@ public class GuiCraftingTree {
             lastDragX = Float.NEGATIVE_INFINITY;
             lastDragY = Float.NEGATIVE_INFINITY;
         } else if (lmbPressed && lastDragX != Float.NEGATIVE_INFINITY) {
-            scrollX -= DRAG_SPEED * (mouseX - lastDragX);
-            scrollY -= DRAG_SPEED * (mouseY - lastDragY);
+            scrollX -= 1.0f / zoomLevel * (mouseX - lastDragX);
+            scrollY -= 1.0f / zoomLevel * (mouseY - lastDragY);
             lastDragX = mouseX;
             lastDragY = mouseY;
-            scrollX = MathHelper.clamp_float(scrollX, -widgetW + 4, treeWidth - 4);
-            scrollY = MathHelper.clamp_float(scrollY, -widgetH + 4, treeHeight - 4);
         }
+        scrollX = MathHelper.clamp_float(scrollX, -widgetW / zoomLevel + 4, treeWidth - 4);
+        scrollY = MathHelper.clamp_float(scrollY, -widgetH / zoomLevel + 4, treeHeight - 4);
         wasLmbPressed = lmbPressed;
 
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
 
         float guiScaleFactor = (float) parent.mc.displayWidth / (float) parent.width;
         final int widgetBottomY = parent.getYSize() - widgetY - widgetH;
+
+        final float zScrollX = scrollX * zoomLevel;
+        final float zScrollY = scrollY * zoomLevel;
+        final int cropYMin = (int) ((zScrollY - 32) / zoomLevel) - 16;
+        final int cropYMax = (int) ((zScrollY + 32) / zoomLevel) + (int) (widgetH / zoomLevel) + 16;
+        final int cropXMin = (int) ((zScrollX - 32) / zoomLevel);
+        final int cropXMax = (int) ((zScrollX + 32) / zoomLevel) + (int) (widgetW / zoomLevel);
+
         // Scissor rect 0,0 is in the bottom left corner of the screen
         GL11.glScissor(
                 (int) ((parent.getGuiLeft() + widgetX) * guiScaleFactor),
@@ -340,11 +359,10 @@ public class GuiCraftingTree {
         GL11.glPushMatrix();
 
         // Round to the nearest real pixel
-        GL11.glTranslatef(widgetX - scrollX, widgetY - scrollY, 0.0f);
-        // drawTreeRequestRecursive(0, 0, request);
-        SortedMap<Integer, ArrayList<Node>> rows = treeNodes.subMap((int) scrollY - 32, (int) scrollY + 32 + widgetH);
-        final int cropXMin = (int) scrollX - 32;
-        final int cropXMax = (int) scrollX + 32 + widgetW;
+        GL11.glTranslatef(widgetX - zScrollX, widgetY - zScrollY, 0.0f);
+        GL11.glScalef(zoomLevel, zoomLevel, 1.0f);
+
+        SortedMap<Integer, ArrayList<Node>> rows = treeNodes.subMap(cropYMin, cropYMax);
         tooltipNode = null;
         for (Entry<Integer, ArrayList<Node>> row : rows.entrySet()) {
             for (Node node : row.getValue()) {
@@ -361,12 +379,12 @@ public class GuiCraftingTree {
                     node.draw();
                     node.drawParentLine();
                     final int widgetLeft = parent.getGuiLeft() + widgetX;
-                    final int nodeX = widgetLeft + node.x - (int) scrollX;
+                    final int nodeX = widgetLeft + (int) (node.x * zoomLevel) - (int) zScrollX;
                     final int widgetTop = parent.getGuiTop() + widgetY;
-                    final int nodeY = widgetTop + node.y - (int) scrollY;
+                    final int nodeY = widgetTop + (int) (node.y * zoomLevel) - (int) zScrollY;
                     if (guiMouseX >= nodeX && guiMouseY >= nodeY
-                            && guiMouseX <= (nodeX + node.width)
-                            && guiMouseY <= (nodeY + node.height)
+                            && guiMouseX <= (nodeX + (int) (node.width * zoomLevel))
+                            && guiMouseY <= (nodeY + (int) (node.height * zoomLevel))
                             && guiMouseX >= widgetLeft
                             && guiMouseX <= (widgetLeft + widgetW)
                             && guiMouseY >= widgetTop

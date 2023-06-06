@@ -648,6 +648,16 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
         }
     }
 
+    @Override
+    protected boolean mouseWheelEvent(int x, int y, int wheel) {
+        if (displayMode == DisplayMode.TREE && craftingTree != null
+                && craftingTree.isPointInWidget(x - guiLeft, y - guiTop)) {
+            craftingTree.onMouseWheel(x - guiLeft, y - guiTop, wheel);
+            return true;
+        }
+        return super.mouseWheelEvent(x, y, wheel);
+    }
+
     private long getTotal(final IAEItemStack is) {
         final IAEItemStack a = this.storage.findPrecise(is);
         final IAEItemStack c = this.pending.findPrecise(is);
