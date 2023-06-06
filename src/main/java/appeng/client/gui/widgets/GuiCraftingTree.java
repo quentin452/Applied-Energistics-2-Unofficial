@@ -1,17 +1,35 @@
 package appeng.client.gui.widgets;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.nio.IntBuffer;
+import java.nio.file.FileAlreadyExistsException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Map.Entry;
 
+import javax.imageio.ImageIO;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.shader.Framebuffer;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.MathHelper;
 
+import org.apache.commons.io.FileUtils;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.client.gui.AEBaseGui;
+import appeng.core.AELog;
 import appeng.core.localization.GuiColors;
 import appeng.crafting.v2.CraftingRequest;
 import appeng.crafting.v2.CraftingRequest.UsedResolverEntry;
@@ -19,6 +37,7 @@ import appeng.crafting.v2.resolvers.CraftableItemResolver.CraftFromPatternTask;
 import appeng.crafting.v2.resolvers.EmitableItemResolver.EmitItemTask;
 import appeng.crafting.v2.resolvers.ExtractItemResolver.ExtractItemTask;
 import appeng.crafting.v2.resolvers.SimulateMissingItemResolver;
+import appeng.util.Platform;
 import appeng.util.ReadableNumberConverter;
 
 public class GuiCraftingTree {
@@ -308,6 +327,10 @@ public class GuiCraftingTree {
     }
 
     public void draw(int guiMouseX, int guiMouseY) {
+        draw(guiMouseX, guiMouseY, false);
+    }
+
+    public void draw(int guiMouseX, int guiMouseY, boolean inScreenshotMode) {
         if (request == null) {
             return;
         }
@@ -339,7 +362,10 @@ public class GuiCraftingTree {
 
         GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
 
-        float guiScaleFactor = (float) parent.mc.displayWidth / (float) parent.width;
+        final float guiScaleFactor = inScreenshotMode ? 1.0f : ((float) parent.mc.displayWidth / (float) parent.width);
+        final float zoomLevel = inScreenshotMode ? 1.0f : this.zoomLevel;
+        final float scrollX = inScreenshotMode ? -8.0f : this.scrollX;
+        final float scrollY = inScreenshotMode ? -8.0f : this.scrollY;
         final int widgetBottomY = parent.getYSize() - widgetY - widgetH;
 
         final float zScrollX = scrollX * zoomLevel;
@@ -350,27 +376,31 @@ public class GuiCraftingTree {
         final int cropXMax = (int) ((zScrollX + 32) / zoomLevel) + (int) (widgetW / zoomLevel);
 
         // Scissor rect 0,0 is in the bottom left corner of the screen
-        GL11.glScissor(
-                (int) ((parent.getGuiLeft() + widgetX) * guiScaleFactor),
-                (int) ((parent.getGuiTop() + widgetBottomY) * guiScaleFactor),
-                (int) (widgetW * guiScaleFactor),
-                (int) (widgetH * guiScaleFactor));
-        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        if (!inScreenshotMode) {
+            GL11.glScissor(
+                    (int) ((parent.getGuiLeft() + widgetX) * guiScaleFactor),
+                    (int) ((parent.getGuiTop() + widgetBottomY) * guiScaleFactor),
+                    (int) (widgetW * guiScaleFactor),
+                    (int) (widgetH * guiScaleFactor));
+            GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        }
         GL11.glPushMatrix();
 
         // Round to the nearest real pixel
-        GL11.glTranslatef(widgetX - zScrollX, widgetY - zScrollY, 0.0f);
-        GL11.glScalef(zoomLevel, zoomLevel, 1.0f);
+        if (!inScreenshotMode) {
+            GL11.glTranslatef(widgetX - zScrollX, widgetY - zScrollY, 0.0f);
+            GL11.glScalef(zoomLevel, zoomLevel, 1.0f);
+        }
 
-        SortedMap<Integer, ArrayList<Node>> rows = treeNodes.subMap(cropYMin, cropYMax);
+        SortedMap<Integer, ArrayList<Node>> rows = inScreenshotMode ? treeNodes : treeNodes.subMap(cropYMin, cropYMax);
         tooltipNode = null;
         for (Entry<Integer, ArrayList<Node>> row : rows.entrySet()) {
             for (Node node : row.getValue()) {
                 if (!node.visible) {
                     continue;
                 }
-                if (node.x > cropXMin) {
-                    if (node.x > cropXMax) {
+                if (inScreenshotMode || node.x > cropXMin) {
+                    if (!inScreenshotMode && node.x > cropXMax) {
                         if (node.parentNode != null && node.parentNode.x < cropXMax) {
                             node.drawParentLine();
                         }
@@ -382,7 +412,8 @@ public class GuiCraftingTree {
                     final int nodeX = widgetLeft + (int) (node.x * zoomLevel) - (int) zScrollX;
                     final int widgetTop = parent.getGuiTop() + widgetY;
                     final int nodeY = widgetTop + (int) (node.y * zoomLevel) - (int) zScrollY;
-                    if (guiMouseX >= nodeX && guiMouseY >= nodeY
+                    if (!inScreenshotMode && guiMouseX >= nodeX
+                            && guiMouseY >= nodeY
                             && guiMouseX <= (nodeX + (int) (node.width * zoomLevel))
                             && guiMouseY <= (nodeY + (int) (node.height * zoomLevel))
                             && guiMouseX >= widgetLeft
@@ -395,19 +426,140 @@ public class GuiCraftingTree {
             }
         }
         GL11.glPopMatrix();
-        float scrollXPct = MathHelper.clamp_float(scrollX / treeWidth, 0.0f, 1.0f);
-        float scrollYPct = MathHelper.clamp_float(scrollY / treeHeight, 0.0f, 1.0f);
-        parent.drawHorizontalLine(
-                (int) (widgetX + scrollXPct * (widgetW - 24)),
-                (int) (widgetX + scrollXPct * (widgetW - 24)) + 24,
-                widgetY + widgetH - 2,
-                0xFFDDDDDD);
-        parent.drawVerticalLine(
-                widgetX + widgetW - 2,
-                (int) (widgetY + scrollYPct * (widgetH - 24)),
-                (int) (widgetY + scrollYPct * (widgetH - 24)) + 24,
-                0xFFDDDDDD);
+        if (!inScreenshotMode) {
+            float scrollXPct = MathHelper.clamp_float(scrollX / treeWidth, 0.0f, 1.0f);
+            float scrollYPct = MathHelper.clamp_float(scrollY / treeHeight, 0.0f, 1.0f);
+            parent.drawHorizontalLine(
+                    (int) (widgetX + scrollXPct * (widgetW - 24)),
+                    (int) (widgetX + scrollXPct * (widgetW - 24)) + 24,
+                    widgetY + widgetH - 2,
+                    0xFFDDDDDD);
+            parent.drawVerticalLine(
+                    widgetX + widgetW - 2,
+                    (int) (widgetY + scrollYPct * (widgetH - 24)),
+                    (int) (widgetY + scrollYPct * (widgetH - 24)) + 24,
+                    0xFFDDDDDD);
+        }
         GL11.glPopAttrib();
+    }
+
+    private static final DateTimeFormatter SCREENSHOT_DATE_FORMAT = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd_HH.mm.ss", Locale.ROOT);
+
+    public void saveScreenshot() {
+        if (this.request == null) {
+            return;
+        }
+        final Minecraft mc = Minecraft.getMinecraft();
+        if (!OpenGlHelper.isFramebufferEnabled()) {
+            AELog.error("Could not save crafting tree screenshot: FBOs disabled/unsupported");
+            mc.ingameGUI.getChatGUI()
+                    .printChatMessage(new ChatComponentTranslation("chat.appliedenergistics2.FBOUnsupported"));
+            return;
+        }
+        try {
+            final int screenshotZoom = 2;
+            final File screenshotsDir = new File(mc.mcDataDir, "screenshots");
+            FileUtils.forceMkdir(screenshotsDir);
+            final int maxGlTexSize = GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE) / 2; // Divide by 2 to be safe
+            int imgWidth = screenshotZoom * (treeWidth + 32);
+            int imgHeight = screenshotZoom * (treeHeight + 32);
+            // Make sure the image can be actually allocated, worst case it'll be cropped
+            while ((long) imgWidth * (long) imgHeight >= (long) Integer.MAX_VALUE / 4) {
+                if (imgWidth > imgHeight) {
+                    imgWidth /= 2;
+                } else {
+                    imgHeight /= 2;
+                }
+            }
+            final int xChunks = (int) Platform.ceilDiv(imgWidth, maxGlTexSize);
+            final int yChunks = (int) Platform.ceilDiv(imgHeight, maxGlTexSize);
+            final int fbWidth = Math.min(imgWidth, maxGlTexSize);
+            final int fbHeight = Math.min(imgHeight, maxGlTexSize);
+            final BufferedImage outputImg = new BufferedImage(imgWidth, imgHeight, BufferedImage.TYPE_INT_ARGB);
+            final IntBuffer downloadBuffer = BufferUtils.createIntBuffer(fbWidth * fbHeight);
+            GL11.glPushMatrix();
+            GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+            final Framebuffer fb = new Framebuffer(fbWidth, fbHeight, true);
+            GL11.glMatrixMode(GL11.GL_PROJECTION);
+            GL11.glLoadIdentity();
+            GL11.glOrtho(0, fbWidth / (float) screenshotZoom, fbHeight / (float) screenshotZoom, 0, 1000, 3000);
+            GL11.glMatrixMode(GL11.GL_MODELVIEW);
+            GL11.glLoadIdentity();
+            GL11.glDisable(GL11.GL_DEPTH_TEST);
+            try {
+                fb.bindFramebuffer(true);
+                for (int xChunk = 0; xChunk < xChunks; xChunk++) {
+                    final int xStart = xChunk * maxGlTexSize;
+                    final int xEnd = Math.min((xChunk + 1) * maxGlTexSize, imgWidth);
+                    final int xChunkSize = xEnd - xStart;
+                    for (int yChunk = 0; yChunk < yChunks; yChunk++) {
+                        final int yStart = yChunk * maxGlTexSize;
+                        final int yEnd = Math.min((yChunk + 1) * maxGlTexSize, imgHeight);
+                        final int yChunkSize = yEnd - yStart;
+
+                        GL11.glPushMatrix();
+                        GL11.glTranslatef(
+                                8 - xStart / (float) screenshotZoom,
+                                8 - yStart / (float) screenshotZoom,
+                                -2000.0f);
+                        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+                        draw(-1000, -1000, true);
+                        GL11.glPopMatrix();
+
+                        GL11.glBindTexture(GL11.GL_TEXTURE_2D, fb.framebufferTexture);
+                        GL11.glGetTexImage(
+                                GL11.GL_TEXTURE_2D,
+                                0,
+                                GL12.GL_BGRA,
+                                GL12.GL_UNSIGNED_INT_8_8_8_8_REV,
+                                downloadBuffer);
+
+                        for (int y = 0; y < yChunkSize; y++) {
+                            for (int x = 0; x < xChunkSize; x++) {
+                                outputImg.setRGB(
+                                        x + xStart,
+                                        y + yStart,
+                                        downloadBuffer.get((fbHeight - 1 - y) * fbWidth + x));
+                            }
+                        }
+                    }
+                }
+            } finally {
+                fb.deleteFramebuffer();
+                GL11.glViewport(0, 0, mc.displayWidth, mc.displayHeight);
+            }
+            GL11.glPopAttrib();
+            GL11.glPopMatrix();
+
+            final String date = SCREENSHOT_DATE_FORMAT.format(LocalDateTime.now());
+            String filename = String.format("%s-ae2.png", date);
+            File outFile = new File(screenshotsDir, filename);
+            if (outFile.exists()) {
+                for (int i = 1; i < 99; i++) {
+                    filename = String.format("%s-ae2-%d.png", date, i);
+                    outFile = new File(screenshotsDir, filename);
+                    if (!outFile.exists()) {
+                        break;
+                    }
+                }
+                if (outFile.exists()) {
+                    throw new FileAlreadyExistsException(filename);
+                }
+            }
+            ImageIO.write(outputImg, "png", outFile);
+
+            AELog.info("Saved crafting tree screenshot to %s", filename);
+            ChatComponentText chatLink = new ChatComponentText(filename);
+            chatLink.getChatStyle()
+                    .setChatClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, outFile.getAbsolutePath()));
+            chatLink.getChatStyle().setUnderlined(Boolean.valueOf(true));
+            mc.ingameGUI.getChatGUI().printChatMessage(new ChatComponentTranslation("screenshot.success", chatLink));
+        } catch (Exception e) {
+            AELog.warn(e, "Could not save crafting tree screenshot");
+            mc.ingameGUI.getChatGUI()
+                    .printChatMessage(new ChatComponentTranslation("screenshot.failure", e.getMessage()));
+        }
     }
 
     public void drawTooltip(int guiMouseX, int guiMouseY) {
