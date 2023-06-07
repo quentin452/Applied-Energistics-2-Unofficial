@@ -535,17 +535,12 @@ public class GuiCraftingTree {
             final String date = SCREENSHOT_DATE_FORMAT.format(LocalDateTime.now());
             String filename = String.format("%s-ae2.png", date);
             File outFile = new File(screenshotsDir, filename);
+            for (int i = 1; outFile.exists() && i < 99; i++) {
+                filename = String.format("%s-ae2-%d.png", date, i);
+                outFile = new File(screenshotsDir, filename);
+            }
             if (outFile.exists()) {
-                for (int i = 1; i < 99; i++) {
-                    filename = String.format("%s-ae2-%d.png", date, i);
-                    outFile = new File(screenshotsDir, filename);
-                    if (!outFile.exists()) {
-                        break;
-                    }
-                }
-                if (outFile.exists()) {
-                    throw new FileAlreadyExistsException(filename);
-                }
+                throw new FileAlreadyExistsException(filename);
             }
             ImageIO.write(outputImg, "png", outFile);
 
