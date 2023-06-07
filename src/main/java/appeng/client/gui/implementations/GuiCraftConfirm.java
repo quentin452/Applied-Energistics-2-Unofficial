@@ -34,6 +34,7 @@ import appeng.client.gui.widgets.*;
 import appeng.container.implementations.ContainerCraftConfirm;
 import appeng.container.implementations.CraftingCPUStatus;
 import appeng.core.AELog;
+import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.GuiColors;
 import appeng.core.localization.GuiText;
 import appeng.core.sync.GuiBridge;
@@ -122,6 +123,7 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
     private GuiButton start;
     private GuiButton selectCPU;
     private GuiImgButton switchTallMode;
+    private GuiSimpleImgButton takeScreenshot;
     private GuiTabButton switchDisplayMode;
     private int tooltip = -1;
     private ItemStack hoveredStack;
@@ -213,6 +215,13 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 tallMode ? TerminalStyle.TALL : TerminalStyle.SMALL);
         this.buttonList.add(switchTallMode);
 
+        this.takeScreenshot = new GuiSimpleImgButton(
+                this.guiLeft - 18,
+                this.guiTop + 184,
+                16 * 9,
+                ButtonToolTips.SaveAsImage.getLocal());
+        this.buttonList.add(takeScreenshot);
+
         this.switchDisplayMode = new GuiTabButton(
                 this.guiLeft + this.xSize - 25,
                 this.guiTop - 4,
@@ -239,6 +248,7 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
 
         this.selectCPU.enabled = (displayMode == DisplayMode.LIST) && !this.isSimulation();
         this.selectCPU.visible = (displayMode == DisplayMode.LIST);
+        this.takeScreenshot.visible = (displayMode == DisplayMode.TREE);
 
         super.drawScreen(mouseX, mouseY, btn);
 
@@ -648,6 +658,16 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
         }
     }
 
+    @Override
+    protected boolean mouseWheelEvent(int x, int y, int wheel) {
+        if (displayMode == DisplayMode.TREE && craftingTree != null
+                && craftingTree.isPointInWidget(x - guiLeft, y - guiTop)) {
+            craftingTree.onMouseWheel(x - guiLeft, y - guiTop, wheel);
+            return true;
+        }
+        return super.mouseWheelEvent(x, y, wheel);
+    }
+
     private long getTotal(final IAEItemStack is) {
         final IAEItemStack a = this.storage.findPrecise(is);
         final IAEItemStack c = this.pending.findPrecise(is);
@@ -723,6 +743,10 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
             switchTallMode.set(tallMode ? TerminalStyle.TALL : TerminalStyle.SMALL);
             recalculateScreenSize();
             this.setWorldAndResolution(mc, width, height);
+        } else if (btn == this.takeScreenshot) {
+            if (craftingTree != null) {
+                craftingTree.saveScreenshot();
+            }
         } else if (btn == this.start) {
             try {
                 NetworkHandler.instance.sendToServer(new PacketValueConfig("Terminal.Start", "Start"));
