@@ -12,23 +12,23 @@ import appeng.core.localization.GuiText;
 import appeng.crafting.MECraftingInventory;
 import appeng.crafting.v2.CraftingContext;
 import appeng.crafting.v2.CraftingRequest;
+import appeng.crafting.v2.CraftingRequest.CraftingMode;
 import appeng.crafting.v2.CraftingTreeSerializer;
 import appeng.crafting.v2.ITreeSerializable;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 
-public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStack> {
+public class IgnoreMissingItemResolver implements CraftingRequestResolver<IAEItemStack> {
 
-    public static class EmitItemTask extends CraftingTask<IAEItemStack> {
+    public static class IgnoreMissingItemTask extends CraftingTask<IAEItemStack> {
 
         private long fulfilled = 0;
 
-        public EmitItemTask(CraftingRequest<IAEItemStack> request) {
-            super(request, CraftingTask.PRIORITY_CRAFTING_EMITTER); // conjure items for calculations out of thin air as
-                                                                    // a last
+        public IgnoreMissingItemTask(CraftingRequest<IAEItemStack> request) {
+            super(request, Integer.MIN_VALUE + 200);
         }
 
         @SuppressWarnings("unused")
-        public EmitItemTask(CraftingTreeSerializer serializer, ITreeSerializable parent) throws IOException {
+        public IgnoreMissingItemTask(CraftingTreeSerializer serializer, ITreeSerializable parent) throws IOException {
             super(serializer, parent);
 
             fulfilled = serializer.getBuffer().readLong();
@@ -50,7 +50,7 @@ public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStac
             if (request.remainingToProcess <= 0) {
                 return new StepOutput(Collections.emptyList());
             }
-            // Assume items will be generated, triggered by the emitter
+            // Assume items will be added into the system later
             fulfilled = request.remainingToProcess;
             request.fulfill(this, request.stack.copy().setStackSize(request.remainingToProcess), context);
             return new StepOutput(Collections.emptyList());
@@ -81,11 +81,12 @@ public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStac
         public void startOnCpu(CraftingContext context, CraftingCPUCluster cpuCluster,
                 MECraftingInventory craftingInv) {
             cpuCluster.addEmitable(this.request.stack.copy());
+            // It's just called that, and it has little to do with the level emitter
         }
 
         @Override
         public String toString() {
-            return "EmitItemTask{" + "fulfilled="
+            return "PreCraftItemTask{" + "fulfilled="
                     + fulfilled
                     + ", request="
                     + request
@@ -98,7 +99,7 @@ public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStac
 
         @Override
         public String getTooltipText() {
-            return GuiText.LevelEmitter.getLocal() + ": " + fulfilled;
+            return GuiText.PreCraftStart.getLocal() + ": " + fulfilled;
         }
     }
 
@@ -106,10 +107,9 @@ public class EmitableItemResolver implements CraftingRequestResolver<IAEItemStac
     @Override
     public List<CraftingTask> provideCraftingRequestResolvers(@Nonnull CraftingRequest<IAEItemStack> request,
             @Nonnull CraftingContext context) {
-        if (context.craftingGrid.canEmitFor(request.stack)) {
-            return Collections.singletonList(new EmitItemTask(request));
-        } else {
-            return Collections.emptyList();
-        }
+        if (request.craftingMode == CraftingMode.IGNORE_MISSING && request.allowSimulation) {
+            return Collections.singletonList(new IgnoreMissingItemTask(request));
+        } else return Collections.emptyList();
+
     }
 }

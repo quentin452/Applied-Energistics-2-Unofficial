@@ -17,6 +17,7 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.core.AEConfig;
 import appeng.crafting.v2.resolvers.*;
+import appeng.crafting.v2.resolvers.IgnoreMissingItemResolver.IgnoreMissingItemTask;
 import appeng.util.item.AEFluidStack;
 import appeng.util.item.AEItemStack;
 import cpw.mods.fml.common.network.ByteBufUtils;
@@ -75,6 +76,7 @@ public final class CraftingTreeSerializer {
         registerSerializable(":te", EmitableItemResolver.EmitItemTask.class);
         registerSerializable(":tx", ExtractItemResolver.ExtractItemTask.class);
         registerSerializable(":ts", SimulateMissingItemResolver.ConjureItemTask.class);
+        registerSerializable(":tp", IgnoreMissingItemTask.class);
     }
 
     /**
