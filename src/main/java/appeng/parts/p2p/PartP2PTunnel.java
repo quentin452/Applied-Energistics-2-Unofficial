@@ -353,7 +353,7 @@ public abstract class PartP2PTunnel<T extends PartP2PTunnel> extends PartBasicSt
         return false;
     }
 
-    private void printConnectionInfo(EntityPlayer player) {
+    protected void printConnectionInfo(EntityPlayer player) {
         if (isOutput()) {
             PartP2PTunnel input = getInput();
             if (input == null) player.addChatMessage(PlayerMessages.TunnelNotConnected.get());
