@@ -17,7 +17,7 @@ import appeng.util.Platform;
 import buildcraft.api.tools.IToolWrench;
 
 /**
- * A P2P Type that cannot be attuned to. Functions exactly the same as a normal P2PTunnel otherwise.
+ * Static P2P tunnels cannot be attuned to. They can only be bound to each other.
  */
 public abstract class PartP2PTunnelStatic<T extends PartP2PTunnelStatic> extends PartP2PTunnel<T> {
 
@@ -38,9 +38,9 @@ public abstract class PartP2PTunnelStatic<T extends PartP2PTunnelStatic> extends
             final long freq = data.getLong("freq");
 
             if (newType != null) {
-                if (newType.getItem() instanceof IPartItem) {
-                    final IPart testPart = ((IPartItem) newType.getItem()).createPartFromItemStack(newType);
-                    if (testPart instanceof PartP2PTunnel) {
+                if (newType.getItem() instanceof IPartItem partItem) {
+                    final IPart testPart = partItem.createPartFromItemStack(newType);
+                    if (this.getClass().isInstance(testPart)) {
                         this.getHost().removePart(this.getSide(), true);
                         final ForgeDirection dir = this.getHost().addPart(newType, this.getSide(), player);
                         final IPart newBus = this.getHost().getPart(dir);
