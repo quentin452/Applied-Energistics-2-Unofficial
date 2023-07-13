@@ -29,7 +29,7 @@ import appeng.me.GridAccessException;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-public class PartP2PLiquids extends PartP2PTunnel<PartP2PLiquids> implements IFluidHandler {
+public class PartP2PLiquids extends PartP2PTunnelNormal<PartP2PLiquids> implements IFluidHandler {
 
     private static final ThreadLocal<Stack<PartP2PLiquids>> DEPTH = new ThreadLocal<>();
     private static final FluidTankInfo[] ACTIVE_TANK = { new FluidTankInfo(null, 10000) };

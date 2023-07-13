@@ -23,7 +23,7 @@ import gregtech.api.interfaces.tileentity.IEnergyConnected;
 import gregtech.api.util.GT_Utility;
 import ic2.api.energy.tile.IEnergySink;
 
-public class PartP2PGT5Power extends PartP2PTunnel<PartP2PGT5Power> implements IPartGT5Power {
+public class PartP2PGT5Power extends PartP2PTunnelNormal<PartP2PGT5Power> implements IPartGT5Power {
 
     private TileEntity cachedTarget;
     private boolean isCachedTargetValid;

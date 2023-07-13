@@ -38,7 +38,7 @@ import appeng.me.cache.helpers.Connections;
 import appeng.me.cache.helpers.TunnelConnection;
 import appeng.me.helpers.AENetworkProxy;
 
-public class PartP2PTunnelME extends PartP2PTunnel<PartP2PTunnelME> implements IGridTickable {
+public class PartP2PTunnelME extends PartP2PTunnelNormal<PartP2PTunnelME> implements IGridTickable {
 
     private final Connections connection = new Connections(this);
     private final AENetworkProxy outerProxy = new AENetworkProxy(this, "outer", null, true);

@@ -54,7 +54,7 @@ import appeng.util.inv.IInventoryDestination;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-public class PartP2PInterface extends PartP2PTunnel<PartP2PInterface>
+public class PartP2PInterface extends PartP2PTunnelStatic<PartP2PInterface>
         implements IGridTickable, IStorageMonitorable, IInventoryDestination, IInterfaceHost, ISidedInventory,
         IAEAppEngInventory, ITileStorageMonitorable, IPriorityHost {
 

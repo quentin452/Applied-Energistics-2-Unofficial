@@ -35,7 +35,7 @@ import li.cil.oc.api.network.*;
 @InterfaceList(
         value = { @Interface(iface = "li.cil.oc.api.network.Environment", iname = IntegrationType.OpenComputers),
                 @Interface(iface = "li.cil.oc.api.network.SidedEnvironment", iname = IntegrationType.OpenComputers) })
-public final class PartP2POpenComputers extends PartP2PTunnel<PartP2POpenComputers>
+public final class PartP2POpenComputers extends PartP2PTunnelNormal<PartP2POpenComputers>
         implements Environment, SidedEnvironment {
 
     @Nullable
