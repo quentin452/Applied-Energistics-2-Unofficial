@@ -31,6 +31,7 @@ import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.me.storage.ItemWatcher;
+import appeng.util.item.LazyItemList;
 
 public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T> {
 
@@ -226,9 +227,13 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T> {
         this.notifyListenersOfChange(changes, src);
 
         for (final T changedItem : changes) {
+            if (changedItem == null) {
+                continue;
+            }
+
             T difference = changedItem;
 
-            if (!add && changedItem != null) {
+            if (!add) {
                 difference = changedItem.copy();
                 difference.setStackSize(-changedItem.getStackSize());
             }
@@ -237,7 +242,8 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T> {
                 final Collection<ItemWatcher> list = this.myGridCache.getInterestManager().get(changedItem);
 
                 if (!list.isEmpty()) {
-                    IAEStack fullStack = this.getStorageList().findPrecise(changedItem);
+                    IAEStack<T> fullStack = this
+                            .extractItems(changedItem.copy().setStackSize(Long.MAX_VALUE), Actionable.SIMULATE, src);
 
                     if (fullStack == null) {
                         fullStack = changedItem.copy();
@@ -246,9 +252,9 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T> {
 
                     this.myGridCache.getInterestManager().enableTransactions();
 
+                    IItemList<T> itemList = new LazyItemList<>(this::getStorageList);
                     for (final ItemWatcher iw : list) {
-                        iw.getHost()
-                                .onStackChange(this.getStorageList(), fullStack, difference, src, this.getChannel());
+                        iw.getHost().onStackChange(itemList, fullStack, difference, src, this.getChannel());
                     }
 
                     this.myGridCache.getInterestManager().disableTransactions();
