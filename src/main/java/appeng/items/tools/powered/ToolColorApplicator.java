@@ -150,6 +150,11 @@ public class ToolColorApplicator extends AEBasePoweredItem
                 }
             } else if (paintBall != null) {
                 final AEColor color = this.getColorFromItem(paintBall);
+                final TileEntity te = w.getTileEntity(x, y, z);
+                if (te instanceof IColorableTile colorable) {
+                    colorable.recolourBlock(ForgeDirection.getOrientation(side), color, p);
+                    return true;
+                }
 
                 if (color != null && this.getAECurrentPower(is) > powerPerUse) {
                     if (color != AEColor.Transparent && this.recolourBlock(
