@@ -199,6 +199,22 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack> {
     }
 
     @Override
+    public IAEItemStack getAvailableItem(IAEItemStack request) {
+        long count = 0;
+        for (final IAEItemStack is : this.localCache) {
+            if (is != null && is.getStackSize() > 0 && is.isSameType(request)) {
+                count += is.getStackSize();
+                if (count < 0) {
+                    // overflow
+                    count = Long.MAX_VALUE;
+                    break;
+                }
+            }
+        }
+        return count == 0 ? null : request.copy().setStackSize(count);
+    }
+
+    @Override
     public StorageChannel getChannel() {
         return StorageChannel.ITEMS;
     }

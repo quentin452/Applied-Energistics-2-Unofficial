@@ -95,6 +95,11 @@ public class VoidCellInventory extends MEInventoryHandler<IAEItemStack> {
     }
 
     @Override
+    public IAEItemStack getAvailableItem(IAEItemStack request) {
+        return null;
+    }
+
+    @Override
     public AccessRestriction getAccess() {
         // you shouldn't try to read anything in void cell.
         return AccessRestriction.WRITE;

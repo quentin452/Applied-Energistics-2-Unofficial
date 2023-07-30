@@ -209,6 +209,33 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
         return out;
     }
 
+    @Override
+    public T getAvailableItem(T request) {
+        long count = 0;
+
+        if (this.diveIteration(this, Actionable.SIMULATE)) {
+            return null;
+        }
+
+        for (final List<IMEInventoryHandler<T>> i : this.priorityInventory.values()) {
+            for (final IMEInventoryHandler<T> j : i) {
+                final T stack = j.getAvailableItem(request);
+                if (stack != null && stack.getStackSize() > 0) {
+                    count += stack.getStackSize();
+                    if (count < 0) {
+                        // overflow
+                        count = Long.MAX_VALUE;
+                        break;
+                    }
+                }
+            }
+        }
+
+        this.surface(this, Actionable.SIMULATE);
+
+        return count == 0 ? null : request.copy().setStackSize(count);
+    }
+
     private boolean diveIteration(final NetworkInventoryHandler<T> networkInventoryHandler, final Actionable type) {
         final LinkedList cDepth = this.getDepth(type);
         if (cDepth.isEmpty()) {

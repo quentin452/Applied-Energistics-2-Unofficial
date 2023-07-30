@@ -399,6 +399,11 @@ public class CraftingGridCache
     }
 
     @Override
+    public IAEStack getAvailableItem(IAEStack request) {
+        return null;
+    }
+
+    @Override
     public StorageChannel getChannel() {
         return StorageChannel.ITEMS;
     }

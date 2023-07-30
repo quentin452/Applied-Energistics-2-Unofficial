@@ -175,6 +175,23 @@ public class MEIInventoryWrapper implements IMEInventory<IAEItemStack> {
     }
 
     @Override
+    public IAEItemStack getAvailableItem(IAEItemStack request) {
+        long count = 0;
+        for (int x = 0; x < this.target.getSizeInventory(); x++) {
+            ItemStack stack = this.target.getStackInSlot(x);
+            if (stack != null && stack.stackSize > 0 && Platform.isSameItemPrecise(stack, request.getItemStack())) {
+                count += stack.stackSize;
+                if (count < 0) {
+                    // overflow
+                    count = Long.MAX_VALUE;
+                    break;
+                }
+            }
+        }
+        return count == 0 ? null : request.copy().setStackSize(count);
+    }
+
+    @Override
     public StorageChannel getChannel() {
         return StorageChannel.ITEMS;
     }

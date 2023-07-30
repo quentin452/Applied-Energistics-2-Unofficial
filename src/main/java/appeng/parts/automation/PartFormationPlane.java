@@ -620,6 +620,11 @@ public class PartFormationPlane extends PartUpgradeable
     }
 
     @Override
+    public IAEItemStack getAvailableItem(IAEItemStack request) {
+        return null;
+    }
+
+    @Override
     public StorageChannel getChannel() {
         return StorageChannel.ITEMS;
     }

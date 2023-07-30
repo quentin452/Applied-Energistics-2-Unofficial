@@ -242,8 +242,7 @@ public class NetworkMonitor<T extends IAEStack<T>> implements IMEMonitor<T> {
                 final Collection<ItemWatcher> list = this.myGridCache.getInterestManager().get(changedItem);
 
                 if (!list.isEmpty()) {
-                    IAEStack<T> fullStack = this
-                            .extractItems(changedItem.copy().setStackSize(Long.MAX_VALUE), Actionable.SIMULATE, src);
+                    IAEStack<T> fullStack = this.getHandler().getAvailableItem(changedItem);
 
                     if (fullStack == null) {
                         fullStack = changedItem.copy();

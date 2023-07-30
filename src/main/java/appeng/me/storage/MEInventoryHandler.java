@@ -102,6 +102,15 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
     }
 
     @Override
+    public T getAvailableItem(T request) {
+        if (!this.hasReadAccess) {
+            return null;
+        }
+
+        return this.internal.getAvailableItem(request);
+    }
+
+    @Override
     public StorageChannel getChannel() {
         return this.internal.getChannel();
     }

@@ -50,6 +50,11 @@ public class VoidItemInventory implements IMEInventoryHandler<IAEItemStack> {
     }
 
     @Override
+    public IAEItemStack getAvailableItem(IAEItemStack request) {
+        return null;
+    }
+
+    @Override
     public StorageChannel getChannel() {
         return StorageChannel.ITEMS;
     }

@@ -50,6 +50,11 @@ public class VoidFluidInventory implements IMEInventoryHandler<IAEFluidStack> {
     }
 
     @Override
+    public IAEFluidStack getAvailableItem(IAEFluidStack request) {
+        return null;
+    }
+
+    @Override
     public StorageChannel getChannel() {
         return StorageChannel.FLUIDS;
     }

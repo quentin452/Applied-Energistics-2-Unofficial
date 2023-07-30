@@ -71,6 +71,16 @@ public class CreativeCellInventory implements IMEInventoryHandler<IAEItemStack> 
     }
 
     @Override
+    public IAEItemStack getAvailableItem(IAEItemStack request) {
+        final IAEItemStack local = this.itemListCache.findPrecise(request);
+        if (local == null) {
+            return null;
+        }
+
+        return request.copy();
+    }
+
+    @Override
     public StorageChannel getChannel() {
         return StorageChannel.ITEMS;
     }

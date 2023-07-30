@@ -155,6 +155,11 @@ public class MEMonitorHandler<StackType extends IAEStack> implements IMEMonitor<
     }
 
     @Override
+    public StackType getAvailableItem(StackType request) {
+        return this.getHandler().getAvailableItem(request);
+    }
+
+    @Override
     public int getPriority() {
         return this.getHandler().getPriority();
     }
