@@ -466,7 +466,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
                     }
 
                     total += (ih.getInterfaceDuality().getInstalledUpgrades(Upgrades.PATTERN_CAPACITY) + 1);
-                } else {
+                } else if (gh instanceof GT_MetaTileEntity_Hatch_CraftingInput_ME) {
                     if (ContainerInterfaceTerminal.this.diList.get(gh).isEmpty()) missing = true;
                     total += 4;
                 }
