@@ -15,6 +15,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import appeng.api.networking.IGridHost;
+import appeng.api.util.DimensionalCoord;
+import gregtech.api.metatileentity.implementations.GT_MetaTileEntity_Hatch_InputBus;
+import gregtech.common.tileentities.machines.GT_MetaTileEntity_Hatch_CraftingInput_ME;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
@@ -57,7 +61,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
      */
     private static long autoBase = Long.MIN_VALUE;
 
-    private final Multimap<IInterfaceHost, InvTracker> diList = HashMultimap.create();
+    private final Multimap<IGridHost, InvTracker> diList = HashMultimap.create();
     private final Map<Long, InvTracker> byId = new HashMap<>();
     // private final Map<Long, InvTracker> byId = new HashMap<>();
     private IGrid grid;
@@ -105,6 +109,12 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
                 }
 
                 for (final IGridNode gn : this.grid.getMachines(PartP2PInterface.class)) {
+                    InterfaceCheck interfaceCheck = new InterfaceCheck().invoke(gn);
+                    total += interfaceCheck.getTotal();
+                    missing |= interfaceCheck.isMissing();
+                }
+
+                for (final IGridNode gn : this.grid.getMachines(GT_MetaTileEntity_Hatch_CraftingInput_ME.class)) {
                     InterfaceCheck interfaceCheck = new InterfaceCheck().invoke(gn);
                     total += interfaceCheck.getTotal();
                     missing |= interfaceCheck.isMissing();
@@ -297,6 +307,21 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
                         }
                     }
                 }
+
+                for (final IGridNode gn : this.grid.getMachines(GT_MetaTileEntity_Hatch_CraftingInput_ME.class)) {
+                    final GT_MetaTileEntity_Hatch_CraftingInput_ME hatch = (GT_MetaTileEntity_Hatch_CraftingInput_ME) gn.getMachine();
+                    if (gn.isActive()) {
+                        for (int i = 0; i < 4; ++i) {
+                            this.diList.put(hatch,
+                                    new InvTracker(hatch.getLocation(), 0,
+                                            hatch,
+                                            hatch.getInventoryName(),
+                                            i*8,
+                                            8)
+                            );
+                        }
+                    }
+                }
             }
         }
 
@@ -331,6 +356,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
             tag.setInteger("y", inv.Y);
             tag.setInteger("z", inv.Z);
             tag.setInteger("dim", inv.dim);
+            tag.setInteger("size", inv.client.getSizeInventory());
         }
 
         for (int x = 0; x < length; x++) {
@@ -366,15 +392,25 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
 
         public InvTracker(final DualityInterface dual, final IInventory patterns, final String unlocalizedName,
                 int offset, int size) {
+            this(dual.getLocation(), dual.getSortValue(), patterns, unlocalizedName, offset, size);
+        }
+
+        public InvTracker(final DimensionalCoord coord, long sortValue, final IInventory patterns, final String unlocalizedName,
+                          int offset, int size) {
+            this(coord.x, coord.y, coord.z, coord.getDimension(), sortValue, patterns, unlocalizedName, offset, size);
+        }
+
+        public InvTracker(int x, int y, int z, int dim, long sortValue, final IInventory patterns, final String unlocalizedName,
+                          int offset, int size) {
             this.server = patterns;
             this.client = new AppEngInternalInventory(null, size);
             this.unlocalizedName = unlocalizedName;
-            this.sortBy = dual.getSortValue() + offset << 16;
+            this.sortBy = sortValue + offset << 16;
             this.offset = offset;
-            X = dual.getLocation().x;
-            Y = dual.getLocation().y;
-            Z = dual.getLocation().z;
-            dim = dual.getLocation().getDimension();
+            this.X = x;
+            this.Y = y;
+            this.Z = z;
+            this.dim = dim;
         }
     }
 
@@ -407,26 +443,31 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
 
         public InterfaceCheck invoke(IGridNode gn) {
             if (gn.isActive()) {
-                final IInterfaceHost ih = (IInterfaceHost) gn.getMachine();
-                if (ih.getInterfaceDuality().getConfigManager().getSetting(Settings.INTERFACE_TERMINAL) == YesNo.NO
-                        || ih instanceof PartP2PInterface && ((PartP2PInterface) ih).isOutput()) {
-                    return this;
-                }
+                final IGridHost gh = gn.getMachine();
+                if (gh instanceof IInterfaceHost ih) {
+                    if (ih.getInterfaceDuality().getConfigManager().getSetting(Settings.INTERFACE_TERMINAL) == YesNo.NO
+                            || ih instanceof PartP2PInterface && ((PartP2PInterface) ih).isOutput()) {
+                        return this;
+                    }
 
-                final Collection<InvTracker> t = ContainerInterfaceTerminal.this.diList.get(ih);
+                    final Collection<InvTracker> t = ContainerInterfaceTerminal.this.diList.get(ih);
 
-                if (t.isEmpty()) {
-                    missing = true;
-                } else {
-                    final DualityInterface dual = ih.getInterfaceDuality();
-                    for (InvTracker it : t) {
-                        if (!it.unlocalizedName.equals(dual.getTermName())) {
-                            missing = true;
+                    if (t.isEmpty()) {
+                        missing = true;
+                    } else {
+                        final DualityInterface dual = ih.getInterfaceDuality();
+                        for (InvTracker it : t) {
+                            if (!it.unlocalizedName.equals(dual.getTermName())) {
+                                missing = true;
+                            }
                         }
                     }
-                }
 
-                total += (ih.getInterfaceDuality().getInstalledUpgrades(Upgrades.PATTERN_CAPACITY) + 1);
+                    total += (ih.getInterfaceDuality().getInstalledUpgrades(Upgrades.PATTERN_CAPACITY) + 1);
+                } else {
+                    if (ContainerInterfaceTerminal.this.diList.get(gh).isEmpty()) missing = true;
+                    total += 4;
+                }
             }
             return this;
         }

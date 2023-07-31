@@ -15,6 +15,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.IntStream;
 
+import gregtech.common.tileentities.machines.GT_MetaTileEntity_Hatch_CraftingInput_ME;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.ItemStack;
@@ -1226,6 +1227,8 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             return ((DualityInterface) craftingProvider).getHost().getTile();
         } else if (craftingProvider instanceof AEBaseTile) {
             return ((AEBaseTile) craftingProvider).getTile();
+        } else if (craftingProvider instanceof GT_MetaTileEntity_Hatch_CraftingInput_ME craftingInput) {
+            return (TileEntity) craftingInput.getBaseMetaTileEntity();
         }
         try {
             Method method = craftingProvider.getClass().getMethod("getTile");
