@@ -633,7 +633,8 @@ public class GuiInterfaceTerminal extends AEBaseGui implements IDropToFillTextFi
                 : Integer.MAX_VALUE;
     }
 
-    private ClientDCInternalInv getById(final long id, final long sortBy, final String unlocalizedName, final int sizeInit) {
+    private ClientDCInternalInv getById(final long id, final long sortBy, final String unlocalizedName,
+            final int sizeInit) {
         ClientDCInternalInv o = this.byId.get(id);
 
         if (o == null) {

@@ -15,10 +15,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import appeng.api.networking.IGridHost;
-import appeng.api.util.DimensionalCoord;
-import gregtech.api.metatileentity.implementations.GT_MetaTileEntity_Hatch_InputBus;
-import gregtech.common.tileentities.machines.GT_MetaTileEntity_Hatch_CraftingInput_ME;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.IInventory;
@@ -33,8 +29,10 @@ import appeng.api.config.Settings;
 import appeng.api.config.Upgrades;
 import appeng.api.config.YesNo;
 import appeng.api.networking.IGrid;
+import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.security.IActionHost;
+import appeng.api.util.DimensionalCoord;
 import appeng.container.AEBaseContainer;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketCompressedNBT;
@@ -53,6 +51,7 @@ import appeng.util.inv.AdaptorIInventory;
 import appeng.util.inv.AdaptorPlayerHand;
 import appeng.util.inv.ItemSlot;
 import appeng.util.inv.WrapperInvSlot;
+import gregtech.common.tileentities.machines.GT_MetaTileEntity_Hatch_CraftingInput_ME;
 
 public final class ContainerInterfaceTerminal extends AEBaseContainer {
 
@@ -309,16 +308,19 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
                 }
 
                 for (final IGridNode gn : this.grid.getMachines(GT_MetaTileEntity_Hatch_CraftingInput_ME.class)) {
-                    final GT_MetaTileEntity_Hatch_CraftingInput_ME hatch = (GT_MetaTileEntity_Hatch_CraftingInput_ME) gn.getMachine();
+                    final GT_MetaTileEntity_Hatch_CraftingInput_ME hatch = (GT_MetaTileEntity_Hatch_CraftingInput_ME) gn
+                            .getMachine();
                     if (gn.isActive()) {
                         for (int i = 0; i < 4; ++i) {
-                            this.diList.put(hatch,
-                                    new InvTracker(hatch.getLocation(), 0,
+                            this.diList.put(
+                                    hatch,
+                                    new InvTracker(
+                                            hatch.getLocation(),
+                                            0,
                                             hatch,
-                                            hatch.getInventoryName(),
-                                            i*8,
-                                            8)
-                            );
+                                            hatch.hasCustomName() ? hatch.getCustomName() : hatch.getInventoryName(),
+                                            i * 8,
+                                            8));
                         }
                     }
                 }
@@ -395,13 +397,13 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
             this(dual.getLocation(), dual.getSortValue(), patterns, unlocalizedName, offset, size);
         }
 
-        public InvTracker(final DimensionalCoord coord, long sortValue, final IInventory patterns, final String unlocalizedName,
-                          int offset, int size) {
+        public InvTracker(final DimensionalCoord coord, long sortValue, final IInventory patterns,
+                final String unlocalizedName, int offset, int size) {
             this(coord.x, coord.y, coord.z, coord.getDimension(), sortValue, patterns, unlocalizedName, offset, size);
         }
 
-        public InvTracker(int x, int y, int z, int dim, long sortValue, final IInventory patterns, final String unlocalizedName,
-                          int offset, int size) {
+        public InvTracker(int x, int y, int z, int dim, long sortValue, final IInventory patterns,
+                final String unlocalizedName, int offset, int size) {
             this.server = patterns;
             this.client = new AppEngInternalInventory(null, size);
             this.unlocalizedName = unlocalizedName;
