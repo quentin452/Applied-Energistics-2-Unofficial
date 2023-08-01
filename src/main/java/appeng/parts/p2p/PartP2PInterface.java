@@ -385,4 +385,9 @@ public class PartP2PInterface extends PartP2PTunnelStatic<PartP2PInterface>
     public void onTunnelNetworkChange() {
         this.duality.updateCraftingList();
     }
+
+    @Override
+    public boolean shouldDisplay() {
+        return IInterfaceHost.super.shouldDisplay() && !isOutput();
+    }
 }
