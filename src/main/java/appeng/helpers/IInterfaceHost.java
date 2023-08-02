@@ -10,16 +10,23 @@
 
 package appeng.helpers;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
+import net.minecraft.inventory.IInventory;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 
+import appeng.api.config.Settings;
+import appeng.api.config.Upgrades;
+import appeng.api.config.YesNo;
 import appeng.api.implementations.IUpgradeableHost;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.crafting.ICraftingRequester;
 
-public interface IInterfaceHost extends ICraftingProvider, IUpgradeableHost, ICraftingRequester {
+public interface IInterfaceHost
+        extends ICraftingProvider, IUpgradeableHost, ICraftingRequester, IInterfaceTerminalSupport {
 
     DualityInterface getInterfaceDuality();
 
@@ -28,4 +35,34 @@ public interface IInterfaceHost extends ICraftingProvider, IUpgradeableHost, ICr
     TileEntity getTileEntity();
 
     void saveChanges();
+
+    @Override
+    default PatternsConfiguration[] getPatternsConfigurations() {
+        DualityInterface dual = getInterfaceDuality();
+        List<PatternsConfiguration> patterns = new ArrayList<>();
+        for (int i = 0; i <= dual.getInstalledUpgrades(Upgrades.PATTERN_CAPACITY); ++i) {
+            patterns.add(new PatternsConfiguration(i * 9, 9));
+        }
+        return patterns.toArray(new PatternsConfiguration[0]);
+    }
+
+    @Override
+    default IInventory getPatterns(int index) {
+        return getInterfaceDuality().getPatterns();
+    }
+
+    @Override
+    default boolean shouldDisplay() {
+        return getInterfaceDuality().getConfigManager().getSetting(Settings.INTERFACE_TERMINAL) == YesNo.YES;
+    }
+
+    @Override
+    default String getName() {
+        return getInterfaceDuality().getTermName();
+    }
+
+    @Override
+    default long getSortValue() {
+        return getInterfaceDuality().getSortValue();
+    }
 }

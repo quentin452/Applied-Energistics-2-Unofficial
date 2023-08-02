@@ -59,6 +59,7 @@ import appeng.crafting.CraftingLink;
 import appeng.crafting.CraftingWatcher;
 import appeng.crafting.MECraftingInventory;
 import appeng.helpers.DualityInterface;
+import appeng.helpers.IInterfaceTerminalSupport;
 import appeng.me.cache.CraftingGridCache;
 import appeng.me.cluster.IAECluster;
 import appeng.tile.AEBaseTile;
@@ -1226,6 +1227,8 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             return ((DualityInterface) craftingProvider).getHost().getTile();
         } else if (craftingProvider instanceof AEBaseTile) {
             return ((AEBaseTile) craftingProvider).getTile();
+        } else if (craftingProvider instanceof IInterfaceTerminalSupport interfaceTerminalSupport) {
+            return interfaceTerminalSupport.getTileEntity();
         }
         try {
             Method method = craftingProvider.getClass().getMethod("getTile");
