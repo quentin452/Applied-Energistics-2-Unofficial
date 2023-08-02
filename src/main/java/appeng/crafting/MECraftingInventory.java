@@ -10,6 +10,8 @@
 
 package appeng.crafting;
 
+import javax.annotation.Nonnull;
+
 import appeng.api.AEApi;
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.BaseActionSource;
@@ -199,7 +201,7 @@ public class MECraftingInventory implements IMEInventory<IAEItemStack> {
     }
 
     @Override
-    public IAEItemStack getAvailableItem(IAEItemStack request) {
+    public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request) {
         long count = 0;
         for (final IAEItemStack is : this.localCache) {
             if (is != null && is.getStackSize() > 0 && is.isSameType(request)) {

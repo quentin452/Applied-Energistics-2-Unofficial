@@ -10,6 +10,8 @@
 
 package appeng.integration.modules.helpers;
 
+import javax.annotation.Nonnull;
+
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
@@ -98,7 +100,7 @@ public class MinefactoryReloadedDeepStorageUnit implements IMEInventory<IAEItemS
     }
 
     @Override
-    public IAEItemStack getAvailableItem(IAEItemStack request) {
+    public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request) {
         final ItemStack is = this.dsu.getStoredItemType();
         if (is != null && request.isSameType(is)) {
             return AEItemStack.create(is);

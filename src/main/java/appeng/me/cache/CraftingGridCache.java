@@ -18,6 +18,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.stream.StreamSupport;
 
+import javax.annotation.Nonnull;
+
 import net.minecraft.world.World;
 
 import com.google.common.collect.*;
@@ -399,7 +401,7 @@ public class CraftingGridCache
     }
 
     @Override
-    public IAEStack getAvailableItem(IAEStack request) {
+    public IAEStack getAvailableItem(@Nonnull IAEStack request) {
         return null;
     }
 

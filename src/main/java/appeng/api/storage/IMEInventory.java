@@ -13,6 +13,8 @@
 
 package appeng.api.storage;
 
+import javax.annotation.Nonnull;
+
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.data.IAEStack;
@@ -66,7 +68,7 @@ public interface IMEInventory<StackType extends IAEStack> {
      */
     @SuppressWarnings("unchecked") // changing the generic StackType to be correct here is too much of a breaking API
                                    // change
-    default StackType getAvailableItem(StackType request) {
+    default StackType getAvailableItem(@Nonnull StackType request) {
         return getAvailableItems((IItemList<StackType>) getChannel().createList()).findPrecise(request);
     }
 

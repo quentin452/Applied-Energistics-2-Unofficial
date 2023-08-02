@@ -10,6 +10,8 @@
 
 package appeng.integration.modules.helpers;
 
+import javax.annotation.Nonnull;
+
 import net.mcft.copy.betterstorage.api.crate.ICrateStorage;
 import net.minecraft.item.ItemStack;
 
@@ -64,7 +66,7 @@ public class BSCrate implements IMEInventory<IAEItemStack> {
     }
 
     @Override
-    public IAEItemStack getAvailableItem(IAEItemStack request) {
+    public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request) {
         long count = 0;
         for (final ItemStack is : this.crateStorage.getContents()) {
             if (is != null && is.stackSize > 0 && Platform.isSameItemPrecise(is, request.getItemStack())) {

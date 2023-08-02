@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import javax.annotation.Nonnull;
+
 import com.google.common.collect.ImmutableList;
 
 import appeng.api.config.AccessRestriction;
@@ -155,7 +157,7 @@ public class MEMonitorHandler<StackType extends IAEStack> implements IMEMonitor<
     }
 
     @Override
-    public StackType getAvailableItem(StackType request) {
+    public StackType getAvailableItem(@Nonnull StackType request) {
         return this.getHandler().getAvailableItem(request);
     }
 

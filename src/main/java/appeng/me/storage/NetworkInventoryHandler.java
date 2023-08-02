@@ -12,6 +12,8 @@ package appeng.me.storage;
 
 import java.util.*;
 
+import javax.annotation.Nonnull;
+
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
 import appeng.api.config.SecurityPermissions;
@@ -210,7 +212,7 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
     }
 
     @Override
-    public T getAvailableItem(T request) {
+    public T getAvailableItem(@Nonnull T request) {
         long count = 0;
 
         if (this.diveIteration(this, Actionable.SIMULATE)) {

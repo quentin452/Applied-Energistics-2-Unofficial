@@ -10,6 +10,8 @@
 
 package appeng.integration.modules.BCHelpers;
 
+import javax.annotation.Nonnull;
+
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -65,7 +67,7 @@ public class BCPipeInventory implements IMEInventory<IAEItemStack> {
     }
 
     @Override
-    public IAEItemStack getAvailableItem(IAEItemStack request) {
+    public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request) {
         return null;
     }
 
