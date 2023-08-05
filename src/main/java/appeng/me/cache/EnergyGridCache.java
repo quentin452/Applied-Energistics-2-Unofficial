@@ -360,7 +360,9 @@ public class EnergyGridCache implements IEnergyGrid {
 
     @Override
     public boolean calculateInfiniteStore(boolean currentInfinite, Set<IEnergyGrid> seen) {
-        if (!seen.add(this)) return currentInfinite;
+        if (!seen.add(this)) {
+            return currentInfinite;
+        }
 
         if (!currentInfinite) {
             currentInfinite = this.providers.stream().anyMatch(IAEPowerStorage::isInfinite);
