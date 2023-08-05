@@ -60,6 +60,8 @@ public class EnergyGridCache implements IEnergyGrid {
     private boolean publicHasPower = false;
 
     private boolean hasPower = true;
+    private boolean infinite = false;
+    private boolean updateInfinite = false;
     private long ticksSinceHasPowerChange = 900;
     /**
      * excess power in the system.
@@ -125,6 +127,10 @@ public class EnergyGridCache implements IEnergyGrid {
             for (final EnergyThreshold th : this.getInterests().subSet(low, true, high, true)) {
                 ((EnergyWatcher) th.getWatcher()).post(this);
             }
+        }
+
+        if (this.updateInfinite) {
+            this.updateInfinite();
         }
 
         this.avgDrainPerTick *= (this.AvgLength - 1) / this.AvgLength;
@@ -203,6 +209,13 @@ public class EnergyGridCache implements IEnergyGrid {
     public double extractAEPower(final double amt, final Actionable mode, final Set<IEnergyGrid> seen) {
         if (!seen.add(this)) {
             return 0;
+        }
+
+        if (infinite) {
+            if (mode == Actionable.MODULATE) {
+                this.tickDrainPerTick += amt;
+            }
+            return amt;
         }
 
         double extractedPower = this.extra;
@@ -321,6 +334,28 @@ public class EnergyGridCache implements IEnergyGrid {
         return required;
     }
 
+    @Override
+    public void setHasInfiniteStore(boolean infinite) {
+        this.updateInfinite = false;
+        this.infinite = infinite;
+    }
+
+    @Override
+    public boolean calculateInfiniteStore(boolean currentInfinite, Set<IEnergyGrid> seen) {
+        if (!seen.add(this))
+            return currentInfinite;
+
+        if (!currentInfinite) {
+            currentInfinite = this.providers.stream().anyMatch(IAEPowerStorage::isInfinite);
+        }
+
+        for (IEnergyGridProvider gridProvider : this.energyGridProviders) {
+            currentInfinite |= gridProvider.calculateInfiniteStore(currentInfinite, seen);
+        }
+
+        return currentInfinite;
+    }
+
     private double simulateExtract(double extractedPower, final double amt) {
         final Iterator<IAEPowerStorage> it = this.providers.iterator();
 
@@ -416,10 +451,20 @@ public class EnergyGridCache implements IEnergyGrid {
         return this.getEnergyDemand(maxRequired, this.localSeen);
     }
 
+    private void updateInfinite() {
+        Set<IEnergyGrid> grids = new HashSet<>();
+        boolean infinite = this.calculateInfiniteStore(false, grids);
+        for (IEnergyGrid grid : grids) {
+            grid.setHasInfiniteStore(infinite);
+        }
+    }
+
     @Override
     public void removeNode(final IGridNode node, final IGridHost machine) {
         if (machine instanceof IEnergyGridProvider) {
             this.energyGridProviders.remove(machine);
+            // removing a quartz fiber will not cause a net to go from finite to infinite
+            this.updateInfinite = true;
         }
 
         // idle draw.
@@ -444,6 +489,10 @@ public class EnergyGridCache implements IEnergyGrid {
 
                 this.providers.remove(machine);
                 this.requesters.remove(machine);
+
+                if (((IAEPowerStorage) machine).isInfinite()) {
+                    this.updateInfinite = true;
+                }
             }
         }
 
@@ -460,6 +509,8 @@ public class EnergyGridCache implements IEnergyGrid {
     public void addNode(final IGridNode node, final IGridHost machine) {
         if (machine instanceof IEnergyGridProvider) {
             this.energyGridProviders.add((IEnergyGridProvider) machine);
+            // adding a quartz fiber will not cause a net to go from with infinite to finite
+            this.updateInfinite |= !infinite;
         }
 
         // idle draw...
@@ -486,6 +537,10 @@ public class EnergyGridCache implements IEnergyGrid {
                 if (current < max && ps.getPowerFlow() != AccessRestriction.READ) {
                     this.requesters.add(ps);
                 }
+
+                if (((IAEPowerStorage) machine).isInfinite()) {
+                    this.updateInfinite = true;
+                }
             }
         }
 
@@ -500,12 +555,16 @@ public class EnergyGridCache implements IEnergyGrid {
 
     @Override
     public void onSplit(final IGridStorage storageB) {
+        // it's not clear as what this method do, set update to true just in case
+        this.updateInfinite = true;
         this.extra /= 2;
         storageB.dataObject().setDouble("extraEnergy", this.extra);
     }
 
     @Override
     public void onJoin(final IGridStorage storageB) {
+        // it's not clear as what this method do, set update to true just in case
+        this.updateInfinite = true;
         this.extra += storageB.dataObject().getDouble("extraEnergy");
     }
 
