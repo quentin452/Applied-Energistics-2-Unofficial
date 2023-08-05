@@ -35,6 +35,10 @@ public class EnergyGridCache implements IEnergyGrid {
     private final Set<IAEPowerStorage> providers = new LinkedHashSet<>();
     private final Set<IAEPowerStorage> requesters = new LinkedHashSet<>();
     private final Multiset<IEnergyGridProvider> energyGridProviders = HashMultiset.create();
+    /*
+     * We only keep track of one extractable provider, since player usually only place energy cells in one place
+     */
+    private IEnergyGridProvider lastExtractableGridProvider = null;
     private final IGrid myGrid;
     private final HashMap<IGridNode, IEnergyWatcher> watchers = new HashMap<>();
     private final Set<IEnergyGrid> localSeen = new HashSet<>();
@@ -223,12 +227,7 @@ public class EnergyGridCache implements IEnergyGrid {
         if (mode == Actionable.SIMULATE) {
             extractedPower += this.simulateExtract(extractedPower, amt);
 
-            if (extractedPower < amt) {
-                final Iterator<IEnergyGridProvider> i = this.energyGridProviders.iterator();
-                while (extractedPower < amt && i.hasNext()) {
-                    extractedPower += i.next().extractAEPower(amt - extractedPower, mode, seen);
-                }
-            }
+            extractedPower = extractAEPowerFromOtherGrids(amt, mode, seen, extractedPower);
 
             return extractedPower;
         } else {
@@ -245,16 +244,35 @@ public class EnergyGridCache implements IEnergyGrid {
             return amt;
         }
 
-        if (extractedPower < amt) {
-            final Iterator<IEnergyGridProvider> i = this.energyGridProviders.iterator();
-            while (extractedPower < amt && i.hasNext()) {
-                extractedPower += i.next().extractAEPower(amt - extractedPower, mode, seen);
-            }
-        }
+        extractedPower = this.extractAEPowerFromOtherGrids(amt, mode, seen, extractedPower);
 
         // go less or the correct amount?
         this.globalAvailablePower -= extractedPower;
         this.tickDrainPerTick += extractedPower;
+        return extractedPower;
+    }
+
+    private double extractAEPowerFromOtherGrids(double amt, Actionable mode, Set<IEnergyGrid> seen, double extractedPower) {
+        if (extractedPower < amt) {
+            if (this.lastExtractableGridProvider != null) {
+                double extracted = this.lastExtractableGridProvider.extractAEPower(amt - extractedPower, mode, seen);
+                if (extracted < 1e-8) {
+                    this.lastExtractableGridProvider = null;
+                } else {
+                    extractedPower += extracted;
+                }
+            }
+
+            final Iterator<IEnergyGridProvider> i = this.energyGridProviders.iterator();
+            while (extractedPower < amt && i.hasNext()) {
+                IEnergyGridProvider provider = i.next();
+                double extracted = provider.extractAEPower(amt - extractedPower, mode, seen);
+                if (extracted > 1e-8) {
+                    this.lastExtractableGridProvider = provider;
+                    extractedPower += extracted;
+                }
+            }
+        }
         return extractedPower;
     }
 
