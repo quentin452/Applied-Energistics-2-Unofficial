@@ -227,7 +227,7 @@ public class EnergyGridCache implements IEnergyGrid {
         if (mode == Actionable.SIMULATE) {
             extractedPower += this.simulateExtract(extractedPower, amt);
 
-            extractedPower = extractAEPowerFromOtherGrids(amt, mode, seen, extractedPower);
+            extractedPower = extractFromOtherGrids(amt, mode, seen, extractedPower);
 
             return extractedPower;
         } else {
@@ -244,7 +244,7 @@ public class EnergyGridCache implements IEnergyGrid {
             return amt;
         }
 
-        extractedPower = this.extractAEPowerFromOtherGrids(amt, mode, seen, extractedPower);
+        extractedPower = this.extractFromOtherGrids(amt, mode, seen, extractedPower);
 
         // go less or the correct amount?
         this.globalAvailablePower -= extractedPower;
@@ -252,7 +252,7 @@ public class EnergyGridCache implements IEnergyGrid {
         return extractedPower;
     }
 
-    private double extractAEPowerFromOtherGrids(double amt, Actionable mode, Set<IEnergyGrid> seen, double extractedPower) {
+    private double extractFromOtherGrids(double amt, Actionable mode, Set<IEnergyGrid> seen, double extractedPower) {
         if (extractedPower < amt) {
             if (this.lastExtractableGridProvider != null) {
                 double extracted = this.lastExtractableGridProvider.extractAEPower(amt - extractedPower, mode, seen);
@@ -360,8 +360,7 @@ public class EnergyGridCache implements IEnergyGrid {
 
     @Override
     public boolean calculateInfiniteStore(boolean currentInfinite, Set<IEnergyGrid> seen) {
-        if (!seen.add(this))
-            return currentInfinite;
+        if (!seen.add(this)) return currentInfinite;
 
         if (!currentInfinite) {
             currentInfinite = this.providers.stream().anyMatch(IAEPowerStorage::isInfinite);

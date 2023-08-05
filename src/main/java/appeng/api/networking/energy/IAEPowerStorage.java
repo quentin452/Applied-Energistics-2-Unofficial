@@ -57,6 +57,7 @@ public interface IAEPowerStorage extends IEnergySource {
 
     /**
      * Whether this power store fulfills all power consumption for free
+     * 
      * @return true if is creative energy cell, false otherwise
      */
     default boolean isInfinite() {
