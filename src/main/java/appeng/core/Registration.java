@@ -78,6 +78,7 @@ import appeng.tile.AEBaseTile;
 import appeng.util.Platform;
 import appeng.worldgen.MeteoriteWorldGen;
 import appeng.worldgen.QuartzWorldGen;
+import appeng.helpers.BlockingModeIgnoreList;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
@@ -774,5 +775,11 @@ public final class Registration {
          * initial recipe bake, if ore dictionary changes after this it re-bakes.
          */
         OreDictionaryHandler.INSTANCE.bakeRecipes();
+
+        /**
+         * Populate list of items that blocking mode should ignore
+         */
+        BlockingModeIgnoreList.registerIgnoredMaterials();
+
     }
 }
