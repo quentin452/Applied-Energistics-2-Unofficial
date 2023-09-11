@@ -11,6 +11,7 @@
 package appeng.core.features.registries;
 
 import appeng.api.features.IGrinderRegistry;
+import appeng.api.features.IIfaceTermRegistry;
 import appeng.api.features.IInscriberRegistry;
 import appeng.api.features.ILocatableRegistry;
 import appeng.api.features.IMatterCannonAmmoRegistry;
@@ -42,6 +43,7 @@ public class RegistryContainer implements IRegistryContainer {
     private final IExternalStorageRegistry storage = new ExternalStorageRegistry();
     private final ICellRegistry cell = new CellRegistry();
     private final IItemDisplayRegistry itemDisplay = new ItemDisplayRegistry();
+    private final IIfaceTermRegistry ifaceTerm = new IfaceTermRegistry();
     private final ILocatableRegistry locatable = new LocatableRegistry();
     private final ISpecialComparisonRegistry comparison = new SpecialComparisonRegistry();
     private final IWirelessTermRegistry wireless = new WirelessRegistry();
@@ -95,6 +97,11 @@ public class RegistryContainer implements IRegistryContainer {
     @Override
     public IInscriberRegistry inscriber() {
         return this.inscriber;
+    }
+
+    @Override
+    public IIfaceTermRegistry ifaceTerm() {
+        return this.ifaceTerm;
     }
 
     @Override
