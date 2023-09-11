@@ -65,7 +65,7 @@ public class PathGridCache implements IPathingGrid {
 
         if (this.updateNetwork) {
             if (!this.booting) {
-                this.myGrid.postEvent(new MENetworkBootingStatusChange());
+                this.myGrid.postEvent(new MENetworkBootingStatusChange(true));
             }
 
             this.booting = true;
@@ -166,7 +166,7 @@ public class PathGridCache implements IPathingGrid {
 
                 this.booting = false;
                 this.setChannelPowerUsage(this.getChannelsByBlocks() / 128.0);
-                this.myGrid.postEvent(new MENetworkBootingStatusChange());
+                this.myGrid.postEvent(new MENetworkBootingStatusChange(false));
             }
         }
     }
