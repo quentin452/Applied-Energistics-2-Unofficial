@@ -73,6 +73,8 @@ public interface IRegistryContainer {
      */
     IInscriberRegistry inscriber();
 
+    IIfaceTermRegistry ifaceTerm();
+
     /**
      * get access to the locatable registry
      */
