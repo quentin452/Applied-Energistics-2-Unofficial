@@ -79,7 +79,8 @@ public class AppEngPacketHandlerBase {
         PACKET_PATTERN_VALUE(PacketPatternValueSet.class),
         PACKET_CRAFTING_REMAINING_OPERATIONS(PacketCraftingRemainingOperations.class),
         PACKET_CRAFTING_ITEM_INTERFACE(PacketCraftingItemInterface.class),
-        PACKET_CRAFTING_TREE_DATA(PacketCraftingTreeData.class);
+        PACKET_CRAFTING_TREE_DATA(PacketCraftingTreeData.class),
+        PACKET_IFACE_TERMINAL_UPDATE(PacketIfaceTermUpdate.class);
 
         private final Class<? extends AppEngPacket> packetClass;
         private final Constructor<? extends AppEngPacket> packetConstructor;
