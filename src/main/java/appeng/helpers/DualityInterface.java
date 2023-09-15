@@ -1145,11 +1145,6 @@ public class DualityInterface implements IGridTickable, IStorageMonitorable, IIn
         }
     }
 
-    public long getSortValue() {
-        final TileEntity te = this.iHost.getTileEntity();
-        return (te.zCoord << 24) ^ (te.xCoord << 8) ^ te.yCoord;
-    }
-
     public BaseActionSource getActionSource() {
         return interfaceRequestSource;
     }
