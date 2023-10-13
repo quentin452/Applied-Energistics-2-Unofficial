@@ -13,7 +13,6 @@ import appeng.api.parts.IPart;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.PartItemStack;
 import appeng.me.GridAccessException;
-import appeng.me.cache.P2PCache;
 import appeng.util.Platform;
 
 /**
@@ -35,7 +34,6 @@ public abstract class PartP2PTunnelStatic<T extends PartP2PTunnelStatic> extends
             final NBTTagCompound data = mc.getData(is);
 
             final ItemStack newType = ItemStack.loadItemStackFromNBT(data);
-            final long freq = data.getLong("freq");
 
             if (newType != null) {
                 if (newType.getItem() instanceof IPartItem partItem) {
@@ -49,10 +47,7 @@ public abstract class PartP2PTunnelStatic<T extends PartP2PTunnelStatic> extends
                             newTunnel.setOutput(true);
 
                             try {
-                                final P2PCache p2p = newTunnel.getProxy().getP2P();
-                                p2p.updateFreq(newTunnel, freq);
-                                PartP2PTunnel input = p2p.getInput(freq);
-                                if (input != null) newTunnel.setCustomNameInternal(input.getCustomName());
+                                pasteMemoryCardData(newTunnel, data);
                             } catch (final GridAccessException e) {
                                 // :P
                             }

@@ -55,10 +55,7 @@ public class PartP2PTunnelNormal<T extends PartP2PTunnelNormal> extends PartP2PT
                             newTunnel.setOutput(true);
 
                             try {
-                                final P2PCache p2p = newTunnel.getProxy().getP2P();
-                                p2p.updateFreq(newTunnel, freq);
-                                PartP2PTunnel input = p2p.getInput(freq);
-                                if (input != null) newTunnel.setCustomNameInternal(input.getCustomName());
+                                pasteMemoryCardData(newTunnel, data);
                             } catch (final GridAccessException e) {
                                 // :P
                             }
