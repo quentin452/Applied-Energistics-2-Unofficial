@@ -1,5 +1,7 @@
 package appeng.client.render;
 
+import static appeng.client.render.AppEngRenderItem.POST_HOOKS;
+
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.RenderItem;
@@ -7,6 +9,8 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.item.ItemStack;
 
 import org.lwjgl.opengl.GL11;
+
+import appeng.api.storage.IItemDisplayRegistry.ItemRenderHook;
 
 /**
  * Uses translations instead of depth test to perform rendering.
@@ -17,8 +21,21 @@ public class TranslatedRenderItem extends RenderItem {
     public void renderItemOverlayIntoGUI(FontRenderer font, TextureManager texManager, ItemStack stack, int x, int y,
             String customText) {
         if (stack != null) {
+            boolean skip = false;
+            boolean showDurabilitybar = true;
+            boolean showStackSize = true;
+            boolean showCraftLabelText = true;
+            for (ItemRenderHook hook : POST_HOOKS) {
+                skip |= hook.renderOverlay(font, texManager, stack, x, y);
+                showDurabilitybar &= hook.showDurability(stack);
+                showStackSize &= hook.showStackSize(stack);
+                showCraftLabelText &= hook.showCraftLabelText(stack);
+            }
+            if (skip) {
+                return;
+            }
             GL11.glPushMatrix();
-            if (stack.stackSize > 1 || customText != null) {
+            if ((showStackSize && stack.stackSize > 1) || (showCraftLabelText && customText != null)) {
                 GL11.glTranslatef(0.0f, 0.0f, this.zLevel);
                 String s1 = customText == null ? String.valueOf(stack.stackSize) : customText;
                 GL11.glDisable(GL11.GL_LIGHTING);
@@ -28,7 +45,7 @@ public class TranslatedRenderItem extends RenderItem {
                 GL11.glTranslatef(0.0f, 0.0f, -this.zLevel);
             }
 
-            if (stack.getItem().showDurabilityBar(stack)) {
+            if (showDurabilitybar && stack.getItem().showDurabilityBar(stack)) {
                 GL11.glTranslatef(0.0f, 0.0f, this.zLevel - 1f);
                 double health = stack.getItem().getDurabilityForDisplay(stack);
                 int j1 = (int) Math.round(13.0D - health * 13.0D);
