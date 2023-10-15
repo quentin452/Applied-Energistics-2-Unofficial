@@ -29,6 +29,7 @@ public class TranslatedRenderItem extends RenderItem {
             }
 
             if (stack.getItem().showDurabilityBar(stack)) {
+                GL11.glTranslatef(0.0f, 0.0f, this.zLevel - 1f);
                 double health = stack.getItem().getDurabilityForDisplay(stack);
                 int j1 = (int) Math.round(13.0D - health * 13.0D);
                 int k = (int) Math.round(255.0D - health * 255.0D);
@@ -48,6 +49,7 @@ public class TranslatedRenderItem extends RenderItem {
                 GL11.glEnable(GL11.GL_TEXTURE_2D);
                 GL11.glEnable(GL11.GL_LIGHTING);
                 GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+                GL11.glTranslatef(0.0f, 0.0f, -(this.zLevel - 1f));
             }
             GL11.glPopMatrix();
         }
