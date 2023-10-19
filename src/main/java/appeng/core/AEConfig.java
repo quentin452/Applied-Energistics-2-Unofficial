@@ -109,6 +109,7 @@ public final class AEConfig extends Configuration implements IConfigurableObject
     public int craftingCalculatorVersion = 2;
     public int maxCraftingSteps = 2_000_000;
     public int maxCraftingTreeVisualizationSize = 32 * 1024 * 1024; // 32 MiB
+    public boolean limitCraftingCPUSpill = true;
 
     public AEConfig(final File configFile) {
         super(configFile);
@@ -225,6 +226,8 @@ public final class AEConfig extends Configuration implements IConfigurableObject
         // Clamp to 4kiB..1GiB
         this.maxCraftingTreeVisualizationSize = Math
                 .max(4096, Math.min(this.maxCraftingTreeVisualizationSize, 1024 * 1024 * 1024));
+        this.limitCraftingCPUSpill = this.get("misc", "LimitCraftingCPUSpill", this.limitCraftingCPUSpill)
+                .getBoolean(this.limitCraftingCPUSpill);
         this.clientSync();
 
         for (final AEFeature feature : AEFeature.values()) {
