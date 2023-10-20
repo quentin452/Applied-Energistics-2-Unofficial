@@ -69,7 +69,6 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
             this.grid = anchor.getActionableNode().getGrid();
             dirty = this.updateList();
             if (dirty != null) {
-                dirty.encode();
                 this.isDirty = true;
             } else {
                 dirty = new PacketIfaceTermUpdate();

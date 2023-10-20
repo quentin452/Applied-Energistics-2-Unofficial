@@ -2,7 +2,9 @@ package appeng.core.sync.packets;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -12,9 +14,12 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraftforge.common.util.Constants.NBT;
+import net.minecraftforge.common.util.ForgeDirection;
 
 import appeng.client.gui.IInterfaceTerminalPostUpdate;
+import appeng.core.AEConfig;
 import appeng.core.AELog;
+import appeng.core.features.AEFeature;
 import appeng.core.sync.AppEngPacket;
 import appeng.core.sync.network.INetworkInfo;
 import appeng.helpers.Reflected;
@@ -50,9 +55,8 @@ public class PacketIfaceTermUpdate extends AppEngPacket {
         int numEntries = buf.readInt();
 
         for (int i = 0; i < numEntries; ++i) {
-            int packetType = -1;
             try {
-                packetType = buf.readByte();
+                int packetType = buf.readByte();
                 PacketType type = PacketType.valueOf(packetType);
                 switch (type) {
                     case ADD -> this.commands.add(new PacketAdd(buf));
@@ -61,17 +65,49 @@ public class PacketIfaceTermUpdate extends AppEngPacket {
                     case RENAME -> this.commands.add(new PacketRename(buf));
                 }
             } catch (ArrayIndexOutOfBoundsException e) {
-                AELog.error("Unknown packet type of type %d (-1 = uninitialized)", packetType);
-                break;
+                if (AEConfig.instance.isFeatureEnabled(AEFeature.PacketLogging)) {
+                    AELog.info(
+                            "Corrupted packet commands: (" + i
+                                    + ") of ("
+                                    + numEntries
+                                    + ") -> "
+                                    + this.commands.size()
+                                    + " : "
+                                    + this.commands.stream().map(packetEntry -> packetEntry.getClass().getSimpleName())
+                                            .collect(Collectors.groupingBy(String::new, Collectors.counting())));
+                    if (AEConfig.instance.isFeatureEnabled(AEFeature.DebugLogging)) {
+                        AELog.info(" <- Parsed content: " + this.commands);
+                    }
+                }
+                AELog.debug(e);
+                return;
             } catch (IOException e) {
                 AELog.error(e);
                 break;
             }
         }
+        if (AEConfig.instance.isFeatureEnabled(AEFeature.PacketLogging)) {
+            AELog.info(
+                    " <- Received commands " + this.commands.size()
+                            + " : "
+                            + this.commands.stream().map(packetEntry -> packetEntry.getClass().getSimpleName())
+                                    .collect(Collectors.groupingBy(String::new, Collectors.counting())));
+        }
     }
 
     public void encode() {
         try {
+            if (AEConfig.instance.isFeatureEnabled(AEFeature.PacketLogging)) {
+                AELog.info(
+                        " -> Sent commands " + this.commands.size()
+                                + " : "
+                                + this.commands.stream().map(packetEntry -> packetEntry.getClass().getSimpleName())
+                                        .collect(Collectors.groupingBy(String::new, Collectors.counting())));
+                if (AEConfig.instance.isFeatureEnabled(AEFeature.DebugLogging)) {
+                    AELog.info(" -> Sent commands: " + this.commands);
+                }
+            }
+
             ByteBuf buf = Unpooled.buffer(2048);
             buf.writeInt(this.getPacketID());
             buf.writeByte(this.statusFlags);
@@ -257,21 +293,21 @@ public class PacketIfaceTermUpdate extends AppEngPacket {
             buf.writeInt(rows);
             buf.writeInt(rowSize);
 
-            ByteBuf tempBuf = Unpooled.buffer(256);
-            try (ByteBufOutputStream stream = new ByteBufOutputStream(tempBuf)) {
-
-                NBTTagCompound wrapper = new NBTTagCompound();
-
-                if (selfRep != null) {
-                    wrapper.setTag("self", selfRep.writeToNBT(new NBTTagCompound()));
-                }
-                if (dispRep != null) {
-                    wrapper.setTag("disp", dispRep.writeToNBT(new NBTTagCompound()));
-                }
-                wrapper.setTag("data", items);
-                CompressedStreamTools.writeCompressed(wrapper, stream);
-            }
+            ByteBuf tempBuf = Unpooled.directBuffer(256);
             try {
+                try (ByteBufOutputStream stream = new ByteBufOutputStream(tempBuf)) {
+
+                    NBTTagCompound wrapper = new NBTTagCompound();
+
+                    if (selfRep != null) {
+                        wrapper.setTag("self", selfRep.writeToNBT(new NBTTagCompound()));
+                    }
+                    if (dispRep != null) {
+                        wrapper.setTag("disp", dispRep.writeToNBT(new NBTTagCompound()));
+                    }
+                    wrapper.setTag("data", items);
+                    CompressedStreamTools.writeCompressed(wrapper, stream);
+                }
                 buf.writeInt(tempBuf.readableBytes());
                 buf.writeBytes(tempBuf);
             } finally {
@@ -292,6 +328,27 @@ public class PacketIfaceTermUpdate extends AppEngPacket {
             int payloadSize = buf.readInt();
             try (ByteBufInputStream stream = new ByteBufInputStream(buf, payloadSize)) {
                 NBTTagCompound payload = CompressedStreamTools.readCompressed(stream);
+                int available = stream.available();
+                if (available > 0) {
+                    byte[] left = new byte[available];
+                    int read = stream.read(left);
+                    if (AEConfig.instance.isFeatureEnabled(AEFeature.PacketLogging)) {
+                        AELog.info(
+                                "Unread bytes detected (" + read
+                                        + "): "
+                                        + Arrays.toString(left)
+                                        + " at "
+                                        + dim
+                                        + "#("
+                                        + x
+                                        + ":"
+                                        + y
+                                        + ":"
+                                        + z
+                                        + ")@"
+                                        + ForgeDirection.getOrientation(side));
+                    }
+                }
                 if (payload.hasKey("self", NBT.TAG_COMPOUND)) {
                     this.selfRep = ItemStack.loadItemStackFromNBT(payload.getCompoundTag("self"));
                 }
@@ -302,6 +359,38 @@ public class PacketIfaceTermUpdate extends AppEngPacket {
 
                 this.items = payload.getTagList("data", NBT.TAG_COMPOUND);
             }
+        }
+
+        @Override
+        public String toString() {
+            return "PacketAdd{" + "name='"
+                    + name
+                    + '\''
+                    + ", x="
+                    + x
+                    + ", y="
+                    + y
+                    + ", z="
+                    + z
+                    + ", dim="
+                    + dim
+                    + ", side="
+                    + side
+                    + ", rows="
+                    + rows
+                    + ", rowSize="
+                    + rowSize
+                    + ", online="
+                    + online
+                    + ", selfRep="
+                    + selfRep
+                    + ", dispRep="
+                    + dispRep
+                    + ", items="
+                    + items
+                    + ", entryId="
+                    + entryId
+                    + '}';
         }
     }
 
@@ -323,6 +412,11 @@ public class PacketIfaceTermUpdate extends AppEngPacket {
 
         @Override
         protected void read(ByteBuf buf) {}
+
+        @Override
+        public String toString() {
+            return "PacketRemove{" + "entryId=" + entryId + '}';
+        }
     }
 
     /**
@@ -387,13 +481,21 @@ public class PacketIfaceTermUpdate extends AppEngPacket {
                         buf.writeInt(validIndex);
                     }
                 }
-                try (ByteBufOutputStream stream = new ByteBufOutputStream(buf)) {
+                ByteBuf tempBuf = Unpooled.directBuffer(256);
+                try {
+                    try (ByteBufOutputStream stream = new ByteBufOutputStream(tempBuf)) {
 
-                    NBTTagCompound wrapper = new NBTTagCompound();
+                        NBTTagCompound wrapper = new NBTTagCompound();
 
-                    wrapper.setTag("data", items);
-                    CompressedStreamTools.writeCompressed(wrapper, stream);
+                        wrapper.setTag("data", items);
+                        CompressedStreamTools.writeCompressed(wrapper, stream);
+                    }
+                    buf.writeInt(tempBuf.readableBytes());
+                    buf.writeBytes(tempBuf);
+                } finally {
+                    tempBuf.release();
                 }
+
             } else {
                 buf.writeByte(flags);
             }
@@ -421,10 +523,38 @@ public class PacketIfaceTermUpdate extends AppEngPacket {
                     }
                 }
 
-                try (ByteBufInputStream stream = new ByteBufInputStream(buf)) {
+                int payloadSize = buf.readInt();
+                try (ByteBufInputStream stream = new ByteBufInputStream(buf, payloadSize)) {
                     this.items = CompressedStreamTools.readCompressed(stream).getTagList("data", NBT.TAG_COMPOUND);
+                    int available = stream.available();
+                    if (available > 0) {
+                        byte[] left = new byte[available];
+                        int read = stream.read(left);
+                        if (AEConfig.instance.isFeatureEnabled(AEFeature.PacketLogging)) {
+                            AELog.info("Unread bytes detected (" + read + "): " + Arrays.toString(left));
+                        }
+                    }
                 }
             }
+        }
+
+        @Override
+        public String toString() {
+            return "PacketOverwrite{" + "onlineValid="
+                    + onlineValid
+                    + ", online="
+                    + online
+                    + ", itemsValid="
+                    + itemsValid
+                    + ", allItemUpdate="
+                    + allItemUpdate
+                    + ", validIndices="
+                    + Arrays.toString(validIndices)
+                    + ", items="
+                    + items
+                    + ", entryId="
+                    + entryId
+                    + '}';
         }
     }
 
@@ -454,6 +584,11 @@ public class PacketIfaceTermUpdate extends AppEngPacket {
         @Override
         protected void read(ByteBuf buf) {
             newName = ByteBufUtils.readUTF8String(buf);
+        }
+
+        @Override
+        public String toString() {
+            return "PacketRename{" + "newName='" + newName + '\'' + ", entryId=" + entryId + '}';
         }
     }
 }
