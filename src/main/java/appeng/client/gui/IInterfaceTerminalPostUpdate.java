@@ -2,7 +2,7 @@ package appeng.client.gui;
 
 import java.util.List;
 
-import appeng.core.sync.packets.PacketIfaceTermUpdate.PacketEntry;
+import appeng.core.sync.packets.PacketInterfaceTerminalUpdate.PacketEntry;
 
 public interface IInterfaceTerminalPostUpdate {
 

@@ -5,11 +5,12 @@ import net.minecraft.tileentity.TileEntity;
 
 import appeng.api.networking.IGridHost;
 import appeng.api.util.DimensionalCoord;
+import appeng.api.util.IInterfaceViewable;
 
 /**
  * Refactoring this class into API, and renaming.
  *
- * @see appeng.api.util.IIfaceTermViewable
+ * @see IInterfaceViewable
  */
 @Deprecated
 public interface IInterfaceTerminalSupport extends IGridHost {

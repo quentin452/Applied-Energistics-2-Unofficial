@@ -35,11 +35,11 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.util.DimensionalCoord;
-import appeng.api.util.IIfaceTermViewable;
+import appeng.api.util.IInterfaceViewable;
 import appeng.container.AEBaseContainer;
-import appeng.core.features.registries.IfaceTermRegistry;
+import appeng.core.features.registries.InterfaceTerminalRegistry;
 import appeng.core.sync.network.NetworkHandler;
-import appeng.core.sync.packets.PacketIfaceTermUpdate;
+import appeng.core.sync.packets.PacketInterfaceTerminalUpdate;
 import appeng.helpers.InventoryAction;
 import appeng.items.misc.ItemEncodedPattern;
 import appeng.parts.AEBasePart;
@@ -53,9 +53,9 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
 
     private int nextId = 0;
 
-    private final Map<IIfaceTermViewable, InvTracker> tracked = new HashMap<>();
+    private final Map<IInterfaceViewable, InvTracker> tracked = new HashMap<>();
     private final Map<Long, InvTracker> trackedById = new HashMap<>();
-    private PacketIfaceTermUpdate dirty;
+    private PacketInterfaceTerminalUpdate dirty;
     private boolean isDirty;
     private IGrid grid;
     private IActionHost anchor;
@@ -71,7 +71,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
             if (dirty != null) {
                 this.isDirty = true;
             } else {
-                dirty = new PacketIfaceTermUpdate();
+                dirty = new PacketInterfaceTerminalUpdate();
             }
         }
         this.bindPlayerInventory(ip, 14, 3);
@@ -98,7 +98,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
              * updates. This prevents DoSing the player if their network is flickering.
              */
             if (!this.wasOff) {
-                PacketIfaceTermUpdate update = new PacketIfaceTermUpdate();
+                PacketInterfaceTerminalUpdate update = new PacketInterfaceTerminalUpdate();
 
                 update.setDisconnect();
                 this.wasOff = true;
@@ -109,7 +109,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
         this.wasOff = false;
 
         if (anchor instanceof PartInterfaceTerminal terminal && terminal.needsUpdate()) {
-            PacketIfaceTermUpdate update = this.updateList();
+            PacketInterfaceTerminalUpdate update = this.updateList();
             if (update != null) {
                 update.encode();
                 NetworkHandler.instance.sendTo(update, (EntityPlayerMP) this.getPlayerInv().player);
@@ -117,7 +117,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
         } else if (isDirty) {
             this.dirty.encode();
             NetworkHandler.instance.sendTo(this.dirty, (EntityPlayerMP) this.getPlayerInv().player);
-            this.dirty = new PacketIfaceTermUpdate();
+            this.dirty = new PacketInterfaceTerminalUpdate();
             this.isDirty = false;
         }
     }
@@ -264,14 +264,14 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
     /**
      * Finds out whether any updates are needed, and if so, incrementally updates the list.
      */
-    private PacketIfaceTermUpdate updateList() {
-        PacketIfaceTermUpdate update = null;
-        var supported = IfaceTermRegistry.instance().getSupportedClasses();
-        Set<IIfaceTermViewable> visited = new HashSet<>();
+    private PacketInterfaceTerminalUpdate updateList() {
+        PacketInterfaceTerminalUpdate update = null;
+        var supported = InterfaceTerminalRegistry.instance().getSupportedClasses();
+        Set<IInterfaceViewable> visited = new HashSet<>();
 
-        for (Class<? extends IIfaceTermViewable> c : supported) {
+        for (Class<? extends IInterfaceViewable> c : supported) {
             for (IGridNode node : grid.getMachines(c)) {
-                IIfaceTermViewable machine = (IIfaceTermViewable) node.getMachine();
+                IInterfaceViewable machine = (IInterfaceViewable) node.getMachine();
                 /* First check if we are already tracking this node */
                 if (tracked.containsKey(machine)) {
                     /* Check for updates */
@@ -281,7 +281,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
                     String name = machine.getName();
 
                     if (!Objects.equals(known.name, name)) {
-                        if (update == null) update = new PacketIfaceTermUpdate();
+                        if (update == null) update = new PacketInterfaceTerminalUpdate();
                         update.addRenamedEntry(known.id, name);
                         known.name = name;
                     }
@@ -292,18 +292,18 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
                     if (!known.online && isActive) {
                         /* Node offline -> online */
                         known.online = true;
-                        if (update == null) update = new PacketIfaceTermUpdate();
+                        if (update == null) update = new PacketInterfaceTerminalUpdate();
                         known.updateNBT();
                         update.addOverwriteEntry(known.id).setOnline(true).setItems(new int[0], known.invNbt);
                     } else if (known.online && !isActive) {
                         /* Node online -> offline */
                         known.online = false;
-                        if (update == null) update = new PacketIfaceTermUpdate();
+                        if (update == null) update = new PacketInterfaceTerminalUpdate();
                         update.addOverwriteEntry(known.id).setOnline(false);
                     }
                 } else {
                     /* Add a new entry */
-                    if (update == null) update = new PacketIfaceTermUpdate();
+                    if (update == null) update = new PacketInterfaceTerminalUpdate();
                     InvTracker entry = new InvTracker(nextId++, machine, node.isActive());
                     update.addNewEntry(entry.id, entry.name, entry.online)
                             .setLoc(entry.x, entry.y, entry.z, entry.dim, entry.side.ordinal())
@@ -317,14 +317,14 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
         }
 
         /* Now find any entries that we need to remove */
-        Iterator<Entry<IIfaceTermViewable, InvTracker>> it = tracked.entrySet().iterator();
+        Iterator<Entry<IInterfaceViewable, InvTracker>> it = tracked.entrySet().iterator();
         while (it.hasNext()) {
             var entry = it.next();
             if (visited.contains(entry.getKey())) {
                 continue;
             }
 
-            if (update == null) update = new PacketIfaceTermUpdate();
+            if (update == null) update = new PacketInterfaceTerminalUpdate();
 
             trackedById.remove(entry.getValue().id);
             it.remove();
@@ -360,7 +360,7 @@ public final class ContainerInterfaceTerminal extends AEBaseContainer {
         private boolean online;
         private NBTTagList invNbt;
 
-        InvTracker(long id, IIfaceTermViewable machine, boolean online) {
+        InvTracker(long id, IInterfaceViewable machine, boolean online) {
             DimensionalCoord location = machine.getLocation();
 
             this.id = id;
