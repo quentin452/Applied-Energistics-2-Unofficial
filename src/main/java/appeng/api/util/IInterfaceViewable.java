@@ -9,7 +9,7 @@ import appeng.api.networking.IGridHost;
 /**
  * Replacement for {@code IInterfaceTerminalSupport} in API.
  */
-public interface IIfaceTermViewable extends IGridHost {
+public interface IInterfaceViewable extends IGridHost {
 
     DimensionalCoord getLocation();
 

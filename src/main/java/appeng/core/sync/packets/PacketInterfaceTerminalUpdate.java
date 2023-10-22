@@ -35,7 +35,7 @@ import io.netty.buffer.Unpooled;
  * Packet used for interface terminal updates. Packet allows the server to send an array of command packets, which are
  * then processed in order. This allows for chaining commands to produce the desired update.
  */
-public class PacketIfaceTermUpdate extends AppEngPacket {
+public class PacketInterfaceTerminalUpdate extends AppEngPacket {
 
     public static final int CLEAR_ALL_BIT = 1;
     public static final int DISCONNECT_BIT = 2;
@@ -44,11 +44,11 @@ public class PacketIfaceTermUpdate extends AppEngPacket {
     private int statusFlags;
 
     @Reflected
-    public PacketIfaceTermUpdate(final ByteBuf buf) throws IOException {
+    public PacketInterfaceTerminalUpdate(final ByteBuf buf) throws IOException {
         decode(buf);
     }
 
-    public PacketIfaceTermUpdate() {}
+    public PacketInterfaceTerminalUpdate() {}
 
     private void decode(ByteBuf buf) {
         this.statusFlags = buf.readByte();
