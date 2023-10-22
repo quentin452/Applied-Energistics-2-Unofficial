@@ -66,6 +66,7 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.api.util.DimensionalCoord;
+import appeng.api.util.IInterfaceViewable;
 import appeng.api.util.WorldCoord;
 import appeng.container.ContainerNull;
 import appeng.core.AELog;
@@ -75,7 +76,6 @@ import appeng.crafting.CraftingLink;
 import appeng.crafting.CraftingWatcher;
 import appeng.crafting.MECraftingInventory;
 import appeng.helpers.DualityInterface;
-import appeng.helpers.IInterfaceTerminalSupport;
 import appeng.me.cache.CraftingGridCache;
 import appeng.me.cluster.IAECluster;
 import appeng.tile.AEBaseTile;
@@ -1243,8 +1243,8 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             return ((DualityInterface) craftingProvider).getHost().getTile();
         } else if (craftingProvider instanceof AEBaseTile) {
             return ((AEBaseTile) craftingProvider).getTile();
-        } else if (craftingProvider instanceof IInterfaceTerminalSupport interfaceTerminalSupport) {
-            return interfaceTerminalSupport.getTileEntity();
+        } else if (craftingProvider instanceof IInterfaceViewable interfaceViewable) {
+            return interfaceViewable.getTileEntity();
         }
         try {
             Method method = craftingProvider.getClass().getMethod("getTile");
