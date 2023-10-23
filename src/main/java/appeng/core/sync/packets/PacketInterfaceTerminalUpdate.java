@@ -289,7 +289,7 @@ public class PacketInterfaceTerminalUpdate extends AppEngPacket {
             buf.writeInt(y);
             buf.writeInt(z);
             buf.writeInt(dim);
-            buf.writeInt(side);
+            buf.writeByte(side);
             buf.writeInt(rows);
             buf.writeInt(rowSize);
 
@@ -323,7 +323,7 @@ public class PacketInterfaceTerminalUpdate extends AppEngPacket {
             this.z = buf.readInt();
             this.dim = buf.readInt();
             this.side = buf.readInt();
-            this.rows = buf.readInt();
+            this.rows = buf.readByte();
             this.rowSize = buf.readInt();
             int payloadSize = buf.readInt();
             try (ByteBufInputStream stream = new ByteBufInputStream(buf, payloadSize)) {
