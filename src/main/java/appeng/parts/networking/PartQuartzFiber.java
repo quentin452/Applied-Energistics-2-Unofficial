@@ -197,4 +197,23 @@ public class PartQuartzFiber extends AEBasePart implements IEnergyGridProvider {
 
         return demand;
     }
+
+    @Override
+    public boolean calculateInfiniteStore(boolean currentInfinite, Set<IEnergyGrid> seen) {
+        try {
+            final IEnergyGrid eg = this.getProxy().getEnergy();
+            currentInfinite |= eg.calculateInfiniteStore(currentInfinite, seen);
+        } catch (final GridAccessException e) {
+            // :P
+        }
+
+        try {
+            final IEnergyGrid eg = this.outerProxy.getEnergy();
+            currentInfinite |= eg.calculateInfiniteStore(currentInfinite, seen);
+        } catch (final GridAccessException e) {
+            // :P
+        }
+
+        return currentInfinite;
+    }
 }
