@@ -67,7 +67,7 @@ public class GridStorageCache implements IStorageGrid {
 
     public GridStorageCache(final IGrid g) {
         this.myGrid = g;
-        this.ticksCount = 0;
+        this.ticksCount = 100;
     }
 
     @Override
