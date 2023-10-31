@@ -46,6 +46,8 @@ import appeng.me.storage.CellInventoryHandler;
 import appeng.me.storage.DriveWatcher;
 import appeng.me.storage.ItemWatcher;
 import appeng.me.storage.NetworkInventoryHandler;
+import appeng.me.storage.VoidCellInventory;
+import appeng.tile.storage.TileDrive;
 
 public class GridStorageCache implements IStorageGrid {
 
@@ -77,25 +79,24 @@ public class GridStorageCache implements IStorageGrid {
         this.itemBytesUsed = 0;
         try {
             for (ICellProvider icp : this.activeCellProviders) {
-                if (icp.getClass() == Class.forName("appeng.tile.storage.TileDrive")) {
+                if (icp instanceof TileDrive) {
                     // All Item Cell
                     for (IMEInventoryHandler<?> meih : icp.getCellArray(StorageChannel.ITEMS)) {
-                        if (((DriveWatcher<IAEItemStack>) meih).getInternal().getClass()
-                                == Class.forName("appeng.me.storage.VoidCellInventory")) { // exclude void cell and
-                                                                                           // creative cell
+                        // exclude void cell
+                        if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof VoidCellInventory) {
                             continue;
                         }
-                        if (((CellInventoryHandler) (((DriveWatcher<IAEItemStack>) meih).getInternal())).getCellInv()
-                                != null) {
-                            itemBytesTotal += ((CellInventoryHandler) (((DriveWatcher<IAEItemStack>) meih)
-                                    .getInternal())).getCellInv().getTotalBytes();
-                            itemBytesUsed += ((CellInventoryHandler) (((DriveWatcher<IAEItemStack>) meih)
-                                    .getInternal())).getCellInv().getUsedBytes();
+                        // exclude creative cell
+                        if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof CellInventoryHandler handler) {
+                            if (handler.getCellInv() != null) {
+                                itemBytesTotal += handler.getCellInv().getTotalBytes();
+                                itemBytesUsed += handler.getCellInv().getUsedBytes();
+                            }
                         }
                     }
                 }
             }
-        } catch (ClassNotFoundException e) {
+        } catch (Exception e) {
             // XD
         }
     }
