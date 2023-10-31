@@ -142,25 +142,28 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 143 - 20,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
         this.fontRendererObj.drawString(
-        		GuiText.ByteTotal.getLocal() + ": " + Platform.formatByteLong(ns.getItemBytesTotal()),
+                GuiText.ByteTotal.getLocal() + ": " + Platform.formatByteLong(ns.getItemBytesTotal()),
                 13,
                 143,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
         this.fontRendererObj.drawString(
-        		GuiText.ByteUsage.getLocal() + ": " + Platform.formatByteLong(ns.getItemBytesUsed())
-        		+ " (" + df.format(ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal()) + "%)",
+                GuiText.ByteUsage.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getItemBytesUsed())
+                        + " ("
+                        + df.format(ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal())
+                        + "%)",
                 13,
                 143 + 10,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
         this.fontRendererObj.drawString(
-        		GuiText.ByteFree.getLocal() + ": " + Platform.formatByteLong(ns.getItemBytesFree())
-        		+ " (" + df.format(ns.getItemBytesFree() * 100d / ns.getItemBytesTotal()) + "%)",
+                GuiText.ByteFree.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getItemBytesFree())
+                        + " ("
+                        + df.format(ns.getItemBytesFree() * 100d / ns.getItemBytesTotal())
+                        + "%)",
                 13,
                 143 + 20,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
-        
-        
-        
 
         final int sectionLength = 30;
 

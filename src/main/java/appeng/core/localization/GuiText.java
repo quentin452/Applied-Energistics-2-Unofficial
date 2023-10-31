@@ -206,11 +206,11 @@ public enum GuiText {
 
     // If a thing is deprecated
     Deprecated,
-	
-	//mine
-	ByteTotal,
-	ByteUsage,
-	ByteFree;
+
+    // mine
+    ByteTotal,
+    ByteUsage,
+    ByteFree;
 
     private final String root;
 
