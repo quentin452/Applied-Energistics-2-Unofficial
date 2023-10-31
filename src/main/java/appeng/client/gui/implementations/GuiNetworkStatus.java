@@ -10,6 +10,7 @@
 
 package appeng.client.gui.implementations;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import net.minecraft.client.gui.GuiButton;
@@ -51,7 +52,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
 
         this.setScrollBar(scrollbar);
         this.repo = new ItemRepo(scrollbar, this);
-        this.ySize = 153;
+        this.ySize = 183;
         this.xSize = 195;
         this.repo.setRowSize(5);
     }
@@ -115,7 +116,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
     @Override
     public void drawFG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
         final ContainerNetworkStatus ns = (ContainerNetworkStatus) this.inventorySlots;
-
+        final DecimalFormat df = new DecimalFormat("#.##");
         this.fontRendererObj
                 .drawString(GuiText.NetworkDetails.getLocal(), 8, 6, GuiColors.NetworkStatusDetails.getColor());
 
@@ -140,6 +141,26 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 13,
                 143 - 20,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
+        this.fontRendererObj.drawString(
+        		GuiText.ByteTotal.getLocal() + ": " + Platform.formatByteLong(ns.getItemBytesTotal()),
+                13,
+                143,
+                GuiColors.NetworkStatusPowerUsageRate.getColor());
+        this.fontRendererObj.drawString(
+        		GuiText.ByteUsage.getLocal() + ": " + Platform.formatByteLong(ns.getItemBytesUsed())
+        		+ " (" + df.format(ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal()) + "%)",
+                13,
+                143 + 10,
+                GuiColors.NetworkStatusPowerUsageRate.getColor());
+        this.fontRendererObj.drawString(
+        		GuiText.ByteFree.getLocal() + ": " + Platform.formatByteLong(ns.getItemBytesFree())
+        		+ " (" + df.format(ns.getItemBytesFree() * 100d / ns.getItemBytesTotal()) + "%)",
+                13,
+                143 + 20,
+                GuiColors.NetworkStatusPowerUsageRate.getColor());
+        
+        
+        
 
         final int sectionLength = 30;
 

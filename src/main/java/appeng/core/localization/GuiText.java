@@ -205,7 +205,12 @@ public enum GuiText {
     VoidCellTooltip,
 
     // If a thing is deprecated
-    Deprecated;
+    Deprecated,
+	
+	//mine
+	ByteTotal,
+	ByteUsage,
+	ByteFree;
 
     private final String root;
 
