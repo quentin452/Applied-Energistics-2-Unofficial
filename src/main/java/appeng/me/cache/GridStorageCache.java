@@ -81,7 +81,7 @@ public class GridStorageCache implements IStorageGrid {
             for (ICellProvider icp : this.activeCellProviders) {
                 if (icp instanceof TileDrive) {
                     // All Item Cell
-                    for (IMEInventoryHandler meih : icp.getCellArray(StorageChannel.ITEMS)) {
+                    for (IMEInventoryHandler<?> meih : icp.getCellArray(StorageChannel.ITEMS)) {
                         // exclude void cell
                         if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof VoidCellInventory) {
                             continue;
