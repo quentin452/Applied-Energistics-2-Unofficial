@@ -76,7 +76,7 @@ public class GridStorageCache implements IStorageGrid {
         this.fluidMonitor.onTick();
 
         // update every 1000Ticks
-        if (this.ticksCount >= 1000) {
+        if (this.ticksCount <= 1000) {
             this.ticksCount++;
         } else {
             this.ticksCount = 0;
