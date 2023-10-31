@@ -79,7 +79,7 @@ public class GridStorageCache implements IStorageGrid {
             for (ICellProvider icp : this.activeCellProviders) {
                 if (icp.getClass() == Class.forName("appeng.tile.storage.TileDrive")) {
                     // All Item Cell
-                    for (IMEInventoryHandler meih : icp.getCellArray(StorageChannel.ITEMS)) {
+                    for (IMEInventoryHandler<?> meih : icp.getCellArray(StorageChannel.ITEMS)) {
                         if (((DriveWatcher<IAEItemStack>) meih).getInternal().getClass()
                                 == Class.forName("appeng.me.storage.VoidCellInventory")) { // exclude void cell and
                                                                                            // creative cell
