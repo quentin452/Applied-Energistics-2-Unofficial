@@ -55,6 +55,7 @@ public final class AEConfig extends Configuration implements IConfigurableObject
     public int storageBiomeID = -1;
     public int storageProviderID = -1;
     public int formationPlaneEntityLimit = 128;
+    public int networkBytesUpdateFrequency = 5;
     public float spawnChargedChance = 0.92f;
     public int quartzOresPerCluster = 4;
     public int quartzOresClusterAmount = 15;
@@ -191,6 +192,16 @@ public final class AEConfig extends Configuration implements IConfigurableObject
         this.formationPlaneEntityLimit = this
                 .get("automation", "formationPlaneEntityLimit", this.formationPlaneEntityLimit)
                 .getInt(this.formationPlaneEntityLimit);
+        this.networkBytesUpdateFrequency = this
+                .get("automation", "networkBytesUpdateFrequency", this.networkBytesUpdateFrequency)
+                .getInt(this.networkBytesUpdateFrequency);
+        if (this.networkBytesUpdateFrequency == 0) {
+            throw new IllegalArgumentException("networkBytesUpdateFrequency can not be 0!");
+        }
+        this.get(
+                "automation",
+                "networkBytesUpdateFrequency",
+                this.networkBytesUpdateFrequency).comment = "#Network bytes information update Frequency(s) default:5";
 
         this.wirelessTerminalBattery = this.get("battery", "wirelessTerminal", this.wirelessTerminalBattery)
                 .getInt(this.wirelessTerminalBattery);

@@ -41,6 +41,7 @@ import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
+import appeng.core.AEConfig;
 import appeng.me.helpers.GenericInterestManager;
 import appeng.me.storage.CellInventoryHandler;
 import appeng.me.storage.DriveWatcher;
@@ -63,11 +64,13 @@ public class GridStorageCache implements IStorageGrid {
     private NetworkInventoryHandler<IAEFluidStack> myFluidNetwork;
     private long itemBytesTotal;
     private long itemBytesUsed;
-    private short ticksCount;
+    private int ticksCount;
+    private int networkBytesUpdateFrequency;
 
     public GridStorageCache(final IGrid g) {
         this.myGrid = g;
-        this.ticksCount = 100;
+        this.networkBytesUpdateFrequency = AEConfig.instance.networkBytesUpdateFrequency * 20;
+        this.ticksCount = this.networkBytesUpdateFrequency;
     }
 
     @Override
@@ -75,36 +78,12 @@ public class GridStorageCache implements IStorageGrid {
         this.itemMonitor.onTick();
         this.fluidMonitor.onTick();
 
-        // update every 100Ticks
-        if (this.ticksCount <= 100) {
+        // update every 100Ticks by default
+        if (this.ticksCount < this.networkBytesUpdateFrequency) {
             this.ticksCount++;
         } else {
             this.ticksCount = 0;
-            this.itemBytesTotal = 0;
-            this.itemBytesUsed = 0;
-            try {
-                for (ICellProvider icp : this.activeCellProviders) {
-                    if (icp instanceof TileDrive) {
-                        // All Item Cell
-                        for (IMEInventoryHandler<?> meih : icp.getCellArray(StorageChannel.ITEMS)) {
-                            // exclude void cell
-                            if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof VoidCellInventory) {
-                                continue;
-                            }
-                            // exclude creative cell
-                            if (((DriveWatcher<IAEItemStack>) meih)
-                                    .getInternal() instanceof CellInventoryHandler handler) {
-                                if (handler.getCellInv() != null) {
-                                    itemBytesTotal += handler.getCellInv().getTotalBytes();
-                                    itemBytesUsed += handler.getCellInv().getUsedBytes();
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                // XD Normally won't be here, just normally..
-            }
+            this.updateBytesInfo();
         }
     }
 
@@ -368,6 +347,33 @@ public class GridStorageCache implements IStorageGrid {
             for (final CellChangeTrackerRecord rec : this.data) {
                 rec.applyChanges();
             }
+        }
+    }
+
+    private void updateBytesInfo() {
+        this.itemBytesTotal = 0;
+        this.itemBytesUsed = 0;
+        try {
+            for (ICellProvider icp : this.activeCellProviders) {
+                if (icp instanceof TileDrive) {
+                    // All Item Cell
+                    for (IMEInventoryHandler<?> meih : icp.getCellArray(StorageChannel.ITEMS)) {
+                        // exclude void cell
+                        if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof VoidCellInventory) {
+                            continue;
+                        }
+                        // exclude creative cell
+                        if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof CellInventoryHandler handler) {
+                            if (handler.getCellInv() != null) {
+                                itemBytesTotal += handler.getCellInv().getTotalBytes();
+                                itemBytesUsed += handler.getCellInv().getUsedBytes();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // XD Normally won't be here, just normally..
         }
     }
 
