@@ -52,7 +52,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
 
         this.setScrollBar(scrollbar);
         this.repo = new ItemRepo(scrollbar, this);
-        this.ySize = 183;
+        this.ySize = 213;
         this.xSize = 195;
         this.repo.setRowSize(5);
     }
@@ -141,13 +141,15 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 13,
                 143 - 20,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
+
+        // Item byte status
         this.fontRendererObj.drawString(
-                GuiText.ByteTotal.getLocal() + ": " + Platform.formatByteLong(ns.getItemBytesTotal()),
+                GuiText.ItemBytesTotal.getLocal() + ": " + Platform.formatByteLong(ns.getItemBytesTotal()),
                 13,
                 143,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
         this.fontRendererObj.drawString(
-                GuiText.ByteUsage.getLocal() + ": "
+                GuiText.ItemBytesUsage.getLocal() + ": "
                         + Platform.formatByteLong(ns.getItemBytesUsed())
                         + " ("
                         + df.format(ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal())
@@ -156,13 +158,38 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 143 + 10,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
         this.fontRendererObj.drawString(
-                GuiText.ByteFree.getLocal() + ": "
+                GuiText.ItemBytesFree.getLocal() + ": "
                         + Platform.formatByteLong(ns.getItemBytesFree())
                         + " ("
                         + df.format(ns.getItemBytesFree() * 100d / ns.getItemBytesTotal())
                         + "%)",
                 13,
                 143 + 20,
+                GuiColors.NetworkStatusPowerUsageRate.getColor());
+
+        // Fluid byte status
+        this.fontRendererObj.drawString(
+                GuiText.FluidBytesTotal.getLocal() + ": " + Platform.formatByteLong(ns.getFluidBytesTotal()),
+                13,
+                143 + 30,
+                GuiColors.NetworkStatusPowerUsageRate.getColor());
+        this.fontRendererObj.drawString(
+                GuiText.FluidBytesUsage.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getFluidBytesUsed())
+                        + " ("
+                        + df.format(ns.getFluidBytesUsed() * 100d / ns.getFluidBytesTotal())
+                        + "%)",
+                13,
+                143 + 40,
+                GuiColors.NetworkStatusPowerUsageRate.getColor());
+        this.fontRendererObj.drawString(
+                GuiText.FluidBytesFree.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getFluidBytesFree())
+                        + " ("
+                        + df.format(ns.getFluidBytesFree() * 100d / ns.getFluidBytesTotal())
+                        + "%)",
+                13,
+                143 + 50,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
 
         final int sectionLength = 30;

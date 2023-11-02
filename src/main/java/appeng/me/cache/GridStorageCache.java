@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.glodblock.github.common.storage.FluidCellInventoryHandler;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
@@ -46,6 +47,7 @@ import appeng.me.helpers.GenericInterestManager;
 import appeng.me.storage.CellInventoryHandler;
 import appeng.me.storage.DriveWatcher;
 import appeng.me.storage.ItemWatcher;
+import appeng.me.storage.MEInventoryHandler;
 import appeng.me.storage.NetworkInventoryHandler;
 import appeng.me.storage.VoidCellInventory;
 import appeng.tile.storage.TileDrive;
@@ -64,6 +66,8 @@ public class GridStorageCache implements IStorageGrid {
     private NetworkInventoryHandler<IAEFluidStack> myFluidNetwork;
     private long itemBytesTotal;
     private long itemBytesUsed;
+    private long fluidBytesTotal;
+    private long fluidBytesUsed;
     private int ticksCount;
     private int networkBytesUpdateFrequency;
 
@@ -353,6 +357,8 @@ public class GridStorageCache implements IStorageGrid {
     private void updateBytesInfo() {
         this.itemBytesTotal = 0;
         this.itemBytesUsed = 0;
+        this.fluidBytesTotal = 0;
+        this.fluidBytesUsed = 0;
         try {
             for (ICellProvider icp : this.activeCellProviders) {
                 if (icp instanceof TileDrive) {
@@ -370,6 +376,16 @@ public class GridStorageCache implements IStorageGrid {
                             }
                         }
                     }
+                    for (IMEInventoryHandler meih : icp.getCellArray(StorageChannel.FLUIDS)) {
+                        // FluidCellInventoryHandler MEInventoryHandler<IAEFluidStack>
+                        if (((MEInventoryHandler<IAEFluidStack>) meih)
+                                .getInternal() instanceof FluidCellInventoryHandler handler) {
+                            if (handler.getCellInv() != null) {
+                                fluidBytesTotal += handler.getCellInv().getTotalBytes();
+                                fluidBytesUsed += handler.getCellInv().getUsedBytes();
+                            }
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
@@ -383,6 +399,14 @@ public class GridStorageCache implements IStorageGrid {
 
     public long getItemBytesUsed() {
         return this.itemBytesUsed;
+    }
+
+    public long getFluidBytesTotal() {
+        return this.fluidBytesTotal;
+    }
+
+    public long getFluidBytesUsed() {
+        return this.fluidBytesUsed;
     }
 
 }

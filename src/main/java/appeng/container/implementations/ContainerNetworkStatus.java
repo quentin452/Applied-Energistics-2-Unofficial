@@ -60,6 +60,15 @@ public class ContainerNetworkStatus extends AEBaseContainer {
     @GuiSync(6)
     public long itemBytesFree;
 
+    @GuiSync(7)
+    public long fluidBytesTotal;
+
+    @GuiSync(8)
+    public long fluidBytesUsed;
+
+    @GuiSync(9)
+    public long fluidBytesFree;
+
     private IGrid network;
     private int delay = 40;
 
@@ -137,6 +146,9 @@ public class ContainerNetworkStatus extends AEBaseContainer {
                 this.setItemBytesTotal(sg.getItemBytesTotal());
                 this.setItemBytesUsed(sg.getItemBytesUsed());
                 this.setItemBytesFree(this.getItemBytesTotal() - this.getItemBytesUsed());
+                this.setFluidBytesTotal(sg.getFluidBytesTotal());
+                this.setFluidBytesUsed(sg.getFluidBytesUsed());
+                this.setFluidBytesFree(this.getFluidBytesTotal() - this.getFluidBytesUsed());
             }
         }
         super.detectAndSendChanges();
@@ -196,5 +208,29 @@ public class ContainerNetworkStatus extends AEBaseContainer {
 
     public void setItemBytesFree(final long itemBytesFree) {
         this.itemBytesFree = itemBytesFree;
+    }
+
+    public long getFluidBytesTotal() {
+        return this.fluidBytesTotal;
+    }
+
+    public long getFluidBytesUsed() {
+        return this.fluidBytesUsed;
+    }
+
+    public long getFluidBytesFree() {
+        return this.fluidBytesFree;
+    }
+
+    public void setFluidBytesTotal(final long fluidBytesTotal) {
+        this.fluidBytesTotal = fluidBytesTotal;
+    }
+
+    public void setFluidBytesUsed(final long fluidBytesUsed) {
+        this.fluidBytesUsed = fluidBytesUsed;
+    }
+
+    public void setFluidBytesFree(final long fluidBytesFree) {
+        this.fluidBytesFree = fluidBytesFree;
     }
 }
