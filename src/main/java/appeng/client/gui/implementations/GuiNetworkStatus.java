@@ -50,7 +50,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
     public GuiNetworkStatus(final InventoryPlayer inventoryPlayer, final INetworkTool te) {
         super(new ContainerNetworkStatus(inventoryPlayer, te));
         final GuiScrollbar scrollbar = new GuiScrollbar();
-        
+
         this.df = new DecimalFormat("#.##");
         this.setScrollBar(scrollbar);
         this.repo = new ItemRepo(scrollbar, this);
