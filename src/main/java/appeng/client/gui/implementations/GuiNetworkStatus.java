@@ -45,11 +45,13 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
     private final int rows = 4;
     private GuiImgButton units;
     private int tooltip = -1;
+    private final DecimalFormat df;
 
     public GuiNetworkStatus(final InventoryPlayer inventoryPlayer, final INetworkTool te) {
         super(new ContainerNetworkStatus(inventoryPlayer, te));
         final GuiScrollbar scrollbar = new GuiScrollbar();
-
+        
+        this.df = new DecimalFormat("#.##");
         this.setScrollBar(scrollbar);
         this.repo = new ItemRepo(scrollbar, this);
         this.ySize = 183;
@@ -116,7 +118,6 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
     @Override
     public void drawFG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
         final ContainerNetworkStatus ns = (ContainerNetworkStatus) this.inventorySlots;
-        final DecimalFormat df = new DecimalFormat("#.##");
         this.fontRendererObj
                 .drawString(GuiText.NetworkDetails.getLocal(), 8, 6, GuiColors.NetworkStatusDetails.getColor());
 
