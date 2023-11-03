@@ -376,35 +376,21 @@ public class GridStorageCache implements IStorageGrid {
                         // exclude creative cell
                         if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof CellInventoryHandler handler) {
                             if (handler.getCellInv() != null) {
-                                itemBytesTotal += handler.getCellInv().getTotalBytes();
-                                itemBytesUsed += handler.getCellInv().getUsedBytes();
+                                itemBytesTotal += handler.getTotalBytes();
+                                itemBytesUsed += handler.getUsedBytes();
                             }
                         }
                     }
-                    for (IMEInventoryHandler meih : icp.getCellArray(StorageChannel.FLUIDS)) {
-                        // Fluid Cell
-                        if (((MEInventoryHandler<IAEFluidStack>) meih)
-                                .getInternal() instanceof FluidCellInventoryHandler handler) {
-                            if (handler.getCellInv() != null) {
-                                fluidBytesTotal += handler.getCellInv().getTotalBytes();
-                                fluidBytesUsed += handler.getCellInv().getUsedBytes();
-                            }
-                        }
-                        // Essentia Cell
-                        if (((MEInventoryHandler<IAEFluidStack>) meih)
-                                .getInternal() instanceof HandlerItemEssentiaCell handler) {
-                            essentiaBytesTotal += handler.getTotalBytes();
-                            essentiaBytesUsed += handler.getUsedBytes();
-                        }
+                    //TODO
+                    for (IMEInventoryHandler<?> meih : icp.getCellArray(StorageChannel.FLUIDS)) {
+                    	
                     }
-
                 }
             }
         } catch (Exception e) {
             // XD Normally won't be here, just normally..
         }
     }
-
     public long getItemBytesTotal() {
         return itemBytesTotal;
     }

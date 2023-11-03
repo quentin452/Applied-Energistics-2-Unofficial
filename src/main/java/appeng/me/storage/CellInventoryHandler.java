@@ -18,6 +18,7 @@ import appeng.api.config.FuzzyMode;
 import appeng.api.config.IncludeExclude;
 import appeng.api.config.Upgrades;
 import appeng.api.implementations.items.IUpgradeModule;
+import appeng.api.networking.ICellCacheHandler;
 import appeng.api.storage.ICellInventory;
 import appeng.api.storage.ICellInventoryHandler;
 import appeng.api.storage.IMEInventory;
@@ -29,7 +30,7 @@ import appeng.util.prioitylist.FuzzyPriorityList;
 import appeng.util.prioitylist.OreFilteredList;
 import appeng.util.prioitylist.PrecisePriorityList;
 
-public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack> implements ICellInventoryHandler {
+public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack> implements ICellInventoryHandler, ICellCacheHandler{
 
     CellInventoryHandler(final IMEInventory<IAEItemStack> c) {
         super(c, StorageChannel.ITEMS);
@@ -116,4 +117,39 @@ public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack> imple
 
         return val;
     }
+
+	@Override
+	public long getTotalBytes() {
+		return this.getCellInv().getTotalBytes();
+	}
+
+	@Override
+	public long getFreeBytes() {
+		return this.getCellInv().getFreeBytes();
+	}
+	
+	@Override
+	public long getUsedBytes() {
+		return this.getCellInv().getUsedBytes();
+	}
+
+	@Override
+	public long getTotalTypes() {
+		return this.getCellInv().getTotalItemTypes();
+	}
+
+	@Override
+	public long getFreeTypes() {
+		return this.getCellInv().getRemainingItemTypes();
+	}
+	
+	@Override
+	public long getUsedTypes() {
+		return this.getCellInv().getStoredItemTypes();
+	}
+	
+	@Override
+	public StorageChannel getCellType() {
+		return StorageChannel.ITEMS;
+	}
 }
