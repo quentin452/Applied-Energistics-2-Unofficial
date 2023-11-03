@@ -77,6 +77,10 @@ gui.appliedenergistics2.EUTunnel=EU
 gui.appliedenergistics2.RFTunnel=RF
 gui.appliedenergistics2.LightTunnel=光
 
+gui.appliedenergistics2.Items=物品
+gui.appliedenergistics2.Fluids=流體
+gui.appliedenergistics2.Essentias=源質
+
 gui.appliedenergistics2.security.extract.name=取出
 gui.appliedenergistics2.security.inject.name=存入
 gui.appliedenergistics2.security.craft.name=合成

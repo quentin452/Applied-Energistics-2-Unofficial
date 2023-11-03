@@ -208,12 +208,9 @@ public enum GuiText {
     Deprecated,
 
     // Network bytes status
-    ItemBytesTotal,
-    ItemBytesUsage,
-    ItemBytesFree,
-    FluidBytesTotal,
-    FluidBytesUsage,
-    FluidBytesFree;
+    Items,
+    Fluids,
+    Essentias;
 
     private final String root;
 

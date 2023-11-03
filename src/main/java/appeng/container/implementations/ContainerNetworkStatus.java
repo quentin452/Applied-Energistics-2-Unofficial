@@ -58,16 +58,17 @@ public class ContainerNetworkStatus extends AEBaseContainer {
     public long itemBytesUsed;
 
     @GuiSync(6)
-    public long itemBytesFree;
-
-    @GuiSync(7)
     public long fluidBytesTotal;
 
-    @GuiSync(8)
+    @GuiSync(7)
     public long fluidBytesUsed;
+    
+    @GuiSync(8)
+    public long essentiaBytesTotal;
 
     @GuiSync(9)
-    public long fluidBytesFree;
+    public long essentiaBytesUsed;
+
 
     private IGrid network;
     private int delay = 40;
@@ -145,10 +146,10 @@ public class ContainerNetworkStatus extends AEBaseContainer {
             if (sg != null) {
                 this.setItemBytesTotal(sg.getItemBytesTotal());
                 this.setItemBytesUsed(sg.getItemBytesUsed());
-                this.setItemBytesFree(this.getItemBytesTotal() - this.getItemBytesUsed());
                 this.setFluidBytesTotal(sg.getFluidBytesTotal());
                 this.setFluidBytesUsed(sg.getFluidBytesUsed());
-                this.setFluidBytesFree(this.getFluidBytesTotal() - this.getFluidBytesUsed());
+                this.setEssentiaBytesTotal(sg.getEssentiaBytesTotal());
+                this.setEssentiaBytesUsed(sg.getEssentiaBytesUsed());
             }
         }
         super.detectAndSendChanges();
@@ -194,20 +195,12 @@ public class ContainerNetworkStatus extends AEBaseContainer {
         return this.itemBytesUsed;
     }
 
-    public long getItemBytesFree() {
-        return this.itemBytesFree;
-    }
-
     public void setItemBytesTotal(final long itemBytesTotal) {
         this.itemBytesTotal = itemBytesTotal;
     }
 
     public void setItemBytesUsed(final long itemBytesUsed) {
         this.itemBytesUsed = itemBytesUsed;
-    }
-
-    public void setItemBytesFree(final long itemBytesFree) {
-        this.itemBytesFree = itemBytesFree;
     }
 
     public long getFluidBytesTotal() {
@@ -218,10 +211,6 @@ public class ContainerNetworkStatus extends AEBaseContainer {
         return this.fluidBytesUsed;
     }
 
-    public long getFluidBytesFree() {
-        return this.fluidBytesFree;
-    }
-
     public void setFluidBytesTotal(final long fluidBytesTotal) {
         this.fluidBytesTotal = fluidBytesTotal;
     }
@@ -230,7 +219,20 @@ public class ContainerNetworkStatus extends AEBaseContainer {
         this.fluidBytesUsed = fluidBytesUsed;
     }
 
-    public void setFluidBytesFree(final long fluidBytesFree) {
-        this.fluidBytesFree = fluidBytesFree;
-    }
+	public long getEssentiaBytesTotal() {
+		return essentiaBytesTotal;
+	}
+
+	public long getEssentiaBytesUsed() {
+		return essentiaBytesUsed;
+	}
+
+	public void setEssentiaBytesTotal(long essentiaBytesTotal) {
+		this.essentiaBytesTotal = essentiaBytesTotal;
+	}
+
+	public void setEssentiaBytesUsed(long essentiaBytesUsed) {
+		this.essentiaBytesUsed = essentiaBytesUsed;
+	}
+
 }
