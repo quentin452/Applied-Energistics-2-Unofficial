@@ -62,13 +62,12 @@ public class ContainerNetworkStatus extends AEBaseContainer {
 
     @GuiSync(7)
     public long fluidBytesUsed;
-    
+
     @GuiSync(8)
     public long essentiaBytesTotal;
 
     @GuiSync(9)
     public long essentiaBytesUsed;
-
 
     private IGrid network;
     private int delay = 40;
@@ -219,20 +218,20 @@ public class ContainerNetworkStatus extends AEBaseContainer {
         this.fluidBytesUsed = fluidBytesUsed;
     }
 
-	public long getEssentiaBytesTotal() {
-		return essentiaBytesTotal;
-	}
+    public long getEssentiaBytesTotal() {
+        return essentiaBytesTotal;
+    }
 
-	public long getEssentiaBytesUsed() {
-		return essentiaBytesUsed;
-	}
+    public long getEssentiaBytesUsed() {
+        return essentiaBytesUsed;
+    }
 
-	public void setEssentiaBytesTotal(long essentiaBytesTotal) {
-		this.essentiaBytesTotal = essentiaBytesTotal;
-	}
+    public void setEssentiaBytesTotal(long essentiaBytesTotal) {
+        this.essentiaBytesTotal = essentiaBytesTotal;
+    }
 
-	public void setEssentiaBytesUsed(long essentiaBytesUsed) {
-		this.essentiaBytesUsed = essentiaBytesUsed;
-	}
+    public void setEssentiaBytesUsed(long essentiaBytesUsed) {
+        this.essentiaBytesUsed = essentiaBytesUsed;
+    }
 
 }

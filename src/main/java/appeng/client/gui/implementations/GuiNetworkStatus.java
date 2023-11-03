@@ -144,34 +144,42 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
 
         // Item byte status
         this.fontRendererObj.drawString(
-                GuiText.Items.getLocal() + ": " + Platform.formatByteLong(ns.getItemBytesUsed())
-                	+ " / " + Platform.formatByteLong(ns.getItemBytesTotal()) 
-                	+ " (" + df.format(ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal())
-                	+ "%)",
+                GuiText.Items.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getItemBytesUsed())
+                        + " / "
+                        + Platform.formatByteLong(ns.getItemBytesTotal())
+                        + " ("
+                        + df.format(ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal())
+                        + "%)",
                 13,
                 143,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
 
         // Fluid byte status
         this.fontRendererObj.drawString(
-                GuiText.Fluids.getLocal() + ": " + Platform.formatByteLong(ns.getFluidBytesUsed())
-            	+ " / " + Platform.formatByteLong(ns.getFluidBytesTotal()) 
-            	+ " (" + df.format(ns.getFluidBytesUsed() * 100d / ns.getFluidBytesTotal())
-            	+ "%)",
+                GuiText.Fluids.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getFluidBytesUsed())
+                        + " / "
+                        + Platform.formatByteLong(ns.getFluidBytesTotal())
+                        + " ("
+                        + df.format(ns.getFluidBytesUsed() * 100d / ns.getFluidBytesTotal())
+                        + "%)",
                 13,
                 143 + 10,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
-        
+
         // Essential byte status
         this.fontRendererObj.drawString(
-                GuiText.Essentias.getLocal() + ": " + Platform.formatByteLong(ns.getEssentiaBytesUsed())
-            	+ " / " + Platform.formatByteLong(ns.getEssentiaBytesTotal()) 
-            	+ " (" + df.format(ns.getEssentiaBytesUsed() * 100d / ns.getEssentiaBytesTotal())
-            	+ "%)",
+                GuiText.Essentias.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getEssentiaBytesUsed())
+                        + " / "
+                        + Platform.formatByteLong(ns.getEssentiaBytesTotal())
+                        + " ("
+                        + df.format(ns.getEssentiaBytesUsed() * 100d / ns.getEssentiaBytesTotal())
+                        + "%)",
                 13,
                 143 + 20,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
-
 
         final int sectionLength = 30;
 
