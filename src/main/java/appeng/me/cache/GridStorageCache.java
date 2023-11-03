@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.glodblock.github.common.storage.FluidCellInventoryHandler;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
@@ -46,9 +47,11 @@ import appeng.me.helpers.GenericInterestManager;
 import appeng.me.storage.CellInventoryHandler;
 import appeng.me.storage.DriveWatcher;
 import appeng.me.storage.ItemWatcher;
+import appeng.me.storage.MEInventoryHandler;
 import appeng.me.storage.NetworkInventoryHandler;
 import appeng.me.storage.VoidCellInventory;
 import appeng.tile.storage.TileDrive;
+import thaumicenergistics.common.inventory.HandlerItemEssentiaCell;
 
 public class GridStorageCache implements IStorageGrid {
 

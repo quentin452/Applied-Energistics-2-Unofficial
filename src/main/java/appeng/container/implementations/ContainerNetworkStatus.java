@@ -233,4 +233,5 @@ public class ContainerNetworkStatus extends AEBaseContainer {
     public void setEssentiaBytesUsed(long essentiaBytesUsed) {
         this.essentiaBytesUsed = essentiaBytesUsed;
     }
+
 }
