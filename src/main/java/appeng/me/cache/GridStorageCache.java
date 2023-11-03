@@ -64,6 +64,10 @@ public class GridStorageCache implements IStorageGrid {
     private NetworkInventoryHandler<IAEFluidStack> myFluidNetwork;
     private long itemBytesTotal;
     private long itemBytesUsed;
+    private long fluidBytesTotal;
+    private long fluidBytesUsed;
+    private long essentiaBytesTotal;
+    private long essentiaBytesUsed;
     private int ticksCount;
     private int networkBytesUpdateFrequency;
 
@@ -353,6 +357,10 @@ public class GridStorageCache implements IStorageGrid {
     private void updateBytesInfo() {
         this.itemBytesTotal = 0;
         this.itemBytesUsed = 0;
+        this.fluidBytesTotal = 0;
+        this.fluidBytesUsed = 0;
+        this.essentiaBytesTotal = 0;
+        this.essentiaBytesUsed = 0;
         try {
             for (ICellProvider icp : this.activeCellProviders) {
                 if (icp instanceof TileDrive) {
@@ -365,10 +373,14 @@ public class GridStorageCache implements IStorageGrid {
                         // exclude creative cell
                         if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof CellInventoryHandler handler) {
                             if (handler.getCellInv() != null) {
-                                itemBytesTotal += handler.getCellInv().getTotalBytes();
-                                itemBytesUsed += handler.getCellInv().getUsedBytes();
+                                itemBytesTotal += handler.getTotalBytes();
+                                itemBytesUsed += handler.getUsedBytes();
                             }
                         }
+                    }
+                    //TODO
+                    for (IMEInventoryHandler<?> meih : icp.getCellArray(StorageChannel.FLUIDS)) {
+                    	
                     }
                 }
             }
@@ -376,13 +388,28 @@ public class GridStorageCache implements IStorageGrid {
             // XD Normally won't be here, just normally..
         }
     }
-
     public long getItemBytesTotal() {
-        return this.itemBytesTotal;
+        return itemBytesTotal;
     }
 
     public long getItemBytesUsed() {
-        return this.itemBytesUsed;
+        return itemBytesUsed;
+    }
+
+    public long getFluidBytesTotal() {
+        return fluidBytesTotal;
+    }
+
+    public long getFluidBytesUsed() {
+        return fluidBytesUsed;
+    }
+
+    public long getEssentiaBytesTotal() {
+        return essentiaBytesTotal;
+    }
+
+    public long getEssentiaBytesUsed() {
+        return essentiaBytesUsed;
     }
 
 }

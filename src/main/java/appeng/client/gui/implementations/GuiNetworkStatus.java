@@ -141,25 +141,40 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 13,
                 143 - 20,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
+        // Item byte status
         this.fontRendererObj.drawString(
-                GuiText.ByteTotal.getLocal() + ": " + Platform.formatByteLong(ns.getItemBytesTotal()),
-                13,
-                143,
-                GuiColors.NetworkStatusPowerUsageRate.getColor());
-        this.fontRendererObj.drawString(
-                GuiText.ByteUsage.getLocal() + ": "
+                GuiText.Items.getLocal() + ": "
                         + Platform.formatByteLong(ns.getItemBytesUsed())
+                        + " / "
+                        + Platform.formatByteLong(ns.getItemBytesTotal())
                         + " ("
                         + df.format(ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal())
                         + "%)",
                 13,
+                143,
+                GuiColors.NetworkStatusPowerUsageRate.getColor());
+
+        // Fluid byte status
+        this.fontRendererObj.drawString(
+                GuiText.Fluids.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getFluidBytesUsed())
+                        + " / "
+                        + Platform.formatByteLong(ns.getFluidBytesTotal())
+                        + " ("
+                        + df.format(ns.getFluidBytesUsed() * 100d / ns.getFluidBytesTotal())
+                        + "%)",
+                13,
                 143 + 10,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
+
+        // Essential byte status
         this.fontRendererObj.drawString(
-                GuiText.ByteFree.getLocal() + ": "
-                        + Platform.formatByteLong(ns.getItemBytesFree())
+                GuiText.Essentias.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getEssentiaBytesUsed())
+                        + " / "
+                        + Platform.formatByteLong(ns.getEssentiaBytesTotal())
                         + " ("
-                        + df.format(ns.getItemBytesFree() * 100d / ns.getItemBytesTotal())
+                        + df.format(ns.getEssentiaBytesUsed() * 100d / ns.getEssentiaBytesTotal())
                         + "%)",
                 13,
                 143 + 20,

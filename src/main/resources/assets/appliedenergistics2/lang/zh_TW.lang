@@ -184,6 +184,10 @@ gui.appliedenergistics2.CalculatingWait=正在計算,請等待...
 gui.appliedenergistics2.Clean=清空
 gui.appliedenergistics2.InvalidPattern=無效樣板
 
+gui.appliedenergistics2.Items=物品
+gui.appliedenergistics2.Fluids=流體
+gui.appliedenergistics2.Essentias=源質
+
 gui.tooltips.appliedenergistics2.Stash=存儲物品
 gui.tooltips.appliedenergistics2.StashDesc=將合成槽的物品返回網絡
 gui.tooltips.appliedenergistics2.Substitutions=礦物詞典替換

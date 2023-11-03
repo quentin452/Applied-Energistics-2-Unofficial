@@ -207,10 +207,10 @@ public enum GuiText {
     // If a thing is deprecated
     Deprecated,
 
-    // mine
-    ByteTotal,
-    ByteUsage,
-    ByteFree;
+    // Network bytes status
+    Items,
+    Fluids,
+    Essentias;
 
     private final String root;
 

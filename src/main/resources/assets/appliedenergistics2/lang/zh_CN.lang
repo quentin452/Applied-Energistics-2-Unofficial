@@ -265,9 +265,9 @@ gui.appliedenergistics2.HoldShiftClick_HIGHLIGHT_INTERFACE=shift点击,高亮ME�
 gui.appliedenergistics2.VoidCellTooltip=删除§任何§7存储在里面的物品
 gui.appliedenergistics2.Nothing=无
 
-gui.appliedenergistics2.ByteTotal=所有字节
-gui.appliedenergistics2.ByteUsage=已用字节
-gui.appliedenergistics2.ByteFree=剩余字节
+gui.appliedenergistics2.Items=物品
+gui.appliedenergistics2.Fluids=流体
+gui.appliedenergistics2.Essentias=源质
 
 # GUI Colors - ARGB
 gui.color.appliedenergistics2.SearchboxFocused=6E000000

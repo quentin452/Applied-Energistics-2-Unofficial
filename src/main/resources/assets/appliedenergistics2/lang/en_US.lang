@@ -272,9 +272,9 @@ gui.appliedenergistics2.Nothing=Nothing
 gui.appliedenergistics2.VoidCellTooltip=Deletes §4everything§7 stored on it
 gui.appliedenergistics2.Deprecated=Deprecated, will be removed soon!
 
-gui.appliedenergistics2.ByteTotal=Bytes Total
-gui.appliedenergistics2.ByteUsage=Bytes Used
-gui.appliedenergistics2.ByteFree=Bytes Free
+gui.appliedenergistics2.Items=Items
+gui.appliedenergistics2.Fluids=Fluids
+gui.appliedenergistics2.Essentias=Essen
 
 # GUI Colors - ARGB
 gui.color.appliedenergistics2.SearchboxFocused=6E000000
