@@ -46,7 +46,6 @@ import appeng.me.helpers.GenericInterestManager;
 import appeng.me.storage.CellInventoryHandler;
 import appeng.me.storage.DriveWatcher;
 import appeng.me.storage.ItemWatcher;
-import appeng.me.storage.MEInventoryHandler;
 import appeng.me.storage.NetworkInventoryHandler;
 import appeng.me.storage.VoidCellInventory;
 import appeng.tile.storage.TileDrive;
@@ -379,9 +378,9 @@ public class GridStorageCache implements IStorageGrid {
                             }
                         }
                     }
-                    //TODO
+                    // TODO
                     for (IMEInventoryHandler<?> meih : icp.getCellArray(StorageChannel.FLUIDS)) {
-                    	
+
                     }
                 }
             }
@@ -389,6 +388,7 @@ public class GridStorageCache implements IStorageGrid {
             // XD Normally won't be here, just normally..
         }
     }
+
     public long getItemBytesTotal() {
         return itemBytesTotal;
     }
