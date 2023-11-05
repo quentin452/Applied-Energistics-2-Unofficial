@@ -654,6 +654,7 @@ item.appliedenergistics2.ToolNetherQuartzWrench.name=Nether Quartz Wrench
 item.appliedenergistics2.ItemPaintBall.name=Paint Ball
 item.appliedenergistics2.ToolPortableCell.name=Portable Cell
 item.appliedenergistics2.ToolNetworkTool.name=Network Tool
+item.appliedenergistics2.ToolAdvancedNetworkTool.name=Advanced Network Tool
 item.appliedenergistics2.ToolChargedStaff.name=Charged Staff
 item.appliedenergistics2.ToolEntropyManipulator.name=Entropy Manipulator
 item.appliedenergistics2.ToolMassCannon.name=Matter Cannon

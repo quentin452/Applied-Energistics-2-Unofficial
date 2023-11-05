@@ -49,6 +49,7 @@ public enum GuiText {
     PortableCell,
 
     NetworkTool,
+    AdvancedNetworkTool,
     PowerUsageRate,
     PowerInputRate,
     Installed,
