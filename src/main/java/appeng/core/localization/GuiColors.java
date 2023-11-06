@@ -93,7 +93,9 @@ public enum GuiColors {
     NetworkStatusItemCount(0x404040),
 
     NetworkToolTitle(0x404040),
+    AdvancedNetworkToolTitle(0x404040),
     NetworkToolInventory(0x404040),
+    AdvancedNetworkToolInventory(0x404040),
 
     OreFilterLabel(0x404040),
 

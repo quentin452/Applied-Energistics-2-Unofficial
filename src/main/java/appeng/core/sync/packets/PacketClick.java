@@ -20,6 +20,7 @@ import appeng.api.implementations.items.IMemoryCard;
 import appeng.api.implementations.items.MemoryCardMessages;
 import appeng.core.sync.AppEngPacket;
 import appeng.core.sync.network.INetworkInfo;
+import appeng.items.tools.ToolAdvancedNetworkTool;
 import appeng.items.tools.ToolNetworkTool;
 import appeng.items.tools.powered.ToolColorApplicator;
 import io.netty.buffer.ByteBuf;
@@ -74,6 +75,18 @@ public class PacketClick extends AppEngPacket {
         if (is != null) {
             if (is.getItem() instanceof ToolNetworkTool tnt) {
                 tnt.serverSideToolLogic(
+                        is,
+                        player,
+                        player.worldObj,
+                        this.x,
+                        this.y,
+                        this.z,
+                        this.side,
+                        this.hitX,
+                        this.hitY,
+                        this.hitZ);
+            } else if (is.getItem() instanceof ToolAdvancedNetworkTool atnt) {
+                atnt.serverSideToolLogic(
                         is,
                         player,
                         player.worldObj,

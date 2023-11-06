@@ -151,6 +151,7 @@ gui.appliedenergistics2.StorageBus=存储总线
 gui.appliedenergistics2.EnergyDrain=被动流失
 gui.appliedenergistics2.Installed=已安装
 gui.appliedenergistics2.NetworkTool=网络工具
+gui.appliedenergistics2.AdvancedNetworkTool=高级网络工具
 gui.appliedenergistics2.PowerUsageRate=耗能
 gui.appliedenergistics2.PowerInputRate=产能
 gui.appliedenergistics2.PortableCell=便携元件
