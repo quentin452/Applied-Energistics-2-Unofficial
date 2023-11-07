@@ -65,7 +65,7 @@ public class ToolNetworkTool extends AEBaseItem implements IGuiItem, IAEWrench, 
     @Override
     public IGuiItemObject getGuiObject(final ItemStack is, final World world, final int x, final int y, final int z) {
         final TileEntity te = world.getTileEntity(x, y, z);
-        return new NetworkToolViewer(is, (IGridHost) (te instanceof IGridHost ? te : null));
+        return new NetworkToolViewer(is, (IGridHost) (te instanceof IGridHost ? te : null), 3);
     }
 
     @Override

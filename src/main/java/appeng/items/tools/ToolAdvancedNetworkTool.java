@@ -32,7 +32,7 @@ import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketClick;
 import appeng.integration.IntegrationType;
 import appeng.items.AEBaseItem;
-import appeng.items.contents.AdvancedNetworkToolViewer;
+import appeng.items.contents.NetworkToolViewer;
 import appeng.transformer.annotations.Integration.Interface;
 import appeng.transformer.annotations.Integration.InterfaceList;
 import appeng.util.Platform;
@@ -203,7 +203,7 @@ public class ToolAdvancedNetworkTool extends AEBaseItem implements IGuiItem, IAE
     @Override
     public IGuiItemObject getGuiObject(final ItemStack is, final World world, final int x, final int y, final int z) {
         final TileEntity te = world.getTileEntity(x, y, z);
-        return new AdvancedNetworkToolViewer(is, (IGridHost) (te instanceof IGridHost ? te : null));
+        return new NetworkToolViewer(is, (IGridHost) (te instanceof IGridHost ? te : null), 5);
     }
 
 }

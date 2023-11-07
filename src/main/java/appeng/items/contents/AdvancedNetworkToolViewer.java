@@ -9,20 +9,28 @@ import appeng.api.networking.IGridHost;
 import appeng.tile.inventory.AppEngInternalInventory;
 import appeng.util.Platform;
 
+@Deprecated
 public class AdvancedNetworkToolViewer implements INetworkTool {
 
     private final AppEngInternalInventory inv;
     private final ItemStack is;
     private final IGridHost gh;
+    private final int size;
 
     public AdvancedNetworkToolViewer(final ItemStack is, final IGridHost gHost) {
         this.is = is;
         this.gh = gHost;
         this.inv = new AppEngInternalInventory(null, 25);
+        this.size = 5;
         if (is.hasTagCompound()) // prevent crash when opening network status screen.
         {
             this.inv.readFromNBT(Platform.openNbtData(is), "inv");
         }
+    }
+
+    @Override
+    public int getSize() {
+        return this.size;
     }
 
     @Override
