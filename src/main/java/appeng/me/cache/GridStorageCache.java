@@ -15,6 +15,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.minecraft.item.ItemStack;
+
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 
@@ -48,6 +50,8 @@ import appeng.me.storage.DriveWatcher;
 import appeng.me.storage.ItemWatcher;
 import appeng.me.storage.NetworkInventoryHandler;
 import appeng.me.storage.VoidCellInventory;
+import appeng.tile.inventory.AppEngInternalInventory;
+import appeng.tile.storage.TileChest;
 import appeng.tile.storage.TileDrive;
 
 public class GridStorageCache implements IStorageGrid {
@@ -381,6 +385,19 @@ public class GridStorageCache implements IStorageGrid {
                     // TODO
                     for (IMEInventoryHandler<?> meih : icp.getCellArray(StorageChannel.FLUIDS)) {
 
+                    }
+                } else if (icp instanceof TileChest tc) {
+                    // If there has any better way to get this handler...
+                    ItemStack cell = ((AppEngInternalInventory) (tc.getInternalInventory())).getStackInSlot(1);
+                    CellInventoryHandler handler = (CellInventoryHandler) AEApi.instance().registries().cell()
+                            .getCellInventory(cell, tc, StorageChannel.ITEMS);
+                    if (handler != null) {
+                        itemBytesTotal += handler.getTotalBytes();
+                        itemBytesUsed += handler.getUsedBytes();
+                    } else {
+                        // TODO
+                        handler = (CellInventoryHandler) AEApi.instance().registries().cell()
+                                .getCellInventory(cell, tc, StorageChannel.FLUIDS);
                     }
                 }
             }

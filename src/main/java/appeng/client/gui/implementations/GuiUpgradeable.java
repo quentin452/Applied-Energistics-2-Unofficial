@@ -174,8 +174,8 @@ public class GuiUpgradeable extends AEBaseGui implements INEIGuiHandler {
                 case 5 -> {
                     this.bindTexture(this.getAdvancedBackground());
                     // It's too big, so move it up a little bit
-                    // Why Storage Bus will use this to draw all the slot?????
                     this.drawTexturedModalRect(offsetX + 178, offsetY + this.ySize - 90 - 7, 0, 0, 104, 104);
+                    this.bindTexture(this.getBackground());
                 }
                 default -> this
                         .drawTexturedModalRect(offsetX + 178, offsetY + this.ySize - 90, 178, this.ySize - 90, 68, 68);

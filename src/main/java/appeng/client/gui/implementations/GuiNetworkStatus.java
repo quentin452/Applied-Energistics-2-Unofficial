@@ -118,6 +118,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
     @Override
     public void drawFG(final int offsetX, final int offsetY, final int mouseX, final int mouseY) {
         final ContainerNetworkStatus ns = (ContainerNetworkStatus) this.inventorySlots;
+        String tempStr;
         this.fontRendererObj
                 .drawString(GuiText.NetworkDetails.getLocal(), 8, 6, GuiColors.NetworkStatusDetails.getColor());
 
@@ -144,40 +145,40 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
 
         // Item byte status
+        tempStr = ns.getItemBytesTotal() == 0 ? ""
+                : " (" + df.format(ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal()) + "%)";
         this.fontRendererObj.drawString(
                 GuiText.Items.getLocal() + ": "
                         + Platform.formatByteLong(ns.getItemBytesUsed())
                         + " / "
                         + Platform.formatByteLong(ns.getItemBytesTotal())
-                        + " ("
-                        + df.format(ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal())
-                        + "%)",
+                        + tempStr,
                 13,
                 143,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
 
+        tempStr = ns.getFluidBytesTotal() == 0 ? ""
+                : " (" + df.format(ns.getFluidBytesUsed() * 100d / ns.getFluidBytesTotal()) + "%)";
         // Fluid byte status
         this.fontRendererObj.drawString(
                 GuiText.Fluids.getLocal() + ": "
                         + Platform.formatByteLong(ns.getFluidBytesUsed())
                         + " / "
                         + Platform.formatByteLong(ns.getFluidBytesTotal())
-                        + " ("
-                        + df.format(ns.getFluidBytesUsed() * 100d / ns.getFluidBytesTotal())
-                        + "%)",
+                        + tempStr,
                 13,
                 143 + 10,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
 
+        tempStr = ns.getEssentiaBytesTotal() == 0 ? ""
+                : " (" + df.format(ns.getEssentiaBytesUsed() * 100d / ns.getEssentiaBytesTotal()) + "%)";
         // Essential byte status
         this.fontRendererObj.drawString(
                 GuiText.Essentias.getLocal() + ": "
                         + Platform.formatByteLong(ns.getEssentiaBytesUsed())
                         + " / "
                         + Platform.formatByteLong(ns.getEssentiaBytesTotal())
-                        + " ("
-                        + df.format(ns.getEssentiaBytesUsed() * 100d / ns.getEssentiaBytesTotal())
-                        + "%)",
+                        + tempStr,
                 13,
                 143 + 20,
                 GuiColors.NetworkStatusPowerUsageRate.getColor());
