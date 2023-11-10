@@ -48,6 +48,7 @@ import appeng.me.helpers.GenericInterestManager;
 import appeng.me.storage.CellInventoryHandler;
 import appeng.me.storage.DriveWatcher;
 import appeng.me.storage.ItemWatcher;
+import appeng.me.storage.MEInventoryHandler;
 import appeng.me.storage.NetworkInventoryHandler;
 import appeng.me.storage.VoidCellInventory;
 import appeng.tile.inventory.AppEngInternalInventory;
@@ -374,8 +375,8 @@ public class GridStorageCache implements IStorageGrid {
                         if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof VoidCellInventory) {
                             continue;
                         }
-                        // exclude creative cell
                         if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof CellInventoryHandler handler) {
+                            // exclude creative cell
                             if (handler.getCellInv() != null) {
                                 itemBytesTotal += handler.getTotalBytes();
                                 itemBytesUsed += handler.getUsedBytes();
@@ -389,14 +390,20 @@ public class GridStorageCache implements IStorageGrid {
                 } else if (icp instanceof TileChest tc) {
                     // If there has any better way to get this handler...
                     ItemStack cell = ((AppEngInternalInventory) (tc.getInternalInventory())).getStackInSlot(1);
-                    CellInventoryHandler handler = (CellInventoryHandler) AEApi.instance().registries().cell()
-                            .getCellInventory(cell, tc, StorageChannel.ITEMS);
-                    if (handler != null) {
-                        itemBytesTotal += handler.getTotalBytes();
-                        itemBytesUsed += handler.getUsedBytes();
+                    MEInventoryHandler<IAEItemStack> meih = (MEInventoryHandler<IAEItemStack>) AEApi.instance()
+                            .registries().cell().getCellInventory(cell, tc, StorageChannel.ITEMS);
+                    // exclude void cell
+                    if (meih instanceof VoidCellInventory) {
+                        break;
+                    } else if (meih instanceof CellInventoryHandler handler) {
+                        // exclude creative cell
+                        if (handler.getCellInv() != null) {
+                            itemBytesTotal += handler.getTotalBytes();
+                            itemBytesUsed += handler.getUsedBytes();
+                        }
                     } else {
                         // TODO
-                        handler = (CellInventoryHandler) AEApi.instance().registries().cell()
+                        meih = (MEInventoryHandler<IAEItemStack>) AEApi.instance().registries().cell()
                                 .getCellInventory(cell, tc, StorageChannel.FLUIDS);
                     }
                 }
