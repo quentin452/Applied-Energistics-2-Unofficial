@@ -70,7 +70,7 @@ public enum Settings {
 
     CRAFTING_MODE(EnumSet.allOf(CraftingMode.class)),
 
-    CELL_TYPE(EnumSet.allOf(CellType.class));
+    CELL_TYPE(EnumSet.allOf(CellType.class)),
 
     STICKY_MODE(EnumSet.of(YesNo.YES, YesNo.NO));
 
