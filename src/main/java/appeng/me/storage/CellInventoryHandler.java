@@ -47,6 +47,7 @@ public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack>
             boolean hasInverter = false;
             boolean hasFuzzy = false;
             boolean hasOreFilter = false;
+            boolean hasSticky = false;
 
             for (int x = 0; x < upgrades.getSizeInventory(); x++) {
                 final ItemStack is = upgrades.getStackInSlot(x);
@@ -57,12 +58,18 @@ public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack>
                             case FUZZY -> hasFuzzy = true;
                             case INVERTER -> hasInverter = true;
                             case ORE_FILTER -> hasOreFilter = true;
+                            case STICKY -> hasSticky = true;
                             default -> {}
                         }
                     }
                 }
             }
             this.setWhitelist(hasInverter ? IncludeExclude.BLACKLIST : IncludeExclude.WHITELIST);
+
+            if (hasSticky) {
+                setSticky(true);
+            }
+
             if (hasOreFilter && !filter.isEmpty()) {
                 this.setPartitionList(new OreFilteredList(filter));
             } else {
@@ -73,7 +80,6 @@ public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack>
                         priorityList.add(AEItemStack.create(is));
                     }
                 }
-
                 if (!priorityList.isEmpty()) {
                     if (hasFuzzy) {
                         this.setPartitionList(new FuzzyPriorityList<>(priorityList, fzMode));

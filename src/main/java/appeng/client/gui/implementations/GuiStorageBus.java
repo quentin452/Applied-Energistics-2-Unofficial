@@ -103,16 +103,16 @@ public class GuiStorageBus extends GuiUpgradeable {
                 this.ySize - 96 + 3,
                 GuiColors.StorageBusInventory.getColor());
 
-        if (this.fuzzyMode != null) {
-            this.fuzzyMode.set(this.cvb.getFuzzyMode());
-        }
-
-        if (this.storageFilter != null) {
-            this.storageFilter.set(((ContainerStorageBus) this.cvb).getStorageFilter());
-        }
-
-        if (this.rwMode != null) {
-            this.rwMode.set(((ContainerStorageBus) this.cvb).getReadWriteMode());
+        if (this.cvb instanceof ContainerStorageBus csb) {
+            if (this.fuzzyMode != null) {
+                this.fuzzyMode.set(csb.getFuzzyMode());
+            }
+            if (this.storageFilter != null) {
+                this.storageFilter.set(csb.getStorageFilter());
+            }
+            if (this.rwMode != null) {
+                this.rwMode.set(csb.getReadWriteMode());
+            }
         }
     }
 
