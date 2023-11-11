@@ -44,8 +44,10 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
     private final ItemRepo repo;
     private final int rows = 4;
     private GuiImgButton units;
+    private GuiImgButton cell;
     private int tooltip = -1;
     private final DecimalFormat df;
+    private final boolean isAdvanced;
 
     public GuiNetworkStatus(final InventoryPlayer inventoryPlayer, final INetworkTool te) {
         super(new ContainerNetworkStatus(inventoryPlayer, te));
@@ -57,6 +59,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
         this.ySize = 183;
         this.xSize = 195;
         this.repo.setRowSize(5);
+        this.isAdvanced = te.getSize() != 3;
     }
 
     @Override
@@ -68,6 +71,9 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
         if (btn == this.units) {
             AEConfig.instance.nextPowerUnit(backwards);
             this.units.set(AEConfig.instance.selectedPowerUnit());
+        } else if (btn == this.cell) {
+            AEConfig.instance.nextCellType(backwards);
+            this.cell.set(AEConfig.instance.selectedCellType());
         }
     }
 
@@ -81,6 +87,14 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 Settings.POWER_UNITS,
                 AEConfig.instance.selectedPowerUnit());
         this.buttonList.add(this.units);
+        if (this.isAdvanced) {
+            this.cell = new GuiImgButton(
+                    this.guiLeft - 18,
+                    this.guiTop + 28,
+                    Settings.CELL_TYPE,
+                    AEConfig.instance.selectedCellType());
+            this.buttonList.add(this.cell);
+        }
     }
 
     @Override

@@ -18,6 +18,7 @@ import java.util.List;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 
+import appeng.api.config.CellType;
 import appeng.api.config.CondenserOutput;
 import appeng.api.config.CraftingStatus;
 import appeng.api.config.PowerMultiplier;
@@ -100,6 +101,7 @@ public final class AEConfig extends Configuration implements IConfigurableObject
     public int[] meteoriteDimensionWhitelist = { 0 };
     public int craftingCalculationTimePerTick = 5;
     PowerUnits selectedPowerUnit = PowerUnits.AE;
+    CellType selectedCellType = CellType.ITEM;
     private double WirelessBaseCost = 8;
     private double WirelessCostMultiplier = 1;
     private double WirelessTerminalDrainMultiplier = 1;
@@ -536,9 +538,18 @@ public final class AEConfig extends Configuration implements IConfigurableObject
         return this.selectedPowerUnit;
     }
 
+    public CellType selectedCellType() {
+        return this.selectedCellType;
+    }
+
     public void nextPowerUnit(final boolean backwards) {
         this.selectedPowerUnit = Platform
                 .rotateEnum(this.selectedPowerUnit, backwards, Settings.POWER_UNITS.getPossibleValues());
         this.save();
+    }
+
+    public void nextCellType(final boolean backwards) {
+        this.selectedCellType = Platform
+                .rotateEnum(this.selectedCellType, backwards, Settings.CELL_TYPE.getPossibleValues());
     }
 }

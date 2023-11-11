@@ -68,7 +68,9 @@ public enum Settings {
 
     ADVANCED_BLOCKING_MODE(EnumSet.allOf(AdvancedBlockingMode.class)),
 
-    CRAFTING_MODE(EnumSet.allOf(CraftingMode.class));
+    CRAFTING_MODE(EnumSet.allOf(CraftingMode.class)),
+
+    CELL_TYPE(EnumSet.allOf(CellType.class));
 
     private final EnumSet<? extends Enum<?>> values;
 
