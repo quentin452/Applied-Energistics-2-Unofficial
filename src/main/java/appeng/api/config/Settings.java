@@ -74,7 +74,6 @@ public enum Settings {
 
     STICKY_MODE(EnumSet.of(YesNo.YES, YesNo.NO));
 
-
     private final EnumSet<? extends Enum<?>> values;
 
     Settings(@Nonnull final EnumSet<? extends Enum<?>> possibleOptions) {
