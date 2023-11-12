@@ -156,6 +156,11 @@ public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack>
     }
 
     @Override
+    public int getCellStatus() {
+        return this.getStatusForCell();
+    }
+
+    @Override
     public StorageChannel getCellType() {
         return StorageChannel.ITEMS;
     }

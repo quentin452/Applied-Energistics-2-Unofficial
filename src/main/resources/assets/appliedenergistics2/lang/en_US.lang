@@ -274,9 +274,17 @@ gui.appliedenergistics2.Nothing=Nothing
 gui.appliedenergistics2.VoidCellTooltip=Deletes §4everything§7 stored on it
 gui.appliedenergistics2.Deprecated=Deprecated, will be removed soon!
 
+gui.appliedenergistics2.NetworkBytesDetails=Network Bytes Details
 gui.appliedenergistics2.Items=Items
 gui.appliedenergistics2.Fluids=Fluids
 gui.appliedenergistics2.Essentias=Essen
+gui.appliedenergistics2.NetworkItemCellCount=Network Item Cell Count
+gui.appliedenergistics2.NetworkFluidCellCount=Network Fluid Cell Count
+gui.appliedenergistics2.NetworkEssentiaCellCount=Network Essentia Cell Count
+gui.appliedenergistics2.Green=Green
+gui.appliedenergistics2.Orange=Orange
+gui.appliedenergistics2.Red=Red
+
 
 # GUI Colors - ARGB
 gui.color.appliedenergistics2.SearchboxFocused=6E000000

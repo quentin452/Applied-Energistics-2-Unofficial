@@ -69,10 +69,28 @@ public class GridStorageCache implements IStorageGrid {
     private NetworkInventoryHandler<IAEFluidStack> myFluidNetwork;
     private long itemBytesTotal;
     private long itemBytesUsed;
+    private long itemTypesTotal;
+    private long itemTypesUsed;
+    private long itemCellG;
+    private long itemCellO;
+    private long itemCellR;
+    private long itemCellCount;
     private long fluidBytesTotal;
     private long fluidBytesUsed;
+    private long fluidTypesTotal;
+    private long fluidTypesUsed;
+    private long fluidCellG;
+    private long fluidCellO;
+    private long fluidCellR;
+    private long fluidCellCount;
     private long essentiaBytesTotal;
     private long essentiaBytesUsed;
+    private long essentiaTypesTotal;
+    private long essentiaTypesUsed;
+    private long essentiaCellG;
+    private long essentiaCellO;
+    private long essentiaCellR;
+    private long essentiaCellCount;
     private int ticksCount;
     private int networkBytesUpdateFrequency;
 
@@ -360,12 +378,7 @@ public class GridStorageCache implements IStorageGrid {
     }
 
     private void updateBytesInfo() {
-        this.itemBytesTotal = 0;
-        this.itemBytesUsed = 0;
-        this.fluidBytesTotal = 0;
-        this.fluidBytesUsed = 0;
-        this.essentiaBytesTotal = 0;
-        this.essentiaBytesUsed = 0;
+        this.resetCellInfo();
         try {
             for (ICellProvider icp : this.activeCellProviders) {
                 if (icp instanceof TileDrive) {
@@ -380,8 +393,16 @@ public class GridStorageCache implements IStorageGrid {
                             if (handler.getCellInv() != null) {
                                 itemBytesTotal += handler.getTotalBytes();
                                 itemBytesUsed += handler.getUsedBytes();
+                                switch (handler.getStatusForCell()) {
+                                    case 1 -> itemCellG++;
+                                    case 2 -> itemCellO++;
+                                    case 3 -> itemCellR++;
+                                }
+                                itemTypesTotal += handler.getTotalTypes();
+                                itemTypesUsed += handler.getUsedTypes();
                             }
                         }
+                        itemCellCount++;
                     }
                     // TODO
                     for (IMEInventoryHandler<?> meih : icp.getCellArray(StorageChannel.FLUIDS)) {
@@ -394,13 +415,21 @@ public class GridStorageCache implements IStorageGrid {
                             .registries().cell().getCellInventory(cell, tc, StorageChannel.ITEMS);
                     // exclude void cell
                     if (meih instanceof VoidCellInventory) {
-                        break;
+                        continue;
                     } else if (meih instanceof CellInventoryHandler handler) {
                         // exclude creative cell
                         if (handler.getCellInv() != null) {
                             itemBytesTotal += handler.getTotalBytes();
                             itemBytesUsed += handler.getUsedBytes();
+                            switch (handler.getStatusForCell()) {
+                                case 1 -> itemCellG++;
+                                case 2 -> itemCellO++;
+                                case 3 -> itemCellR++;
+                            }
+                            itemTypesTotal += handler.getTotalTypes();
+                            itemTypesUsed += handler.getUsedTypes();
                         }
+                        itemCellCount++;
                     } else {
                         // TODO
                         meih = (MEInventoryHandler<IAEItemStack>) AEApi.instance().registries().cell()
@@ -413,12 +442,63 @@ public class GridStorageCache implements IStorageGrid {
         }
     }
 
+    private void resetCellInfo() {
+        this.itemBytesTotal = 0;
+        this.itemBytesUsed = 0;
+        this.itemTypesTotal = 0;
+        this.itemTypesUsed = 0;
+        this.itemCellG = 0;
+        this.itemCellO = 0;
+        this.itemCellR = 0;
+        this.itemCellCount = 0;
+        this.fluidBytesTotal = 0;
+        this.fluidBytesUsed = 0;
+        this.fluidTypesTotal = 0;
+        this.fluidTypesUsed = 0;
+        this.fluidCellG = 0;
+        this.fluidCellO = 0;
+        this.fluidCellR = 0;
+        this.fluidCellCount = 0;
+        this.essentiaBytesTotal = 0;
+        this.essentiaBytesUsed = 0;
+        this.essentiaTypesTotal = 0;
+        this.essentiaTypesUsed = 0;
+        this.essentiaCellG = 0;
+        this.essentiaCellO = 0;
+        this.essentiaCellR = 0;
+        this.essentiaCellCount = 0;
+    }
+
     public long getItemBytesTotal() {
         return itemBytesTotal;
     }
 
     public long getItemBytesUsed() {
         return itemBytesUsed;
+    }
+
+    public long getItemTypesTotal() {
+        return itemTypesTotal;
+    }
+
+    public long getItemTypesUsed() {
+        return itemTypesUsed;
+    }
+
+    public long getItemCellG() {
+        return itemCellG;
+    }
+
+    public long getItemCellO() {
+        return itemCellO;
+    }
+
+    public long getItemCellR() {
+        return itemCellR;
+    }
+
+    public long getItemCellCount() {
+        return itemCellCount;
     }
 
     public long getFluidBytesTotal() {
@@ -429,6 +509,30 @@ public class GridStorageCache implements IStorageGrid {
         return fluidBytesUsed;
     }
 
+    public long getFluidTypesTotal() {
+        return fluidTypesTotal;
+    }
+
+    public long getFluidTypesUsed() {
+        return fluidTypesUsed;
+    }
+
+    public long getFluidCellG() {
+        return fluidCellG;
+    }
+
+    public long getFluidCellO() {
+        return fluidCellO;
+    }
+
+    public long getFluidCellR() {
+        return fluidCellR;
+    }
+
+    public long getFluidCellCount() {
+        return fluidCellCount;
+    }
+
     public long getEssentiaBytesTotal() {
         return essentiaBytesTotal;
     }
@@ -437,4 +541,27 @@ public class GridStorageCache implements IStorageGrid {
         return essentiaBytesUsed;
     }
 
+    public long getEssentiaTypesTotal() {
+        return essentiaTypesTotal;
+    }
+
+    public long getEssentiaTypesUsed() {
+        return essentiaTypesUsed;
+    }
+
+    public long getEssentiaCellG() {
+        return essentiaCellG;
+    }
+
+    public long getEssentiaCellO() {
+        return essentiaCellO;
+    }
+
+    public long getEssentiaCellR() {
+        return essentiaCellR;
+    }
+
+    public long getEssentiaCellCount() {
+        return essentiaCellCount;
+    }
 }

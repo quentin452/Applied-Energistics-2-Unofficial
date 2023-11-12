@@ -18,6 +18,8 @@ public interface ICellCacheRegistry {
 
     long getUsedTypes();
 
+    int getCellStatus();
+
     StorageChannel getCellType();
 
 }

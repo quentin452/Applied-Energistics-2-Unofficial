@@ -552,4 +552,5 @@ public final class AEConfig extends Configuration implements IConfigurableObject
         this.selectedCellType = Platform
                 .rotateEnum(this.selectedCellType, backwards, Settings.CELL_TYPE.getPossibleValues());
     }
+
 }

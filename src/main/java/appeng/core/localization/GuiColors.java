@@ -86,6 +86,7 @@ public enum GuiColors {
     IOPortInventory(0x404040),
 
     NetworkStatusDetails(0x404040),
+    NetworkBytesDetails(0x404040),
     NetworkStatusStoredPower(0x404040),
     NetworkStatusMaxPower(0x404040),
     NetworkStatusPowerInputRate(0x404040),
@@ -140,7 +141,8 @@ public enum GuiColors {
     NEIGrindstoneNoSecondOutput(0x000000),
 
     MEMonitorableTitle(0x404040),
-    MEMonitorableInventory(0x404040);
+    MEMonitorableInventory(0x404040),
+    DefaultBlack(0x404040);
 
     private final String root;
     private final int color;
