@@ -199,6 +199,8 @@ gui.appliedenergistics2.NetworkEssentiaCellCount=網絡源質元件數量
 gui.appliedenergistics2.Green=綠
 gui.appliedenergistics2.Orange=橙
 gui.appliedenergistics2.Red=紅
+gui.appliedenergistics2.TypesInfo=種類
+gui.appliedenergistics2.BytesInfo=字節
 
 gui.tooltips.appliedenergistics2.Stash=存儲物品
 gui.tooltips.appliedenergistics2.StashDesc=將合成槽的物品返回網絡

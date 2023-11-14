@@ -49,11 +49,15 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
     private final DecimalFormat df;
     private final boolean isAdvanced;
     private boolean isConsume;
+    private final StringBuilder sb;
+    private final String Equal;
+    private final String Minus;
 
     public GuiNetworkStatus(final InventoryPlayer inventoryPlayer, final INetworkTool te) {
         super(new ContainerNetworkStatus(inventoryPlayer, te));
         final GuiScrollbar scrollbar = new GuiScrollbar();
-
+        
+    	this.sb= new StringBuilder();
         this.df = new DecimalFormat("#.##");
         this.setScrollBar(scrollbar);
         this.repo = new ItemRepo(scrollbar, this);
@@ -62,6 +66,8 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
         this.repo.setRowSize(5);
         this.isAdvanced = te.getSize() != 3;
         this.isConsume = true;
+        this.Equal = "=";
+        this.Minus = "-";
     }
 
     @Override
@@ -281,7 +287,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                         + tempStr,
                 13,
                 143,
-                GuiColors.NetworkStatusPowerUsageRate.getColor());
+                GuiColors.DefaultBlack.getColor());
 
         tempStr = ns.getFluidBytesTotal() == 0 ? ""
                 : " (" + df.format(ns.getFluidBytesUsed() * 100d / ns.getFluidBytesTotal()) + "%)";
@@ -294,7 +300,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                         + tempStr,
                 13,
                 143 + 10,
-                GuiColors.NetworkStatusPowerUsageRate.getColor());
+                GuiColors.DefaultBlack.getColor());
 
         tempStr = ns.getEssentiaBytesTotal() == 0 ? ""
                 : " (" + df.format(ns.getEssentiaBytesUsed() * 100d / ns.getEssentiaBytesTotal()) + "%)";
@@ -307,7 +313,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                         + tempStr,
                 13,
                 143 + 20,
-                GuiColors.NetworkStatusPowerUsageRate.getColor());
+                GuiColors.DefaultBlack.getColor());
 
         final int sectionLength = 30;
 
@@ -374,9 +380,37 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
         }
 
     }
+    
+    private GuiColors getCorrespondingColor(final double percentage) {
+    	if(Double.isNaN(percentage)) {
+    		return GuiColors.DefaultBlack;
+    	}else {
+    		if(percentage > 95) {
+    			return GuiColors.WarningRed;
+    		}else if(percentage > 75) {
+    			return GuiColors.WarningOrange;
+    		}else {
+    			return GuiColors.DefaultBlack;
+    		}
+    	}
+    }
+    
+    private String getProgressBar(final double percentage) {
+    	int count = (int) Math.round(percentage / 5d);
+    	sb.setLength(0);
+    	sb.append('<');
+    	for(int i = 0; i < 20; i ++) {
+    		if(i < count) sb.append(this.Equal);
+    		else  sb.append(this.Minus);
+    	}
+    	sb.append('>');
+    	return sb.toString();
+    }
 
     private void drawItemInfo() {
         final ContainerNetworkStatus ns = (ContainerNetworkStatus) this.inventorySlots;
+        String tempStr;
+        double tempDouble;
         this.fontRendererObj
                 .drawString(GuiText.NetworkBytesDetails.getLocal(), 8, 6, GuiColors.DefaultBlack.getColor());
         this.fontRendererObj.drawString(
@@ -398,10 +432,48 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 13,
                 26,
                 GuiColors.DefaultBlack.getColor());
+        // Item byte status
+        tempDouble = ns.getItemBytesUsed() * 100d / ns.getItemBytesTotal();
+        tempStr = ns.getItemBytesTotal() == 0 ? "(0%)"
+                : " (" + df.format(tempDouble) + "%)";
+        this.fontRendererObj.drawString(
+                GuiText.BytesInfo.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getItemBytesUsed())
+                        + " / "
+                        + Platform.formatByteLong(ns.getItemBytesTotal()),
+                13,
+                143 - 20,
+                getCorrespondingColor(tempDouble).getColor());
+        this.fontRendererObj.drawString(
+                getProgressBar(tempDouble) + tempStr,
+                13,
+                143 - 10,
+                getCorrespondingColor(tempDouble).getColor());
+        
+        // Item type status
+        tempDouble = ns.getItemTypesUsed() * 100d / ns.getItemTypesTotal();
+        tempStr = ns.getItemTypesTotal() == 0 ? "(0%)"
+                : " (" + df.format(tempDouble) + "%)";
+        this.fontRendererObj.drawString(
+                GuiText.TypesInfo.getLocal() + ": "
+                        + ns.getItemTypesUsed()
+                        + " / "
+                        + ns.getItemTypesTotal()
+                        ,
+                13,
+                143,
+                getCorrespondingColor(tempDouble).getColor());
+        this.fontRendererObj.drawString(
+                getProgressBar(tempDouble) + tempStr,
+                13,
+                143 + 10,
+                getCorrespondingColor(tempDouble).getColor());
     }
 
     private void drawFluidInfo() {
         final ContainerNetworkStatus ns = (ContainerNetworkStatus) this.inventorySlots;
+        String tempStr;
+        double tempDouble;
         this.fontRendererObj
                 .drawString(GuiText.NetworkBytesDetails.getLocal(), 8, 6, GuiColors.DefaultBlack.getColor());
         this.fontRendererObj.drawString(
@@ -423,10 +495,47 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 13,
                 26,
                 GuiColors.DefaultBlack.getColor());
+        // Fluid byte status
+        tempDouble = ns.getFluidBytesUsed() * 100d / ns.getFluidBytesTotal();
+        tempStr = ns.getFluidBytesTotal() == 0 ? "(0%)"
+                : " (" + df.format(tempDouble) + "%)";
+        this.fontRendererObj.drawString(
+                GuiText.BytesInfo.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getFluidBytesUsed())
+                        + " / "
+                        + Platform.formatByteLong(ns.getFluidBytesTotal()),
+                13,
+                143 - 20,
+                getCorrespondingColor(tempDouble).getColor());
+        this.fontRendererObj.drawString(
+                getProgressBar(tempDouble)+ tempStr,
+                13,
+                143 - 10,
+                getCorrespondingColor(tempDouble).getColor());
+
+        // Fluid type status
+        tempDouble = ns.getFluidTypesUsed() * 100d / ns.getFluidTypesTotal();
+        tempStr = ns.getFluidTypesTotal() == 0 ? "(0%)"
+                : " (" + df.format(tempDouble) + "%)";
+        this.fontRendererObj.drawString(
+                GuiText.TypesInfo.getLocal() + ": "
+                        + ns.getFluidTypesUsed()
+                        + " / "
+                        + ns.getFluidTypesTotal(),
+                13,
+                143,
+                getCorrespondingColor(tempDouble).getColor());
+        this.fontRendererObj.drawString(
+                getProgressBar(tempDouble) + tempStr,
+                13,
+                143 + 10,
+                getCorrespondingColor(tempDouble).getColor());
     }
 
     private void drawEssentiaInfo() {
         final ContainerNetworkStatus ns = (ContainerNetworkStatus) this.inventorySlots;
+        String tempStr;
+        double tempDouble;
         this.fontRendererObj
                 .drawString(GuiText.NetworkBytesDetails.getLocal(), 8, 6, GuiColors.DefaultBlack.getColor());
         this.fontRendererObj.drawString(
@@ -448,5 +557,42 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource {
                 13,
                 26,
                 GuiColors.DefaultBlack.getColor());
+        // Essentia byte status
+        tempDouble = ns.getEssentiaBytesUsed() * 100d / ns.getEssentiaBytesTotal();
+        tempStr = ns.getEssentiaBytesTotal() == 0 ? "(0%)"
+                : " (" + df.format(tempDouble) + "%)";
+        this.fontRendererObj.drawString(
+                GuiText.BytesInfo.getLocal() + ": "
+                        + Platform.formatByteLong(ns.getEssentiaBytesUsed())
+                        + " / "
+                        + Platform.formatByteLong(ns.getEssentiaBytesTotal())
+                        ,
+                13,
+                143 - 20,
+                getCorrespondingColor(tempDouble).getColor());
+        this.fontRendererObj.drawString(
+                getProgressBar(tempDouble)+ tempStr,
+                13,
+                143 - 10,
+                getCorrespondingColor(tempDouble).getColor());
+        
+        // Essentia type status
+        tempDouble = ns.getEssentiaTypesUsed() * 100d / ns.getEssentiaTypesTotal();
+        tempStr = ns.getEssentiaTypesTotal() == 0 ? "(0%)"
+                : " (" + df.format(tempDouble) + "%)";
+        this.fontRendererObj.drawString(
+                GuiText.TypesInfo.getLocal() + ": "
+                        + ns.getEssentiaTypesUsed()
+                        + " / "
+                        + ns.getEssentiaTypesTotal()
+                        ,
+                13,
+                143,
+                getCorrespondingColor(tempDouble).getColor());
+        this.fontRendererObj.drawString(
+                getProgressBar(tempDouble)+ tempStr,
+                13,
+                143 + 10,
+                getCorrespondingColor(tempDouble).getColor());
     }
 }

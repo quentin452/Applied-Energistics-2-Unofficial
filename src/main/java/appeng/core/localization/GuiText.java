@@ -219,7 +219,9 @@ public enum GuiText {
     NetworkBytesDetails,
     Items,
     Fluids,
-    Essentias;
+    Essentias,
+    TypesInfo,
+    BytesInfo;
 
     private final String root;
 
