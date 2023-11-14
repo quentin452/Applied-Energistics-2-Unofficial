@@ -906,7 +906,6 @@ runClient17Task.configure {
     mainClass = "GradleStart"
     username = minecraft.username
     userUUID = minecraft.userUUID
-//    jvmArgs "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"
 }
 
 def runServer17Task = tasks.register("runServer17", RunHotswappableMinecraftTask, Distribution.DEDICATED_SERVER, "runServer")
