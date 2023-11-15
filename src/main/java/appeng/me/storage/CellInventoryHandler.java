@@ -126,6 +126,11 @@ public class CellInventoryHandler extends MEInventoryHandler<IAEItemStack>
     }
 
     @Override
+    public boolean canGetInv() {
+        return this.getCellInv() != null;
+    }
+
+    @Override
     public long getTotalBytes() {
         return this.getCellInv().getTotalBytes();
     }
