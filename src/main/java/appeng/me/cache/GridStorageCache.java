@@ -34,6 +34,7 @@ import appeng.api.networking.security.MachineSource;
 import appeng.api.networking.storage.IStackWatcher;
 import appeng.api.networking.storage.IStackWatcherHost;
 import appeng.api.networking.storage.IStorageGrid;
+import appeng.api.storage.ICellCacheRegistry;
 import appeng.api.storage.ICellContainer;
 import appeng.api.storage.ICellProvider;
 import appeng.api.storage.IMEInventoryHandler;
@@ -385,21 +386,18 @@ public class GridStorageCache implements IStorageGrid {
                     // All Item Cell
                     for (IMEInventoryHandler<?> meih : icp.getCellArray(StorageChannel.ITEMS)) {
                         // exclude void cell
-                        if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof VoidCellInventory) {
-                            continue;
-                        }
-                        if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof CellInventoryHandler handler) {
+                        if (((DriveWatcher<IAEItemStack>) meih).getInternal() instanceof ICellCacheRegistry iccr) {
                             // exclude creative cell
-                            if (handler.getCellInv() != null) {
-                                itemBytesTotal += handler.getTotalBytes();
-                                itemBytesUsed += handler.getUsedBytes();
-                                switch (handler.getStatusForCell()) {
+                            if (iccr.canGetInv()) {
+                                itemBytesTotal += iccr.getTotalBytes();
+                                itemBytesUsed += iccr.getUsedBytes();
+                                switch (iccr.getCellStatus()) {
                                     case 1 -> itemCellG++;
                                     case 2 -> itemCellO++;
                                     case 3 -> itemCellR++;
                                 }
-                                itemTypesTotal += handler.getTotalTypes();
-                                itemTypesUsed += handler.getUsedTypes();
+                                itemTypesTotal += iccr.getTotalTypes();
+                                itemTypesUsed += iccr.getUsedTypes();
                             }
                         }
                         itemCellCount++;

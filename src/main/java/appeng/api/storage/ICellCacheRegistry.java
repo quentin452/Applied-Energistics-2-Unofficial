@@ -6,6 +6,8 @@ package appeng.api.storage;
  */
 public interface ICellCacheRegistry {
 
+    boolean canGetInv();
+
     long getTotalBytes();
 
     long getFreeBytes();
