@@ -47,7 +47,7 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
             return result;
         }
 
-        result = o2.getPriority() - o1.getPriority();
+        result = Integer.compare(o2.getPriority(), o1.getPriority());
         if (result != 0) {
             return result;
         }
@@ -95,52 +95,80 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
         final int size = priorityInventory.size();
 
         int i = 0;
-        int passTwoStartIndex = -1;
         boolean stickyInventoryFound = false;
+        // Try to insert into all sticky inventories which are at the beginning of the list
         for (; i < size && input != null; i++) {
             final IMEInventoryHandler<T> inv = priorityInventory.get(i);
-            final boolean isSticky = inv.getSticky();
-
-            // The sorting guarantees no more sticky inventories will follow, so we're done here.
-            if (stickyInventoryFound && !isSticky) {
-                break;
-            }
-
-            // We remember at which index the second pass should start iterating
-            if (passTwoStartIndex == -1 && inv.validForPass(2)) {
-                passTwoStartIndex = i;
-            }
-
-            // Because the list is sorted by placement pass as well, we can stop here if the current inventory is not
-            // valid for pass 1. Note that the pass doesn't matter for sticky inventories.
-            boolean validForPass1 = isSticky || inv.validForPass(1);
-            if (!validForPass1) {
-                break;
-            }
+            if (!inv.getSticky()) break;
 
             if (inv.canAccept(input)
                     && (inv.isPrioritized(input) || inv.extractItems(input, Actionable.SIMULATE, src) != null)) {
                 input = inv.injectItems(input, type, src);
-                stickyInventoryFound |= isSticky;
+                stickyInventoryFound = true;
             }
         }
 
-        if (stickyInventoryFound || passTwoStartIndex == -1) {
+        if (stickyInventoryFound || input == null) {
             this.surface(this, type);
             return input;
         }
 
-        // We need to ignore prioritized inventories in the second pass. If they were not able to store everything
-        // during the first pass, they will do so in the second, but as this is stateless we will just report twice
-        // the amount of storable items.
-        // ignores craftingcache on the second pass.
-        i = passTwoStartIndex;
-        for (; i < size && input != null; i++) {
-            final IMEInventoryHandler<T> inv = priorityInventory.get(i);
+        int lastPriority = i < size ? priorityInventory.get(i).getPriority() : 0;
+        outer: while (true) {
+            int passTwoIndex = -1;
+            // Pass 1
+            for (;; i++) {
+                if (i >= size) break outer;
 
-            // The sorting guarantees all of these are pass 2.
-            if (inv.canAccept(input) && !inv.isPrioritized(input)) {
-                input = inv.injectItems(input, type, src);
+                final IMEInventoryHandler<T> inv = priorityInventory.get(i);
+
+                final int priority = inv.getPriority();
+                final boolean prioritySwitch = lastPriority != priority;
+                lastPriority = priority;
+
+                // Check if the current run has ended
+                if (prioritySwitch) break;
+
+                boolean canAcceptInput = true;
+
+                // If the next if-statement computes this value, we can use it later. If it doesn't we're just being
+                // optimistic here and the actual check will happen on pass 2
+                final boolean validForPass1 = inv.validForPass(1);
+                if (validForPass1 && (canAcceptInput = inv.canAccept(input))
+                        && (inv.isPrioritized(input) || inv.extractItems(input, Actionable.SIMULATE, src) != null)) {
+                    input = inv.injectItems(input, type, src);
+                    if (input == null) break outer;
+                }
+
+                // We remember at which index the second pass should start iterating. Additionally, we check if the
+                // inventory accepts the item at all, to avoid doing the exact same check again in the second pass.
+                // This als assumes that canAccept is not dependent on stack size
+                if (canAcceptInput && passTwoIndex == -1 && inv.validForPass(2)) {
+                    passTwoIndex = i;
+                    // If we're at a pass 2 only inventory, we can stop here and continue with pass 2
+                    if (!validForPass1) break;
+                }
+            }
+
+            // Pass 2
+            if (passTwoIndex != -1) {
+                // The loop body is in a weird order to allow reusing the canAcceptInput/inv variable when entering
+                // the loop for the first time
+                for (i = passTwoIndex;; i++) {
+                    // Pass 2 iteration will go at least as far as pass 1, therefore we can be sure pass 1 also has
+                    // no work left
+                    if (i >= size) break outer;
+
+                    final IMEInventoryHandler<T> inv = priorityInventory.get(i);
+
+                    // If ever find an inventory that is not valid for pass 2, we need to pass the work back to pass 1
+                    if (!inv.validForPass(2)) break;
+
+                    if (inv.canAccept(input) && !inv.isPrioritized(input)) {
+                        input = inv.injectItems(input, type, src);
+                        if (input == null) break outer;
+                    }
+                }
             }
         }
 
