@@ -141,7 +141,10 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
 
                 i++;
 
-                if (i >= size) break outer;
+                if (i >= size) {
+                    if (passTwoIndex == -1) break outer; // If pass 2 also has no work to do, we're fully done
+                    else break; // Otherwise pass 2 will run till the end again and then break out of the outer loop
+                }
 
                 inv = priorityInventory.get(i);
 
