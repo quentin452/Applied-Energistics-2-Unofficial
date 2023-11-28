@@ -108,31 +108,21 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
             }
         }
 
-        if (stickyInventoryFound || input == null) {
+        if (stickyInventoryFound || input == null || i >= size) {
             this.surface(this, type);
             return input;
         }
 
-        int lastPriority = i < size ? priorityInventory.get(i).getPriority() : 0;
+        IMEInventoryHandler<T> inv = priorityInventory.get(i);
+        int lastPriority = inv.getPriority();
         outer: while (true) {
             int passTwoIndex = -1;
             // Pass 1
-            for (;; i++) {
-                if (i >= size) break outer;
-
-                final IMEInventoryHandler<T> inv = priorityInventory.get(i);
-
-                final int priority = inv.getPriority();
-                final boolean prioritySwitch = lastPriority != priority;
-                lastPriority = priority;
-
-                // Check if the current run has ended
-                if (prioritySwitch) break;
-
-                boolean canAcceptInput = true;
-
+            while (true) {
                 // If the next if-statement computes this value, we can use it later. If it doesn't we're just being
                 // optimistic here and the actual check will happen on pass 2
+                boolean canAcceptInput = true;
+
                 final boolean validForPass1 = inv.validForPass(1);
                 if (validForPass1 && (canAcceptInput = inv.canAccept(input))
                         && (inv.isPrioritized(input) || inv.extractItems(input, Actionable.SIMULATE, src) != null)) {
@@ -148,26 +138,46 @@ public class NetworkInventoryHandler<T extends IAEStack<T>> implements IMEInvent
                     // If we're at a pass 2 only inventory, we can stop here and continue with pass 2
                     if (!validForPass1) break;
                 }
+
+                i++;
+
+                if (i >= size) break outer;
+
+                inv = priorityInventory.get(i);
+
+                final int priority = inv.getPriority();
+                final boolean prioritySwitch = lastPriority != priority;
+                lastPriority = priority;
+
+                // Check if the current run has ended
+                if (prioritySwitch) break;
             }
 
             // Pass 2
             if (passTwoIndex != -1) {
-                // The loop body is in a weird order to allow reusing the canAcceptInput/inv variable when entering
-                // the loop for the first time
-                for (i = passTwoIndex;; i++) {
-                    // Pass 2 iteration will go at least as far as pass 1, therefore we can be sure pass 1 also has
-                    // no work left
-                    if (i >= size) break outer;
-
-                    final IMEInventoryHandler<T> inv = priorityInventory.get(i);
-
-                    // If ever find an inventory that is not valid for pass 2, we need to pass the work back to pass 1
-                    if (!inv.validForPass(2)) break;
-
+                i = passTwoIndex;
+                inv = priorityInventory.get(i);
+                lastPriority = inv.getPriority();
+                while (true) {
                     if (inv.canAccept(input) && !inv.isPrioritized(input)) {
                         input = inv.injectItems(input, type, src);
                         if (input == null) break outer;
                     }
+
+                    i++;
+
+                    // Pass 2 iteration will go at least as far as pass 1, therefore we can be sure pass 1 also has
+                    // no work left
+                    if (i >= size) break outer;
+
+                    inv = priorityInventory.get(i);
+
+                    final int priority = inv.getPriority();
+                    final boolean prioritySwitch = lastPriority != priority;
+                    lastPriority = priority;
+
+                    // Check if the current run has ended
+                    if (prioritySwitch) break;
                 }
             }
         }
