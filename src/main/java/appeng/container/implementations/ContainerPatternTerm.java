@@ -12,14 +12,17 @@ package appeng.container.implementations;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.inventory.*;
+import net.minecraft.inventory.ICrafting;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.InventoryCrafting;
+import net.minecraft.inventory.Slot;
+import net.minecraft.inventory.SlotCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
@@ -38,7 +41,13 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.container.ContainerNull;
 import appeng.container.guisync.GuiSync;
-import appeng.container.slot.*;
+import appeng.container.slot.IOptionalSlotHost;
+import appeng.container.slot.OptionalSlotFake;
+import appeng.container.slot.SlotFake;
+import appeng.container.slot.SlotFakeCraftingMatrix;
+import appeng.container.slot.SlotPatternOutputs;
+import appeng.container.slot.SlotPatternTerm;
+import appeng.container.slot.SlotRestrictedInput;
 import appeng.core.sync.packets.PacketPatternSlot;
 import appeng.helpers.IContainerCraftingPacket;
 import appeng.items.storage.ItemViewCell;
@@ -257,6 +266,7 @@ public class ContainerPatternTerm extends ContainerMEMonitorable
         encodedValue.setBoolean("crafting", this.isCraftingMode());
         encodedValue.setBoolean("substitute", this.isSubstitute());
         encodedValue.setBoolean("beSubstitute", this.canBeSubstitute());
+        encodedValue.setString("author", this.getPlayerInv().player.getCommandSenderName());
 
         output.setTagCompound(encodedValue);
     }
@@ -549,44 +559,40 @@ public class ContainerPatternTerm extends ContainerMEMonitorable
         this.beSubstitute = beSubstitute;
     }
 
-    static boolean canDoubleStacks(SlotFake[] slots) {
-        List<SlotFake> enabledSlots = Arrays.stream(slots).filter(SlotFake::isEnabled).collect(Collectors.toList());
-        long emptyStots = enabledSlots.stream().filter(s -> s.getStack() == null).count();
-        long fullSlots = enabledSlots.stream().filter(s -> s.getStack() != null && s.getStack().stackSize * 2 > 127)
-                .count();
-        return fullSlots <= emptyStots && emptyStots < enabledSlots.size();
+    static boolean canDouble(SlotFake[] slots, int mult) {
+        for (Slot s : slots) {
+            if (s.getStack() != null) {
+                long val = (long) s.getStack().stackSize * mult;
+                if (val > Integer.MAX_VALUE) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
-    static void doubleStacksInternal(SlotFake[] slots) {
-        List<ItemStack> overFlowStacks = new ArrayList<>();
+    static void doubleStacksInternal(SlotFake[] slots, int mult) {
         List<SlotFake> enabledSlots = Arrays.stream(slots).filter(SlotFake::isEnabled).collect(Collectors.toList());
         for (final Slot s : enabledSlots) {
             ItemStack st = s.getStack();
-            if (st == null) continue;
-            if (st.stackSize * 2 > 127) {
-                overFlowStacks.add(st.copy());
-            } else {
-                st.stackSize *= 2;
+            if (st != null) {
+                st.stackSize *= mult;
                 s.putStack(st);
             }
         }
-        Iterator<ItemStack> ow = overFlowStacks.iterator();
-        for (final Slot s : enabledSlots) {
-            if (!ow.hasNext()) break;
-            if (s.getStack() != null) continue;
-            s.putStack(ow.next());
-        }
-        assert !ow.hasNext();
     }
 
     public void doubleStacks(boolean isShift) {
-        if (!isCraftingMode() && canDoubleStacks(craftingSlots) && canDoubleStacks(outputSlots)) {
-            doubleStacksInternal(this.craftingSlots);
-            doubleStacksInternal(this.outputSlots);
+        if (!isCraftingMode()) {
             if (isShift) {
-                while (canDoubleStacks(craftingSlots) && canDoubleStacks(outputSlots)) {
-                    doubleStacksInternal(this.craftingSlots);
-                    doubleStacksInternal(this.outputSlots);
+                if (canDouble(this.craftingSlots, 8) && canDouble(this.outputSlots, 8)) {
+                    doubleStacksInternal(this.craftingSlots, 8);
+                    doubleStacksInternal(this.outputSlots, 8);
+                }
+            } else {
+                if (canDouble(this.craftingSlots, 2) && canDouble(this.outputSlots, 2)) {
+                    doubleStacksInternal(this.craftingSlots, 2);
+                    doubleStacksInternal(this.outputSlots, 2);
                 }
             }
             this.detectAndSendChanges();

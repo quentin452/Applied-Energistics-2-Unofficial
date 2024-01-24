@@ -10,6 +10,8 @@
 
 package appeng.me.storage;
 
+import javax.annotation.Nonnull;
+
 import com.mojang.authlib.GameProfile;
 
 import appeng.api.AEApi;
@@ -91,6 +93,22 @@ public class SecurityInventory implements IMEInventoryHandler<IAEItemStack> {
         }
 
         return out;
+    }
+
+    @Override
+    public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request) {
+        long count = 0;
+        for (final IAEItemStack is : this.getStoredItems()) {
+            if (is != null && is.getStackSize() > 0 && is.isSameType(request)) {
+                count += is.getStackSize();
+                if (count < 0) {
+                    // overflow
+                    count = Long.MAX_VALUE;
+                    break;
+                }
+            }
+        }
+        return count == 0 ? null : request.copy().setStackSize(count);
     }
 
     @Override

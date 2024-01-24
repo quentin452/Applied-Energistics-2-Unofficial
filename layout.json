@@ -1,0 +1,14 @@
+{
+  "ideaDirPath": "/home/iamacat/Bureau/githubrepo/Applied-Energistics-2-Unofficial/.idea",
+  "modulesMap": {
+    "Applied-Energistics-2-Unofficial": "/home/iamacat/Bureau/githubrepo/Applied-Energistics-2-Unofficial/.idea/modules/Applied-Energistics-2-Unofficial.iml",
+    "Applied-Energistics-2-Unofficial:api": "/home/iamacat/Bureau/githubrepo/Applied-Energistics-2-Unofficial/.idea/modules/Applied-Energistics-2-Unofficial.api.iml",
+    "Applied-Energistics-2-Unofficial:functionalTest": "/home/iamacat/Bureau/githubrepo/Applied-Energistics-2-Unofficial/.idea/modules/Applied-Energistics-2-Unofficial.functionalTest.iml",
+    "Applied-Energistics-2-Unofficial:ideVirtualMain": "/home/iamacat/Bureau/githubrepo/Applied-Energistics-2-Unofficial/.idea/modules/Applied-Energistics-2-Unofficial.ideVirtualMain.iml",
+    "Applied-Energistics-2-Unofficial:injectedTags": "/home/iamacat/Bureau/githubrepo/Applied-Energistics-2-Unofficial/.idea/modules/Applied-Energistics-2-Unofficial.injectedTags.iml",
+    "Applied-Energistics-2-Unofficial:main": "/home/iamacat/Bureau/githubrepo/Applied-Energistics-2-Unofficial/.idea/modules/Applied-Energistics-2-Unofficial.main.iml",
+    "Applied-Energistics-2-Unofficial:mcLauncher": "/home/iamacat/Bureau/githubrepo/Applied-Energistics-2-Unofficial/.idea/modules/Applied-Energistics-2-Unofficial.mcLauncher.iml",
+    "Applied-Energistics-2-Unofficial:patchedMc": "/home/iamacat/Bureau/githubrepo/Applied-Energistics-2-Unofficial/.idea/modules/Applied-Energistics-2-Unofficial.patchedMc.iml",
+    "Applied-Energistics-2-Unofficial:test": "/home/iamacat/Bureau/githubrepo/Applied-Energistics-2-Unofficial/.idea/modules/Applied-Energistics-2-Unofficial.test.iml"
+  }
+}

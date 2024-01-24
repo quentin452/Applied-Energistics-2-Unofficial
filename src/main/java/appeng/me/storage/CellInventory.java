@@ -13,6 +13,8 @@ package appeng.me.storage;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -26,7 +28,11 @@ import appeng.api.config.FuzzyMode;
 import appeng.api.exceptions.AppEngException;
 import appeng.api.implementations.items.IStorageCell;
 import appeng.api.networking.security.BaseActionSource;
-import appeng.api.storage.*;
+import appeng.api.storage.ICellInventory;
+import appeng.api.storage.IMEInventory;
+import appeng.api.storage.IMEInventoryHandler;
+import appeng.api.storage.ISaveProvider;
+import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.util.Platform;
@@ -249,7 +255,7 @@ public class CellInventory implements ICellInventory {
             return null;
         }
 
-        final long size = Math.min(Integer.MAX_VALUE, request.getStackSize());
+        final long size = request.getStackSize();
 
         IAEItemStack results = null;
 
@@ -394,6 +400,22 @@ public class CellInventory implements ICellInventory {
         }
 
         return out;
+    }
+
+    @Override
+    public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request) {
+        long count = 0;
+        for (final IAEItemStack is : this.getCellItems()) {
+            if (is != null && is.getStackSize() > 0 && is.isSameType(request)) {
+                count += is.getStackSize();
+                if (count < 0) {
+                    // overflow
+                    count = Long.MAX_VALUE;
+                    break;
+                }
+            }
+        }
+        return count == 0 ? null : request.copy().setStackSize(count);
     }
 
     @Override

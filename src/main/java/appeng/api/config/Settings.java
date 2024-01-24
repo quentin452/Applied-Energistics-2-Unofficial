@@ -66,7 +66,17 @@ public enum Settings {
 
     SIDELESS_MODE(EnumSet.allOf(SidelessMode.class)),
 
-    ADVANCED_BLOCKING_MODE(EnumSet.allOf(AdvancedBlockingMode.class));
+    ADVANCED_BLOCKING_MODE(EnumSet.allOf(AdvancedBlockingMode.class)),
+
+    CRAFTING_MODE(EnumSet.allOf(CraftingMode.class)),
+
+    CELL_TYPE(EnumSet.allOf(CellType.class)),
+
+    STICKY_MODE(EnumSet.of(YesNo.YES, YesNo.NO)),
+
+    LOCK_CRAFTING_MODE(EnumSet.allOf(LockCraftingMode.class)),
+
+    PRIORITY_CARD_MODE(EnumSet.allOf(PriorityCardMode.class));
 
     private final EnumSet<? extends Enum<?>> values;
 

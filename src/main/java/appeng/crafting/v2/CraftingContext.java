@@ -1,6 +1,15 @@
 package appeng.crafting.v2;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -38,6 +47,7 @@ import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
 import appeng.util.item.OreListMultiMap;
 import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.relauncher.Side;
 
 /**
  * A bundle of state for the crafting operation like the ME grid, who requested crafting, etc.
@@ -259,7 +269,10 @@ public final class CraftingContext {
         if (tasksToProcess.isEmpty()) {
             return finishedState;
         }
-        if (resolvedTasks.size() > AEConfig.instance.maxCraftingSteps) {
+        // Limit number of crafting steps on dedicated servers to prevent abuse, in singleplayer the lag only affects
+        // the player.
+        if (FMLCommonHandler.instance().getSide() == Side.SERVER
+                && resolvedTasks.size() > AEConfig.instance.maxCraftingSteps) {
             this.finishedState = State.FAILURE;
             for (CraftingTask task : tasksToProcess) {
                 if (task.request != null) {

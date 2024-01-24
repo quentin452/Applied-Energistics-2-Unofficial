@@ -26,19 +26,43 @@ import net.minecraftforge.fluids.FluidTankInfo;
 import net.minecraftforge.fluids.IFluidHandler;
 
 import appeng.api.AEApi;
-import appeng.api.config.*;
+import appeng.api.config.AccessRestriction;
+import appeng.api.config.Actionable;
+import appeng.api.config.PowerMultiplier;
+import appeng.api.config.SecurityPermissions;
+import appeng.api.config.Settings;
+import appeng.api.config.SortDir;
+import appeng.api.config.SortOrder;
+import appeng.api.config.TypeFilter;
+import appeng.api.config.ViewItems;
 import appeng.api.implementations.tiles.IColorableTile;
 import appeng.api.implementations.tiles.IMEChest;
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.energy.IEnergyGrid;
-import appeng.api.networking.events.*;
+import appeng.api.networking.events.MENetworkCellArrayUpdate;
+import appeng.api.networking.events.MENetworkChannelsChanged;
+import appeng.api.networking.events.MENetworkEventSubscribe;
+import appeng.api.networking.events.MENetworkPowerStatusChange;
+import appeng.api.networking.events.MENetworkPowerStorage;
 import appeng.api.networking.events.MENetworkPowerStorage.PowerEventType;
-import appeng.api.networking.security.*;
+import appeng.api.networking.security.BaseActionSource;
+import appeng.api.networking.security.IActionHost;
+import appeng.api.networking.security.ISecurityGrid;
+import appeng.api.networking.security.MachineSource;
+import appeng.api.networking.security.PlayerSource;
 import appeng.api.networking.storage.IBaseMonitor;
 import appeng.api.networking.storage.IStorageGrid;
-import appeng.api.storage.*;
+import appeng.api.storage.ICellHandler;
+import appeng.api.storage.IMEInventory;
+import appeng.api.storage.IMEInventoryHandler;
+import appeng.api.storage.IMEMonitor;
+import appeng.api.storage.IMEMonitorHandlerReceiver;
+import appeng.api.storage.IStorageMonitorable;
+import appeng.api.storage.ITerminalHost;
+import appeng.api.storage.MEMonitorHandler;
+import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
@@ -90,6 +114,10 @@ public class TileChest extends AENetworkPowerTile
         this.setInternalPowerFlow(AccessRestriction.WRITE);
     }
 
+    public IMEInventory<IAEItemStack> getInternal(final StorageChannel channel) throws ChestNoHandler {
+        return (IMEInventory<IAEItemStack>) this.getHandler(channel);
+    }
+
     @Override
     protected void PowerEvent(final PowerEventType x) {
         if (x == PowerEventType.REQUEST_POWER) {
@@ -136,7 +164,11 @@ public class TileChest extends AENetworkPowerTile
         return 1;
     }
 
-    private IMEInventoryHandler getHandler(final StorageChannel channel) throws ChestNoHandler {
+    public IMEInventoryHandler getInternalHandler(final StorageChannel channel) {
+        return this.cellHandler.getCellInventory(this.inv.getStackInSlot(1), this, channel);
+    }
+
+    public IMEInventoryHandler getHandler(final StorageChannel channel) throws ChestNoHandler {
         if (!this.isCached) {
             this.itemCell = null;
             this.fluidCell = null;
@@ -198,6 +230,10 @@ public class TileChest extends AENetworkPowerTile
         g.addListener(new ChestNetNotifier(h.getChannel()), g);
 
         return g;
+    }
+
+    public BaseActionSource getActionSource() {
+        return mySrc;
     }
 
     @Override
@@ -693,16 +729,13 @@ public class TileChest extends AENetworkPowerTile
 
         @Override
         public void postChange(final IBaseMonitor<T> monitor, final Iterable<T> change, final BaseActionSource source) {
-            if (source == TileChest.this.mySrc
-                    || (source instanceof PlayerSource && ((PlayerSource) source).via == TileChest.this)) {
-                try {
-                    if (TileChest.this.getProxy().isActive()) {
-                        TileChest.this.getProxy().getStorage()
-                                .postAlterationOfStoredItems(this.chan, change, TileChest.this.mySrc);
-                    }
-                } catch (final GridAccessException e) {
-                    // :(
+            try {
+                if (TileChest.this.getProxy().isActive()) {
+                    TileChest.this.getProxy().getStorage()
+                            .postAlterationOfStoredItems(this.chan, change, TileChest.this.mySrc);
                 }
+            } catch (final GridAccessException e) {
+                // :(
             }
 
             TileChest.this.blinkCell(0);

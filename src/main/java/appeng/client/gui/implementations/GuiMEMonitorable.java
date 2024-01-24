@@ -22,17 +22,28 @@ import net.minecraft.item.ItemStack;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
-import appeng.api.config.*;
+import appeng.api.AEApi;
+import appeng.api.config.CraftingStatus;
+import appeng.api.config.SearchBoxMode;
+import appeng.api.config.Settings;
+import appeng.api.config.TerminalStyle;
+import appeng.api.config.YesNo;
 import appeng.api.implementations.guiobjects.IPortableCell;
 import appeng.api.implementations.tiles.IMEChest;
 import appeng.api.implementations.tiles.IViewCellStorage;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.data.IAEItemStack;
+import appeng.api.storage.data.IDisplayRepo;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
 import appeng.client.ActionKey;
 import appeng.client.gui.AEBaseMEGui;
-import appeng.client.gui.widgets.*;
+import appeng.client.gui.widgets.GuiImgButton;
+import appeng.client.gui.widgets.GuiScrollbar;
+import appeng.client.gui.widgets.GuiTabButton;
+import appeng.client.gui.widgets.IDropToFillTextField;
+import appeng.client.gui.widgets.ISortSource;
+import appeng.client.gui.widgets.MEGuiTextField;
 import appeng.client.me.InternalSlotME;
 import appeng.client.me.ItemRepo;
 import appeng.container.implementations.ContainerMEMonitorable;
@@ -66,7 +77,7 @@ public class GuiMEMonitorable extends AEBaseMEGui implements ISortSource, IConfi
     public static int craftingGridOffsetY;
 
     private static String memoryText = "";
-    private final ItemRepo repo;
+    private final IDisplayRepo repo;
     private final int offsetX = 9;
     private final int MAGIC_HEIGHT_NUMBER = 114 + 1;
     private final int lowerTextureOffset = 0;
@@ -94,6 +105,7 @@ public class GuiMEMonitorable extends AEBaseMEGui implements ISortSource, IConfi
     private boolean isAutoFocus = false;
     private int currentMouseX = 0;
     private int currentMouseY = 0;
+    protected boolean hasShiftKeyDown = false;
 
     public GuiMEMonitorable(final InventoryPlayer inventoryPlayer, final ITerminalHost te) {
         this(inventoryPlayer, te, new ContainerMEMonitorable(inventoryPlayer, te));
@@ -265,7 +277,7 @@ public class GuiMEMonitorable extends AEBaseMEGui implements ISortSource, IConfi
                             this.configSrc.getSetting(Settings.VIEW_MODE)));
             offset += 20;
         }
-        if (ItemRepo.getFilter().containsKey(TypeFilter.FLUIDS)) {
+        if (!AEApi.instance().registries().itemDisplay().getItemFilters().isEmpty()) {
             this.buttonList.add(
                     this.typeFilter = new GuiImgButton(
                             this.guiLeft - 18,
@@ -344,6 +356,7 @@ public class GuiMEMonitorable extends AEBaseMEGui implements ISortSource, IConfi
             this.searchField.setText(memoryText, true);
             repo.setSearchString(memoryText);
         }
+        this.searchField.setCursorPositionEnd();
 
         this.setScrollBar();
 
@@ -512,7 +525,7 @@ public class GuiMEMonitorable extends AEBaseMEGui implements ISortSource, IConfi
 
     @Override
     public void updateScreen() {
-        this.repo.setPower(this.monitorableContainer.isPowered());
+        this.repo.setPowered(this.monitorableContainer.isPowered());
         super.updateScreen();
     }
 
@@ -554,6 +567,16 @@ public class GuiMEMonitorable extends AEBaseMEGui implements ISortSource, IConfi
         }
 
         this.repo.updateView();
+    }
+
+    @Override
+    public void handleKeyboardInput() {
+        super.handleKeyboardInput();
+        hasShiftKeyDown |= isShiftKeyDown();
+        if (hasShiftKeyDown && !Keyboard.getEventKeyState()) { // keyup
+            this.repo.updateView();
+            hasShiftKeyDown = false;
+        }
     }
 
     @SuppressWarnings("SameParameterValue")

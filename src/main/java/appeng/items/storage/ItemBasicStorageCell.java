@@ -126,7 +126,6 @@ public class ItemBasicStorageCell extends AEBaseItem implements IStorageCell, II
 
                 if (handler.isPreformatted()) {
                     String filter = cellInventory.getOreFilter();
-
                     if (filter.isEmpty()) {
                         final String list = (handler.getIncludeExcludeMode() == IncludeExclude.WHITELIST
                                 ? GuiText.Included
@@ -146,6 +145,10 @@ public class ItemBasicStorageCell extends AEBaseItem implements IStorageCell, II
                         }
                     } else {
                         lines.add(GuiText.PartitionedOre.getLocal() + " : " + filter);
+                    }
+
+                    if (handler.getSticky()) {
+                        lines.add(GuiText.Sticky.getLocal());
                     }
                 }
             }
@@ -219,12 +222,7 @@ public class ItemBasicStorageCell extends AEBaseItem implements IStorageCell, II
 
     @Override
     public FuzzyMode getFuzzyMode(final ItemStack is) {
-        final String fz = Platform.openNbtData(is).getString("FuzzyMode");
-        try {
-            return FuzzyMode.valueOf(fz);
-        } catch (final Throwable t) {
-            return FuzzyMode.IGNORE_ALL;
-        }
+        return FuzzyMode.fromItemStack(is);
     }
 
     @Override

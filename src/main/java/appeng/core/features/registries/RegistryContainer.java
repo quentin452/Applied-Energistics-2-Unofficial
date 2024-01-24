@@ -10,11 +10,23 @@
 
 package appeng.core.features.registries;
 
-import appeng.api.features.*;
+import appeng.api.features.IGrinderRegistry;
+import appeng.api.features.IInscriberRegistry;
+import appeng.api.features.IInterfaceTerminalRegistry;
+import appeng.api.features.ILocatableRegistry;
+import appeng.api.features.IMatterCannonAmmoRegistry;
+import appeng.api.features.IP2PTunnelRegistry;
+import appeng.api.features.IPlayerRegistry;
+import appeng.api.features.IRecipeHandlerRegistry;
+import appeng.api.features.IRegistryContainer;
+import appeng.api.features.ISpecialComparisonRegistry;
+import appeng.api.features.IWirelessTermRegistry;
+import appeng.api.features.IWorldGen;
 import appeng.api.movable.IMovableRegistry;
 import appeng.api.networking.IGridCacheRegistry;
 import appeng.api.storage.ICellRegistry;
 import appeng.api.storage.IExternalStorageRegistry;
+import appeng.api.storage.IItemDisplayRegistry;
 
 /**
  * represents all registries
@@ -30,6 +42,8 @@ public class RegistryContainer implements IRegistryContainer {
     private final IInscriberRegistry inscriber = new InscriberRegistry();
     private final IExternalStorageRegistry storage = new ExternalStorageRegistry();
     private final ICellRegistry cell = new CellRegistry();
+    private final IItemDisplayRegistry itemDisplay = new ItemDisplayRegistry();
+    private final IInterfaceTerminalRegistry interfaceTerminalRegistry = new InterfaceTerminalRegistry();
     private final ILocatableRegistry locatable = new LocatableRegistry();
     private final ISpecialComparisonRegistry comparison = new SpecialComparisonRegistry();
     private final IWirelessTermRegistry wireless = new WirelessRegistry();
@@ -71,6 +85,11 @@ public class RegistryContainer implements IRegistryContainer {
     }
 
     @Override
+    public IItemDisplayRegistry itemDisplay() {
+        return itemDisplay;
+    }
+
+    @Override
     public IGrinderRegistry grinder() {
         return this.grinder;
     }
@@ -78,6 +97,11 @@ public class RegistryContainer implements IRegistryContainer {
     @Override
     public IInscriberRegistry inscriber() {
         return this.inscriber;
+    }
+
+    @Override
+    public IInterfaceTerminalRegistry interfaceTerminal() {
+        return this.interfaceTerminalRegistry;
     }
 
     @Override

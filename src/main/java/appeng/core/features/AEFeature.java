@@ -57,6 +57,7 @@ public enum AEFeature {
     PowerGen(Constants.CATEGORY_NETWORK_FEATURES),
     Security(Constants.CATEGORY_NETWORK_FEATURES),
     SpatialIO(Constants.CATEGORY_NETWORK_FEATURES),
+    UltraDenseCables(Constants.CATEGORY_NETWORK_FEATURES),
     QuantumNetworkBridge(Constants.CATEGORY_NETWORK_FEATURES),
     Channels(Constants.CATEGORY_NETWORK_FEATURES),
 
@@ -75,11 +76,13 @@ public enum AEFeature {
     PortableCell(Constants.CATEGORY_PORTABLE_CELL),
 
     StorageCells(Constants.CATEGORY_STORAGE),
+    XtremeStorageCells(Constants.CATEGORY_STORAGE),
     MEChest(Constants.CATEGORY_STORAGE),
     MEDrive(Constants.CATEGORY_STORAGE),
     IOPort(Constants.CATEGORY_STORAGE),
 
     NetworkTool(Constants.CATEGORY_NETWORK_TOOL),
+    AdvancedNetworkTool(Constants.CATEGORY_ADVANCED_NETWORK_TOOL),
 
     DenseEnergyCells(Constants.CATEGORY_HIGHER_CAPACITY),
     DenseCables(Constants.CATEGORY_HIGHER_CAPACITY),
@@ -128,6 +131,7 @@ public enum AEFeature {
     MolecularAssembler(Constants.CATEGORY_CRAFTING_FEATURES),
     Patterns(Constants.CATEGORY_CRAFTING_FEATURES),
     CraftingCPU(Constants.CATEGORY_CRAFTING_FEATURES),
+    XtremeCraftingCPU(Constants.CATEGORY_CRAFTING_FEATURES),
 
     ChunkLoggerTrace(Constants.CATEGORY_COMMANDS, false);
 
@@ -171,6 +175,7 @@ public enum AEFeature {
         private static final String CATEGORY_RENDERING = "Rendering";
         private static final String CATEGORY_FACADES = "Facades";
         private static final String CATEGORY_NETWORK_TOOL = "NetworkTool";
+        private static final String CATEGORY_ADVANCED_NETWORK_TOOL = "AdvancedNetworkTool";
         private static final String CATEGORY_PORTABLE_CELL = "PortableCell";
     }
 }

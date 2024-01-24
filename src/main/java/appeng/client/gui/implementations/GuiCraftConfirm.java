@@ -11,13 +11,18 @@
 package appeng.client.gui.implementations;
 
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
 
+import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
@@ -30,10 +35,19 @@ import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.client.gui.AEBaseGui;
-import appeng.client.gui.widgets.*;
+import appeng.client.gui.IGuiTooltipHandler;
+import appeng.client.gui.widgets.GuiCraftingCPUTable;
+import appeng.client.gui.widgets.GuiCraftingTree;
+import appeng.client.gui.widgets.GuiImgButton;
+import appeng.client.gui.widgets.GuiScrollbar;
+import appeng.client.gui.widgets.GuiSimpleImgButton;
+import appeng.client.gui.widgets.GuiTabButton;
+import appeng.client.gui.widgets.ICraftingCPUTableHolder;
 import appeng.container.implementations.ContainerCraftConfirm;
 import appeng.container.implementations.CraftingCPUStatus;
+import appeng.core.AEConfig;
 import appeng.core.AELog;
+import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.GuiColors;
 import appeng.core.localization.GuiText;
 import appeng.core.sync.GuiBridge;
@@ -50,7 +64,7 @@ import appeng.parts.reporting.PartTerminal;
 import appeng.util.Platform;
 import appeng.util.ReadableNumberConverter;
 
-public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolder {
+public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolder, IGuiTooltipHandler {
 
     public static final int TREE_VIEW_TEXTURE_WIDTH = 238;
     public static final int TREE_VIEW_TEXTURE_HEIGHT = 238;
@@ -115,13 +129,14 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
     private final List<IAEItemStack> visual = new ArrayList<>();
 
     private DisplayMode displayMode = DisplayMode.LIST;
-    private boolean tallMode = true;
+    private boolean tallMode;
 
     private GuiBridge OriginalGui;
     private GuiButton cancel;
     private GuiButton start;
     private GuiButton selectCPU;
     private GuiImgButton switchTallMode;
+    private GuiSimpleImgButton takeScreenshot;
     private GuiTabButton switchDisplayMode;
     private int tooltip = -1;
     private ItemStack hoveredStack;
@@ -131,6 +146,7 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
     public GuiCraftConfirm(final InventoryPlayer inventoryPlayer, final ITerminalHost te) {
         super(new ContainerCraftConfirm(inventoryPlayer, te));
         this.craftingTree = new GuiCraftingTree(this, 9, 19, 203, 192);
+        this.tallMode = AEConfig.instance.getConfigManager().getSetting(Settings.TERMINAL_STYLE) == TerminalStyle.TALL;
         recalculateScreenSize();
 
         scrollbar = new GuiScrollbar();
@@ -213,6 +229,13 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 tallMode ? TerminalStyle.TALL : TerminalStyle.SMALL);
         this.buttonList.add(switchTallMode);
 
+        this.takeScreenshot = new GuiSimpleImgButton(
+                this.guiLeft - 18,
+                this.guiTop + 184,
+                16 * 9,
+                ButtonToolTips.SaveAsImage.getLocal());
+        this.buttonList.add(takeScreenshot);
+
         this.switchDisplayMode = new GuiTabButton(
                 this.guiLeft + this.xSize - 25,
                 this.guiTop - 4,
@@ -239,6 +262,7 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
 
         this.selectCPU.enabled = (displayMode == DisplayMode.LIST) && !this.isSimulation();
         this.selectCPU.visible = (displayMode == DisplayMode.LIST);
+        this.takeScreenshot.visible = (displayMode == DisplayMode.TREE);
 
         super.drawScreen(mouseX, mouseY, btn);
 
@@ -380,11 +404,11 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 if (stored != null && stored.getStackSize() > 0) {
                     lines++;
                 }
-                if (pendingStack != null && pendingStack.getStackSize() > 0) {
+                if (missingStack != null && missingStack.getStackSize() > 0) {
                     lines++;
                 }
                 if (pendingStack != null && pendingStack.getStackSize() > 0) {
-                    lines++;
+                    lines += 2;
                 }
 
                 final int negY = ((lines - 1) * 5) / 2;
@@ -433,7 +457,18 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                 if (pendingStack != null && pendingStack.getStackSize() > 0) {
                     String str = GuiText.ToCraft.getLocal() + ": "
                             + ReadableNumberConverter.INSTANCE.toWideReadableForm(pendingStack.getStackSize());
-                    final int w = 4 + this.fontRendererObj.getStringWidth(str);
+                    int w = 4 + this.fontRendererObj.getStringWidth(str);
+                    this.fontRendererObj.drawString(
+                            str,
+                            (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (w * 0.5)) * 2),
+                            (y * offY + yo + 6 - negY + downY) * 2,
+                            GuiColors.CraftConfirmToCraft.getColor());
+
+                    downY += 5;
+                    str = GuiText.ToCraftRequests.getLocal() + ": "
+                            + ReadableNumberConverter.INSTANCE
+                                    .toWideReadableForm(pendingStack.getCountRequestableCrafts());
+                    w = 4 + this.fontRendererObj.getStringWidth(str);
                     this.fontRendererObj.drawString(
                             str,
                             (int) ((x * (1 + sectionLength) + xo + sectionLength - 19 - (w * 0.5)) * 2),
@@ -444,6 +479,9 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
                         lineList.add(
                                 GuiText.ToCraft.getLocal() + ": "
                                         + NumberFormat.getInstance().format(pendingStack.getStackSize()));
+                        lineList.add(
+                                GuiText.ToCraftRequests.getLocal() + ": "
+                                        + NumberFormat.getInstance().format(pendingStack.getCountRequestableCrafts()));
                     }
                 }
 
@@ -648,6 +686,16 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
         }
     }
 
+    @Override
+    protected boolean mouseWheelEvent(int x, int y, int wheel) {
+        if (displayMode == DisplayMode.TREE && craftingTree != null
+                && craftingTree.isPointInWidget(x - guiLeft, y - guiTop)) {
+            craftingTree.onMouseWheel(x - guiLeft, y - guiTop, wheel);
+            return true;
+        }
+        return super.mouseWheelEvent(x, y, wheel);
+    }
+
     private long getTotal(final IAEItemStack is) {
         final IAEItemStack a = this.storage.findPrecise(is);
         final IAEItemStack c = this.pending.findPrecise(is);
@@ -696,7 +744,7 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
     @Override
     protected void keyTyped(final char character, final int key) {
         if (!this.checkHotbarKeys(key)) {
-            if (key == 28) {
+            if (key == Keyboard.KEY_RETURN || key == Keyboard.KEY_NUMPADENTER) {
                 this.actionPerformed(this.start);
             }
             super.keyTyped(character, key);
@@ -723,6 +771,10 @@ public class GuiCraftConfirm extends AEBaseGui implements ICraftingCPUTableHolde
             switchTallMode.set(tallMode ? TerminalStyle.TALL : TerminalStyle.SMALL);
             recalculateScreenSize();
             this.setWorldAndResolution(mc, width, height);
+        } else if (btn == this.takeScreenshot) {
+            if (craftingTree != null) {
+                craftingTree.saveScreenshot();
+            }
         } else if (btn == this.start) {
             try {
                 NetworkHandler.instance.sendToServer(new PacketValueConfig("Terminal.Start", "Start"));

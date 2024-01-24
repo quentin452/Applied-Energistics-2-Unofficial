@@ -10,7 +10,12 @@
 
 package appeng.items.tools.powered;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDispenser;
@@ -150,6 +155,11 @@ public class ToolColorApplicator extends AEBasePoweredItem
                 }
             } else if (paintBall != null) {
                 final AEColor color = this.getColorFromItem(paintBall);
+                final TileEntity te = w.getTileEntity(x, y, z);
+                if (te instanceof IColorableTile colorable) {
+                    colorable.recolourBlock(ForgeDirection.getOrientation(side), color, p);
+                    return true;
+                }
 
                 if (color != null && this.getAECurrentPower(is) > powerPerUse) {
                     if (color != AEColor.Transparent && this.recolourBlock(
@@ -463,12 +473,7 @@ public class ToolColorApplicator extends AEBasePoweredItem
 
     @Override
     public FuzzyMode getFuzzyMode(final ItemStack is) {
-        final String fz = Platform.openNbtData(is).getString("FuzzyMode");
-        try {
-            return FuzzyMode.valueOf(fz);
-        } catch (final Throwable t) {
-            return FuzzyMode.IGNORE_ALL;
-        }
+        return FuzzyMode.fromItemStack(is);
     }
 
     @Override

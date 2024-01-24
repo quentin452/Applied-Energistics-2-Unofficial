@@ -11,6 +11,7 @@
 package appeng.container.implementations;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.Future;
 
 import javax.annotation.Nonnull;
@@ -156,6 +157,7 @@ public class ContainerCraftConfirm extends AEBaseContainer implements ICraftingC
                         final IAEItemStack toCraft = plannedItem.copy();
                         toCraft.reset();
                         toCraft.setStackSize(plannedItem.getCountRequestable());
+                        toCraft.setCountRequestableCrafts(plannedItem.getCountRequestableCrafts());
 
                         final IStorageGrid sg = this.getGrid().getCache(IStorageGrid.class);
                         final IMEInventory<IAEItemStack> items = sg.getItemInventory();
@@ -186,11 +188,11 @@ public class ContainerCraftConfirm extends AEBaseContainer implements ICraftingC
                         }
                     }
 
-                    final PacketCraftingTreeData treeUpdate;
+                    final List<PacketCraftingTreeData> treeUpdates;
                     if (this.result instanceof CraftingJobV2) {
-                        treeUpdate = new PacketCraftingTreeData((CraftingJobV2) this.result);
+                        treeUpdates = PacketCraftingTreeData.createChunks((CraftingJobV2) this.result);
                     } else {
-                        treeUpdate = null;
+                        treeUpdates = null;
                     }
                     for (final Object player : this.crafters) {
                         if (player instanceof EntityPlayerMP playerMP) {
@@ -199,8 +201,10 @@ public class ContainerCraftConfirm extends AEBaseContainer implements ICraftingC
                             if (missingUpdate != null) {
                                 NetworkHandler.instance.sendTo(missingUpdate, playerMP);
                             }
-                            if (treeUpdate != null) {
-                                NetworkHandler.instance.sendTo(treeUpdate, playerMP);
+                            if (treeUpdates != null) {
+                                for (PacketCraftingTreeData pkt : treeUpdates) {
+                                    NetworkHandler.instance.sendTo(pkt, playerMP);
+                                }
                             }
                         }
                     }

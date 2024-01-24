@@ -10,7 +10,11 @@
 
 package appeng.util.item;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import net.minecraftforge.oredict.OreDictionary;
@@ -142,6 +146,7 @@ public final class ItemList implements IItemList<IAEItemStack> {
 
         if (st != null) {
             st.setCountRequestable(st.getCountRequestable() + option.getCountRequestable());
+            st.setCountRequestableCrafts(st.getCountRequestableCrafts() + option.getCountRequestableCrafts());
             return;
         }
 
@@ -149,6 +154,7 @@ public final class ItemList implements IItemList<IAEItemStack> {
         opt.setStackSize(0);
         opt.setCraftable(false);
         opt.setCountRequestable(option.getCountRequestable());
+        opt.setCountRequestableCrafts(option.getCountRequestableCrafts());
 
         this.putItemRecord(opt);
     }

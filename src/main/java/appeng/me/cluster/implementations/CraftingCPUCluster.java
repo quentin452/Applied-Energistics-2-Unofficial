@@ -11,7 +11,15 @@
 package appeng.me.cluster.implementations;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.IntStream;
 
@@ -37,7 +45,15 @@ import appeng.api.implementations.ICraftingPatternItem;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
-import appeng.api.networking.crafting.*;
+import appeng.api.networking.crafting.CraftingItemList;
+import appeng.api.networking.crafting.ICraftingCPU;
+import appeng.api.networking.crafting.ICraftingGrid;
+import appeng.api.networking.crafting.ICraftingJob;
+import appeng.api.networking.crafting.ICraftingLink;
+import appeng.api.networking.crafting.ICraftingMedium;
+import appeng.api.networking.crafting.ICraftingPatternDetails;
+import appeng.api.networking.crafting.ICraftingProvider;
+import appeng.api.networking.crafting.ICraftingRequester;
 import appeng.api.networking.energy.IEnergyGrid;
 import appeng.api.networking.events.MENetworkCraftingCpuChange;
 import appeng.api.networking.security.BaseActionSource;
@@ -50,6 +66,7 @@ import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IAEStack;
 import appeng.api.storage.data.IItemList;
 import appeng.api.util.DimensionalCoord;
+import appeng.api.util.IInterfaceViewable;
 import appeng.api.util.WorldCoord;
 import appeng.container.ContainerNull;
 import appeng.core.AELog;
@@ -76,6 +93,8 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     private final WorldCoord max;
     private final int[] usedOps = new int[3];
     private final Map<ICraftingPatternDetails, TaskProgress> tasks = new HashMap<>();
+    private Map<ICraftingPatternDetails, TaskProgress> workableTasks = new HashMap<>();
+    private HashSet<ICraftingMedium> knownBusyMediums = new HashSet<>();
     // INSTANCE sate
     private final LinkedList<TileCraftingTile> tiles = new LinkedList<>();
     private final LinkedList<TileCraftingTile> storage = new LinkedList<>();
@@ -188,8 +207,15 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         this.tiles.push(te);
 
         if (te.isStorage()) {
-            this.availableStorage += te.getStorageBytes();
-            this.storage.add(te);
+            long additionalStorage = te.getStorageBytes();
+            if (Long.MAX_VALUE - additionalStorage >= this.availableStorage) {
+                // Safe to add as it does not cause overflow
+                this.availableStorage += additionalStorage;
+                this.storage.add(te);
+            } else {
+                // Prevent form CPU if storage overflowed
+                this.tiles.remove(te);
+            }
         } else if (te.isStatus()) {
             this.status.add((TileCraftingMonitorTile) te);
         } else if (te.isAccelerator()) {
@@ -527,6 +553,9 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         this.remainingOperations = this.accelerator + 1 - (this.usedOps[0] + this.usedOps[1] + this.usedOps[2]);
         final int started = this.remainingOperations;
 
+        // Shallow copy tasks so we may remove them after visiting
+        this.workableTasks = new HashMap<>(this.tasks);
+        this.knownBusyMediums.clear();
         if (this.remainingOperations > 0) {
             do {
                 this.somethingChanged = false;
@@ -537,164 +566,177 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
         this.usedOps[1] = this.usedOps[0];
         this.usedOps[0] = started - this.remainingOperations;
 
+        this.workableTasks.clear();
+        this.knownBusyMediums.clear();
+
         if (this.remainingOperations > 0 && !this.somethingChanged) {
             this.waiting = true;
         }
     }
 
     private void executeCrafting(final IEnergyGrid eg, final CraftingGridCache cc) {
-        final Iterator<Entry<ICraftingPatternDetails, TaskProgress>> i = this.tasks.entrySet().iterator();
+        final Iterator<Entry<ICraftingPatternDetails, TaskProgress>> i = this.workableTasks.entrySet().iterator();
 
         while (i.hasNext()) {
             final Entry<ICraftingPatternDetails, TaskProgress> e = i.next();
 
             if (e.getValue().value <= 0) {
+                this.tasks.remove(e.getKey());
                 i.remove();
                 continue;
             }
 
             final ICraftingPatternDetails details = e.getKey();
+            if (!this.canCraft(details, details.getCondensedInputs())) {
+                i.remove(); // No need to revisit this task on next executeCrafting this tick
+                continue;
+            }
 
-            if (this.canCraft(details, details.getCondensedInputs())) {
-                InventoryCrafting ic = null;
+            InventoryCrafting ic = null;
+            boolean pushedPattern = false;
 
-                for (final ICraftingMedium m : cc.getMediums(e.getKey())) {
+            for (final ICraftingMedium m : cc.getMediums(e.getKey())) {
+                if (e.getValue().value <= 0 || knownBusyMediums.contains(m)) {
+                    continue;
+                }
+
+                if (m.isBusy()) {
+                    knownBusyMediums.add(m);
+                    continue;
+                }
+
+                double sum = 0;
+                if (ic == null) {
+                    final IAEItemStack[] input = details.getInputs();
+
+                    for (final IAEItemStack anInput : input) {
+                        if (anInput != null) {
+                            sum += anInput.getStackSize();
+                        }
+                    }
+                    // upgraded interface uses more power
+                    if (m instanceof DualityInterface)
+                        sum *= Math.pow(4.0, ((DualityInterface) m).getInstalledUpgrades(Upgrades.PATTERN_CAPACITY));
+
+                    // check if there is enough power
+                    if (eg.extractAEPower(sum, Actionable.SIMULATE, PowerMultiplier.CONFIG) < sum - 0.01) continue;
+
+                    ic = details.isCraftable() ? new InventoryCrafting(new ContainerNull(), 3, 3)
+                            : new InventoryCrafting(new ContainerNull(), details.getInputs().length, 1);
+
+                    boolean found = false;
+                    for (int x = 0; x < input.length; x++) {
+                        if (input[x] != null) {
+                            found = false;
+                            for (IAEItemStack ias : getExtractItems(input[x], details)) {
+                                if (details.isCraftable()
+                                        && !details.isValidItemForSlot(x, ias.getItemStack(), this.getWorld())) {
+                                    continue;
+                                }
+                                final IAEItemStack ais = this.inventory
+                                        .extractItems(ias, Actionable.MODULATE, this.machineSrc);
+                                final ItemStack is = ais == null ? null : ais.getItemStack();
+                                if (is == null) continue;
+                                found = true;
+                                ic.setInventorySlotContents(x, is);
+                                if (!details.canBeSubstitute() && is.stackSize == input[x].getStackSize()) {
+                                    this.postChange(input[x], this.machineSrc);
+                                    break;
+                                } else {
+                                    this.postChange(AEItemStack.create(is), this.machineSrc);
+                                }
+                            }
+                            if (!found) {
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!found) {
+                        // put stuff back..
+                        for (int x = 0; x < ic.getSizeInventory(); x++) {
+                            final ItemStack is = ic.getStackInSlot(x);
+                            if (is != null) {
+                                this.inventory
+                                        .injectItems(AEItemStack.create(is), Actionable.MODULATE, this.machineSrc);
+                            }
+                        }
+                        ic = null;
+                        break;
+                    }
+                }
+
+                if (m.pushPattern(details, ic)) {
+                    eg.extractAEPower(sum, Actionable.MODULATE, PowerMultiplier.CONFIG);
+                    this.somethingChanged = true;
+                    this.remainingOperations--;
+                    pushedPattern = true;
+
+                    for (final IAEItemStack out : details.getCondensedOutputs()) {
+                        this.postChange(out, this.machineSrc);
+                        this.waitingFor.add(out.copy());
+                        this.postCraftingStatusChange(out.copy());
+                        providers.computeIfAbsent(out, k -> new ArrayList<>());
+                        List<DimensionalCoord> list = providers.get(out);
+                        if (m instanceof ICraftingProvider) {
+                            TileEntity tile = this.getTile(m);
+                            if (tile == null) continue;
+                            DimensionalCoord tileDimensionalCoord = new DimensionalCoord(tile);
+                            boolean isAdded = false;
+                            for (DimensionalCoord dimensionalCoord : list) {
+                                if (dimensionalCoord.isEqual(tileDimensionalCoord)) {
+                                    isAdded = true;
+                                    break;
+                                }
+                            }
+                            if (!isAdded) {
+                                list.add(tileDimensionalCoord);
+                            }
+                        }
+                    }
+
+                    if (details.isCraftable()) {
+                        FMLCommonHandler.instance().firePlayerCraftingEvent(
+                                Platform.getPlayer((WorldServer) this.getWorld()),
+                                details.getOutput(ic, this.getWorld()),
+                                ic);
+
+                        for (int x = 0; x < ic.getSizeInventory(); x++) {
+                            final ItemStack output = Platform.getContainerItem(ic.getStackInSlot(x));
+                            if (output != null) {
+                                final IAEItemStack cItem = AEItemStack.create(output);
+                                this.postChange(cItem, this.machineSrc);
+                                this.waitingFor.add(cItem);
+                                this.postCraftingStatusChange(cItem);
+                            }
+                        }
+                    }
+
+                    ic = null; // hand off complete!
+                    this.markDirty();
+
+                    e.getValue().value--;
                     if (e.getValue().value <= 0) {
                         continue;
                     }
 
-                    if (!m.isBusy()) {
-                        double sum = 0;
-                        if (ic == null) {
-                            final IAEItemStack[] input = details.getInputs();
-
-                            for (final IAEItemStack anInput : input) {
-                                if (anInput != null) {
-                                    sum += anInput.getStackSize();
-                                }
-                            }
-                            // upgraded interface uses more power
-                            if (m instanceof DualityInterface) sum *= Math
-                                    .pow(4.0, ((DualityInterface) m).getInstalledUpgrades(Upgrades.PATTERN_CAPACITY));
-
-                            // check if there is enough power
-                            if (eg.extractAEPower(sum, Actionable.SIMULATE, PowerMultiplier.CONFIG) < sum - 0.01)
-                                continue;
-
-                            ic = details.isCraftable() ? new InventoryCrafting(new ContainerNull(), 3, 3)
-                                    : new InventoryCrafting(new ContainerNull(), details.getInputs().length, 1);
-
-                            boolean found = false;
-                            for (int x = 0; x < input.length; x++) {
-                                if (input[x] != null) {
-                                    found = false;
-                                    for (IAEItemStack ias : getExtractItems(input[x], details)) {
-                                        if (details.isCraftable() && !details
-                                                .isValidItemForSlot(x, ias.getItemStack(), this.getWorld())) {
-                                            continue;
-                                        }
-                                        final IAEItemStack ais = this.inventory
-                                                .extractItems(ias, Actionable.MODULATE, this.machineSrc);
-                                        final ItemStack is = ais == null ? null : ais.getItemStack();
-                                        if (is == null) continue;
-                                        found = true;
-                                        ic.setInventorySlotContents(x, is);
-                                        if (!details.canBeSubstitute() && is.stackSize == input[x].getStackSize()) {
-                                            this.postChange(input[x], this.machineSrc);
-                                            break;
-                                        } else {
-                                            this.postChange(AEItemStack.create(is), this.machineSrc);
-                                        }
-                                    }
-                                    if (!found) {
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (!found) {
-                                // put stuff back..
-                                for (int x = 0; x < ic.getSizeInventory(); x++) {
-                                    final ItemStack is = ic.getStackInSlot(x);
-                                    if (is != null) {
-                                        this.inventory.injectItems(
-                                                AEItemStack.create(is),
-                                                Actionable.MODULATE,
-                                                this.machineSrc);
-                                    }
-                                }
-                                ic = null;
-                                break;
-                            }
-                        }
-
-                        if (m.pushPattern(details, ic)) {
-                            eg.extractAEPower(sum, Actionable.MODULATE, PowerMultiplier.CONFIG);
-                            this.somethingChanged = true;
-                            this.remainingOperations--;
-
-                            for (final IAEItemStack out : details.getCondensedOutputs()) {
-                                this.postChange(out, this.machineSrc);
-                                this.waitingFor.add(out.copy());
-                                this.postCraftingStatusChange(out.copy());
-                                providers.computeIfAbsent(out, k -> new ArrayList<>());
-                                List<DimensionalCoord> list = providers.get(out);
-                                if (m instanceof ICraftingProvider) {
-                                    TileEntity tile = this.getTile(m);
-                                    if (tile == null) continue;
-                                    DimensionalCoord tileDimensionalCoord = new DimensionalCoord(tile);
-                                    boolean isAdded = false;
-                                    for (DimensionalCoord dimensionalCoord : list) {
-                                        if (dimensionalCoord.isEqual(tileDimensionalCoord)) {
-                                            isAdded = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!isAdded) {
-                                        list.add(tileDimensionalCoord);
-                                    }
-                                }
-                            }
-
-                            if (details.isCraftable()) {
-                                FMLCommonHandler.instance().firePlayerCraftingEvent(
-                                        Platform.getPlayer((WorldServer) this.getWorld()),
-                                        details.getOutput(ic, this.getWorld()),
-                                        ic);
-
-                                for (int x = 0; x < ic.getSizeInventory(); x++) {
-                                    final ItemStack output = Platform.getContainerItem(ic.getStackInSlot(x));
-                                    if (output != null) {
-                                        final IAEItemStack cItem = AEItemStack.create(output);
-                                        this.postChange(cItem, this.machineSrc);
-                                        this.waitingFor.add(cItem);
-                                        this.postCraftingStatusChange(cItem);
-                                    }
-                                }
-                            }
-
-                            ic = null; // hand off complete!
-                            this.markDirty();
-
-                            e.getValue().value--;
-                            if (e.getValue().value <= 0) {
-                                continue;
-                            }
-
-                            if (this.remainingOperations == 0) {
-                                return;
-                            }
-                        }
+                    if (this.remainingOperations == 0) {
+                        return;
                     }
                 }
+            }
 
-                if (ic != null) {
-                    // put stuff back..
-                    for (int x = 0; x < ic.getSizeInventory(); x++) {
-                        final ItemStack is = ic.getStackInSlot(x);
-                        if (is != null) {
-                            this.inventory.injectItems(AEItemStack.create(is), Actionable.MODULATE, this.machineSrc);
-                        }
+            if (!pushedPattern) {
+                // No need to revisit this task on next executeCrafting this tick
+                i.remove();
+            }
+
+            if (ic != null) {
+                // put stuff back..
+                for (int x = 0; x < ic.getSizeInventory(); x++) {
+                    final ItemStack is = ic.getStackInSlot(x);
+                    if (is != null) {
+                        this.inventory.injectItems(AEItemStack.create(is), Actionable.MODULATE, this.machineSrc);
                     }
                 }
             }
@@ -1208,6 +1250,8 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             return ((DualityInterface) craftingProvider).getHost().getTile();
         } else if (craftingProvider instanceof AEBaseTile) {
             return ((AEBaseTile) craftingProvider).getTile();
+        } else if (craftingProvider instanceof IInterfaceViewable interfaceViewable) {
+            return interfaceViewable.getTileEntity();
         }
         try {
             Method method = craftingProvider.getClass().getMethod("getTile");

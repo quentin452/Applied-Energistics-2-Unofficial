@@ -27,11 +27,12 @@ import appeng.core.features.AEFeature;
 import appeng.core.worlddata.WorldData;
 import appeng.util.InventoryAdaptor;
 import appeng.util.Platform;
-import appeng.worldgen.meteorite.*;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+import appeng.worldgen.meteorite.Fallout;
+import appeng.worldgen.meteorite.FalloutCopy;
+import appeng.worldgen.meteorite.FalloutSand;
+import appeng.worldgen.meteorite.FalloutSnow;
+import appeng.worldgen.meteorite.IMeteoriteWorld;
+import appeng.worldgen.meteorite.MeteoriteBlockPutter;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
@@ -44,11 +45,16 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.oredict.OreDictionary;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+
 public final class MeteoritePlacer {
     private static final double PRESSES_SPAWN_CHANCE = 0.7;
     private static final int SKYSTONE_SPAWN_LIMIT = 12;
-    private final Collection<Block> validSpawn = new HashSet<Block>();
-    private final Collection<Block> invalidSpawn = new HashSet<Block>();
+    private final Collection<Block> validSpawn = new HashSet<>();
+    private final Collection<Block> invalidSpawn = new HashSet<>();
     private final IBlockDefinition skyChestDefinition;
     private final IBlockDefinition skyStoneDefinition;
     private final MeteoriteBlockPutter putter = new MeteoriteBlockPutter();
@@ -170,13 +176,12 @@ public final class MeteoritePlacer {
             }
         }
 
-        for (final Object o : w.getWorld()
+        for (final Entity o : w.getWorld()
                 .getEntitiesWithinAABB(
                         EntityItem.class,
                         AxisAlignedBB.getBoundingBox(
                                 w.minX(x - 30), y - 5, w.minZ(z - 30), w.maxX(x + 30), y + 30, w.maxZ(z + 30)))) {
-            final Entity e = (Entity) o;
-            e.setDead();
+            o.setDead();
         }
     }
 

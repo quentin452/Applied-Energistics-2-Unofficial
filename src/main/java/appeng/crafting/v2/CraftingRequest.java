@@ -1,9 +1,15 @@
 package appeng.crafting.v2;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
+import appeng.api.config.CraftingMode;
 import appeng.api.networking.crafting.ICraftingPatternDetails;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.storage.data.IAEItemStack;
@@ -78,6 +84,9 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> implements I
     public final SubstitutionMode substitutionMode;
     public final Predicate<StackType> acceptableSubstituteFn;
     // (task, amount fulfilled by task)
+
+    public final CraftingMode craftingMode;
+
     public final List<UsedResolverEntry<StackType>> usedResolvers = new ArrayList<>();
     /**
      * Whether this request and its children can be fulfilled by simulations
@@ -113,6 +122,7 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> implements I
         buffer.writeLong(untransformedByteCost);
         buffer.writeBoolean(wasSimulated);
         buffer.writeBoolean(incomplete);
+        buffer.writeInt(craftingMode.ordinal());
         return usedResolvers;
     }
 
@@ -144,6 +154,10 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> implements I
         untransformedByteCost = buffer.readLong();
         wasSimulated = buffer.readBoolean();
         incomplete = buffer.readBoolean();
+        int index = buffer.readInt();
+        if (index < 0 || index >= CraftingMode.values().length || CraftingMode.values()[index] == CraftingMode.STANDARD)
+            craftingMode = CraftingMode.STANDARD;
+        else craftingMode = CraftingMode.IGNORE_MISSING;
         acceptableSubstituteFn = x -> true;
     }
 
@@ -154,13 +168,14 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> implements I
      * @param acceptableSubstituteFn A predicate testing if a given item (in fuzzy mode) can fulfill the request
      */
     public CraftingRequest(StackType stack, SubstitutionMode substitutionMode, Class<StackType> stackTypeClass,
-            boolean allowSimulation, Predicate<StackType> acceptableSubstituteFn) {
+            boolean allowSimulation, CraftingMode craftingMode, Predicate<StackType> acceptableSubstituteFn) {
         this.stackTypeClass = stackTypeClass;
         this.stack = stack;
         this.substitutionMode = substitutionMode;
         this.acceptableSubstituteFn = acceptableSubstituteFn;
         this.remainingToProcess = stack.getStackSize();
         this.allowSimulation = allowSimulation;
+        this.craftingMode = craftingMode;
         if (!(stackTypeClass == IAEItemStack.class || stackTypeClass == IAEFluidStack.class)) {
             throw new IllegalArgumentException(
                     "Invalid stack type for a crafting request: " + stackTypeClass.getName());
@@ -173,8 +188,8 @@ public class CraftingRequest<StackType extends IAEStack<StackType>> implements I
      * @param stackTypeClass   Pass in {@code StackType.class}, needed for resolving types at runtime
      */
     public CraftingRequest(StackType request, SubstitutionMode substitutionMode, Class<StackType> stackTypeClass,
-            boolean allowSimulation) {
-        this(request, substitutionMode, stackTypeClass, allowSimulation, x -> true);
+            boolean allowSimulation, CraftingMode craftingMode) {
+        this(request, substitutionMode, stackTypeClass, allowSimulation, craftingMode, x -> true);
         if (substitutionMode == SubstitutionMode.ACCEPT_FUZZY) {
             throw new IllegalArgumentException("Fuzzy requests must have a substitution-valid predicate");
         }

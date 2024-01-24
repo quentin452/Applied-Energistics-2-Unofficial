@@ -49,7 +49,7 @@ public abstract class AppEngPacket {
     }
 
     public FMLProxyPacket getProxy() {
-        if (this.p.array().length > 2 * 1024 * 1024) // 2k walking room :)
+        if (this.p.array().length > 0x1FFF90) // Use the maximum MC S3FPacketCustomPayload size with space for FML
         {
             throw new IllegalArgumentException(
                     "Sorry AE2 made a " + this.p.array().length + " byte packet by accident!");

@@ -10,7 +10,11 @@
 
 package appeng.core.sync.packets;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
@@ -24,7 +28,20 @@ import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
 import appeng.client.gui.implementations.GuiCraftingCPU;
 import appeng.container.AEBaseContainer;
-import appeng.container.implementations.*;
+import appeng.container.implementations.ContainerAdvancedNetworkTool;
+import appeng.container.implementations.ContainerCellWorkbench;
+import appeng.container.implementations.ContainerCraftConfirm;
+import appeng.container.implementations.ContainerCraftingCPU;
+import appeng.container.implementations.ContainerLevelEmitter;
+import appeng.container.implementations.ContainerNetworkTool;
+import appeng.container.implementations.ContainerOreFilter;
+import appeng.container.implementations.ContainerPatternTerm;
+import appeng.container.implementations.ContainerPatternTermEx;
+import appeng.container.implementations.ContainerPriority;
+import appeng.container.implementations.ContainerQuartzKnife;
+import appeng.container.implementations.ContainerRenamer;
+import appeng.container.implementations.ContainerSecurity;
+import appeng.container.implementations.ContainerStorageBus;
 import appeng.container.interfaces.ICraftingCPUSelectorContainer;
 import appeng.core.sync.AppEngPacket;
 import appeng.core.sync.network.INetworkInfo;
@@ -152,6 +169,10 @@ public class PacketValueConfig extends AppEngPacket {
         } else if (c instanceof ContainerNetworkTool) {
             if (this.Name.equals("NetworkTool") && this.Value.equals("Toggle")) {
                 ((ContainerNetworkTool) c).toggleFacadeMode();
+            }
+        } else if (c instanceof ContainerAdvancedNetworkTool) {
+            if (this.Name.equals("AdvancedNetworkTool") && this.Value.equals("Toggle")) {
+                ((ContainerAdvancedNetworkTool) c).toggleFacadeMode();
             }
         } else if (c instanceof IConfigurableObject) {
             final IConfigManager cm = ((IConfigurableObject) c).getConfigManager();

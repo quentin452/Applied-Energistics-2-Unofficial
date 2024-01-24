@@ -1,12 +1,18 @@
 package appeng.parts.p2p;
 
+import java.lang.reflect.Method;
+
 import javax.annotation.Nullable;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.*;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IChatComponent;
+import net.minecraft.util.IIcon;
+import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
@@ -21,7 +27,7 @@ import gregtech.api.interfaces.tileentity.IEnergyConnected;
 import gregtech.api.util.GT_Utility;
 import ic2.api.energy.tile.IEnergySink;
 
-public class PartP2PGT5Power extends PartP2PTunnel<PartP2PGT5Power> implements IPartGT5Power {
+public class PartP2PGT5Power extends PartP2PTunnelNormal<PartP2PGT5Power> implements IPartGT5Power {
 
     private TileEntity cachedTarget;
     private boolean isCachedTargetValid;
@@ -134,6 +140,20 @@ public class PartP2PGT5Power extends PartP2PTunnel<PartP2PGT5Power> implements I
                 .getTileEntity(te.xCoord + side.offsetX, te.yCoord + side.offsetY, te.zCoord + side.offsetZ);
     }
 
+    private long injectEnergy(IEnergyConnected te, ForgeDirection oppositeSide, long aVoltage, long aAmperage) {
+        try {
+            return te.injectEnergyUnits(oppositeSide, aVoltage, aAmperage);
+        } catch (Throwable e) { // NoSuchMethodException on old GT versions
+            Class<?> iEConn = te.getClass();
+            try {
+                Method injectEU = iEConn.getMethod("injectEnergyUnits", byte.class, long.class, long.class);
+                return (long) injectEU.invoke(te, (byte) oppositeSide.ordinal(), aVoltage, aAmperage);
+            } catch (Throwable error) {
+                return 0L;
+            }
+        }
+    }
+
     private long doOutput(long aVoltage, long aAmperage) {
         if (!this.isOutput()) {
             return 0L;
@@ -144,8 +164,7 @@ public class PartP2PGT5Power extends PartP2PTunnel<PartP2PGT5Power> implements I
             } else {
                 ForgeDirection oppositeSide = this.getSide().getOpposite();
                 if (te instanceof IEnergyConnected) {
-                    return ((IEnergyConnected) te)
-                            .injectEnergyUnits((byte) oppositeSide.ordinal(), aVoltage, aAmperage);
+                    return injectEnergy((IEnergyConnected) te, oppositeSide, aVoltage, aAmperage);
                 } else {
                     if (te instanceof IEnergySink) {
                         if (((IEnergySink) te).acceptsEnergyFrom(this.getTile(), oppositeSide)) {

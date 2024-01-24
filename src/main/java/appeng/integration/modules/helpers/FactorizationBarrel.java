@@ -10,6 +10,8 @@
 
 package appeng.integration.modules.helpers;
 
+import javax.annotation.Nonnull;
+
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
@@ -128,6 +130,19 @@ public class FactorizationBarrel implements IMEInventory<IAEItemStack> {
         }
 
         return out;
+    }
+
+    @Override
+    public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request) {
+        if (!this.containsItemType(request, false)) {
+            return null;
+        }
+        final ItemStack i = this.fProxy.barrelGetItem(this.te);
+        if (i == null) {
+            return null;
+        }
+        i.stackSize = this.fProxy.barrelGetItemCount(this.te);
+        return AEItemStack.create(i);
     }
 
     @Override

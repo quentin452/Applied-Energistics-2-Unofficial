@@ -24,7 +24,13 @@ import net.minecraft.util.Vec3;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import appeng.api.AEApi;
-import appeng.api.config.*;
+import appeng.api.config.AccessRestriction;
+import appeng.api.config.FuzzyMode;
+import appeng.api.config.IncludeExclude;
+import appeng.api.config.Settings;
+import appeng.api.config.StorageFilter;
+import appeng.api.config.Upgrades;
+import appeng.api.config.YesNo;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.events.MENetworkCellArrayUpdate;
 import appeng.api.networking.events.MENetworkChannelsChanged;
@@ -40,7 +46,13 @@ import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartHost;
 import appeng.api.parts.IPartRenderHelper;
-import appeng.api.storage.*;
+import appeng.api.storage.ICellContainer;
+import appeng.api.storage.IExternalStorageHandler;
+import appeng.api.storage.IMEInventory;
+import appeng.api.storage.IMEInventoryHandler;
+import appeng.api.storage.IMEMonitor;
+import appeng.api.storage.IMEMonitorHandlerReceiver;
+import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.api.util.IConfigManager;
@@ -91,6 +103,7 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
         this.getConfigManager().registerSetting(Settings.ACCESS, AccessRestriction.READ_WRITE);
         this.getConfigManager().registerSetting(Settings.FUZZY_MODE, FuzzyMode.IGNORE_ALL);
         this.getConfigManager().registerSetting(Settings.STORAGE_FILTER, StorageFilter.EXTRACTABLE_ONLY);
+        this.getConfigManager().registerSetting(Settings.STICKY_MODE, YesNo.NO);
         this.mySrc = new MachineSource(this);
     }
 
@@ -418,7 +431,9 @@ public class PartStorageBus extends PartUpgradeable implements IGridTickable, IC
                             final IAEItemStack is = this.Config.getAEStackInSlot(x);
                             if (is != null) priorityList.add(is);
                         }
-
+                        if (this.getInstalledUpgrades(Upgrades.STICKY) > 0) {
+                            this.handler.setSticky(true);
+                        }
                         if (this.getInstalledUpgrades(Upgrades.FUZZY) > 0) {
                             this.handler.setPartitionList(
                                     new FuzzyPriorityList(

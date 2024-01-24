@@ -10,6 +10,8 @@
 
 package appeng.me.storage;
 
+import javax.annotation.Nonnull;
+
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
 import appeng.api.config.IncludeExclude;
@@ -33,6 +35,7 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
     private AccessRestriction cachedAccessRestriction;
     private boolean hasReadAccess;
     protected boolean hasWriteAccess;
+    protected boolean isSticky;
 
     public MEInventoryHandler(final IMEInventory<T> i, final StorageChannel channel) {
         if (i instanceof IMEInventoryHandler) {
@@ -102,6 +105,15 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
     }
 
     @Override
+    public T getAvailableItem(@Nonnull T request) {
+        if (!this.hasReadAccess) {
+            return null;
+        }
+
+        return this.internal.getAvailableItem(request);
+    }
+
+    @Override
     public StorageChannel getChannel() {
         return this.internal.getChannel();
     }
@@ -153,7 +165,16 @@ public class MEInventoryHandler<T extends IAEStack<T>> implements IMEInventoryHa
         return true;
     }
 
+    @Override
+    public boolean getSticky() {
+        return isSticky || this.internal.getSticky();
+    }
+
     public IMEInventory<T> getInternal() {
         return this.internal;
+    }
+
+    public void setSticky(boolean value) {
+        isSticky = value;
     }
 }

@@ -10,6 +10,8 @@
 
 package appeng.me.storage;
 
+import javax.annotation.Nonnull;
+
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.BaseActionSource;
@@ -48,8 +50,13 @@ public class MEPassThrough<T extends IAEStack<T>> implements IMEInventoryHandler
     }
 
     @Override
-    public IItemList<T> getAvailableItems(final IItemList out) {
+    public IItemList<T> getAvailableItems(final IItemList<T> out) {
         return this.internal.getAvailableItems(out);
+    }
+
+    @Override
+    public T getAvailableItem(@Nonnull T request) {
+        return this.internal.getAvailableItem(request);
     }
 
     @Override

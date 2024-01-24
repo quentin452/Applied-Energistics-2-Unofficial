@@ -49,6 +49,7 @@ public enum GuiText {
     PortableCell,
 
     NetworkTool,
+    AdvancedNetworkTool,
     PowerUsageRate,
     PowerInputRate,
     Installed,
@@ -101,6 +102,7 @@ public enum GuiText {
     BeSubstitute,
     Yes,
     No,
+    EncodedBy,
 
     MolecularAssembler,
 
@@ -141,6 +143,7 @@ public enum GuiText {
 
     FromStorage,
     ToCraft,
+    ToCraftRequests,
     CraftingPlan,
     CalculatingWait,
     Start,
@@ -181,6 +184,8 @@ public enum GuiText {
     Precise,
     Fuzzy,
     Filter,
+    Sticky,
+    Contains,
 
     // Used in a terminal to indicate that an item is craftable
     SmallFontCraft,
@@ -195,13 +200,38 @@ public enum GuiText {
     // oredictionary filter GUI label
     OreFilterLabel,
 
+    PriorityCard,
+    PriorityCardTooltip,
+    PriorityCardTooltipModeEdit,
+    PriorityCardTooltipModeView,
+    PriorityCardTooltipModeSet,
+    PriorityCardTooltipModeInc,
+    PriorityCardTooltipModeDec,
+
     HoldShiftForTooltip,
     HoldShiftClick_HIGHLIGHT_INTERFACE,
 
     // Used in a ME Interface when no appropriate TileEntity was detected near it
     Nothing,
 
-    VoidCellTooltip;
+    VoidCellTooltip,
+
+    // If a thing is deprecated
+    Deprecated,
+
+    // Network bytes status
+    NetworkItemCellCount,
+    NetworkFluidCellCount,
+    NetworkEssentiaCellCount,
+    Green,
+    Orange,
+    Red,
+    NetworkBytesDetails,
+    Items,
+    Fluids,
+    Essentias,
+    TypesInfo,
+    BytesInfo;
 
     private final String root;
 
@@ -215,6 +245,10 @@ public enum GuiText {
 
     public String getLocal() {
         return StatCollector.translateToLocal(this.getUnlocalized());
+    }
+
+    public String getLocal(Object... formatArgs) {
+        return StatCollector.translateToLocalFormatted(this.getUnlocalized(), formatArgs);
     }
 
     public String getUnlocalized() {

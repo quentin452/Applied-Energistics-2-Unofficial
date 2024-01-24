@@ -1,8 +1,17 @@
 package appeng.crafting.v2.resolvers;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
@@ -360,6 +369,7 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                                 childMode,
                                 IAEItemStack.class,
                                 allowSimulation,
+                                request.craftingMode,
                                 stack -> this.isValidSubstitute(input, stack, context.world, finalSlot));
                         complexRequestPerSlot.add(req);
                         newChildren.add(req);
@@ -382,6 +392,7 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                                     childMode,
                                     IAEItemStack.class,
                                     allowSimulation,
+                                    request.craftingMode,
                                     stack -> this.isValidSubstitute(recInput, stack, context.world));
                             newChildren.add(req);
                             childRecursionRequests.put(recInput, req);
@@ -395,6 +406,7 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
                                 childMode,
                                 IAEItemStack.class,
                                 allowSimulation,
+                                request.craftingMode,
                                 stack -> this.isValidSubstitute(input, stack, context.world));
                         newChildren.add(req);
                         childRequests.add(new RequestAndPerCraftAmount(req, input.getStackSize()));
@@ -493,7 +505,8 @@ public class CraftableItemResolver implements CraftingRequestResolver<IAEItemSta
             }
             for (IAEItemStack output : patternOutputs) {
                 targetPlan.addRequestable(
-                        output.copy().setStackSize(0).setCountRequestable(output.getStackSize() * totalCraftsDone));
+                        output.copy().setStackSize(0).setCountRequestable(output.getStackSize() * totalCraftsDone)
+                                .setCountRequestableCrafts(totalCraftsDone));
             }
         }
 

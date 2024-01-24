@@ -18,7 +18,15 @@ import java.util.List;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 
-import appeng.api.config.*;
+import appeng.api.config.CellType;
+import appeng.api.config.CondenserOutput;
+import appeng.api.config.CraftingStatus;
+import appeng.api.config.PowerMultiplier;
+import appeng.api.config.PowerUnits;
+import appeng.api.config.SearchBoxMode;
+import appeng.api.config.Settings;
+import appeng.api.config.TerminalStyle;
+import appeng.api.config.YesNo;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
 import appeng.core.features.AEFeature;
@@ -48,10 +56,12 @@ public final class AEConfig extends Configuration implements IConfigurableObject
     public int storageBiomeID = -1;
     public int storageProviderID = -1;
     public int formationPlaneEntityLimit = 128;
+    public double networkBytesUpdateFrequency = 2.0d;
     public float spawnChargedChance = 0.92f;
     public int quartzOresPerCluster = 4;
     public int quartzOresClusterAmount = 15;
     public final int chargedChange = 4;
+    public int quartzKnifeInputLength = 32;
     public int minMeteoriteDistance = 707;
     public int minMeteoriteDistanceSq = this.minMeteoriteDistance * this.minMeteoriteDistance;
     public double spatialPowerExponent = 1.35;
@@ -91,6 +101,7 @@ public final class AEConfig extends Configuration implements IConfigurableObject
     public int[] meteoriteDimensionWhitelist = { 0 };
     public int craftingCalculationTimePerTick = 5;
     PowerUnits selectedPowerUnit = PowerUnits.AE;
+    CellType selectedCellType = CellType.ITEM;
     private double WirelessBaseCost = 8;
     private double WirelessCostMultiplier = 1;
     private double WirelessTerminalDrainMultiplier = 1;
@@ -101,6 +112,7 @@ public final class AEConfig extends Configuration implements IConfigurableObject
     public int craftingCalculatorVersion = 2;
     public int maxCraftingSteps = 2_000_000;
     public int maxCraftingTreeVisualizationSize = 32 * 1024 * 1024; // 32 MiB
+    public boolean limitCraftingCPUSpill = true;
 
     public AEConfig(final File configFile) {
         super(configFile);
@@ -182,6 +194,16 @@ public final class AEConfig extends Configuration implements IConfigurableObject
         this.formationPlaneEntityLimit = this
                 .get("automation", "formationPlaneEntityLimit", this.formationPlaneEntityLimit)
                 .getInt(this.formationPlaneEntityLimit);
+        this.networkBytesUpdateFrequency = this
+                .get("automation", "networkBytesUpdateFrequency", this.networkBytesUpdateFrequency)
+                .getDouble(this.networkBytesUpdateFrequency);
+        if (this.networkBytesUpdateFrequency == 0) {
+            throw new IllegalArgumentException("networkBytesUpdateFrequency can not be 0!");
+        }
+        this.get(
+                "automation",
+                "networkBytesUpdateFrequency",
+                this.networkBytesUpdateFrequency).comment = "#Network bytes information update Frequency(s) default:2.0";
 
         this.wirelessTerminalBattery = this.get("battery", "wirelessTerminal", this.wirelessTerminalBattery)
                 .getInt(this.wirelessTerminalBattery);
@@ -217,6 +239,8 @@ public final class AEConfig extends Configuration implements IConfigurableObject
         // Clamp to 4kiB..1GiB
         this.maxCraftingTreeVisualizationSize = Math
                 .max(4096, Math.min(this.maxCraftingTreeVisualizationSize, 1024 * 1024 * 1024));
+        this.limitCraftingCPUSpill = this.get("misc", "LimitCraftingCPUSpill", this.limitCraftingCPUSpill)
+                .getBoolean(this.limitCraftingCPUSpill);
         this.clientSync();
 
         for (final AEFeature feature : AEFeature.values()) {
@@ -282,6 +306,8 @@ public final class AEConfig extends Configuration implements IConfigurableObject
         this.preserveSearchBar = this.get("Client", "preserveSearchBar", true).getBoolean(true);
         this.showOnlyInterfacesWithFreeSlotsInInterfaceTerminal = this
                 .get("Client", "showOnlyInterfacesWithFreeSlotsInInterfaceTerminal", false).getBoolean(false);
+        this.quartzKnifeInputLength = this.get("Client", "quartzKnifeInputLength", this.quartzKnifeInputLength)
+                .getInt(this.quartzKnifeInputLength);
         this.MEMonitorableSmallSize = this.get("Client", "MEMonitorableSmallSize", 6).getInt(6);
         this.InterfaceTerminalSmallSize = this.get("Client", "InterfaceTerminalSmallSize", 6).getInt(6);
         // load buttons..
@@ -512,9 +538,19 @@ public final class AEConfig extends Configuration implements IConfigurableObject
         return this.selectedPowerUnit;
     }
 
+    public CellType selectedCellType() {
+        return this.selectedCellType;
+    }
+
     public void nextPowerUnit(final boolean backwards) {
         this.selectedPowerUnit = Platform
                 .rotateEnum(this.selectedPowerUnit, backwards, Settings.POWER_UNITS.getPossibleValues());
         this.save();
     }
+
+    public void nextCellType(final boolean backwards) {
+        this.selectedCellType = Platform
+                .rotateEnum(this.selectedCellType, backwards, Settings.CELL_TYPE.getPossibleValues());
+    }
+
 }

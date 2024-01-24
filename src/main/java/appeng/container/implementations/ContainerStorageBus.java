@@ -17,7 +17,13 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 
 import appeng.api.AEApi;
-import appeng.api.config.*;
+import appeng.api.config.AccessRestriction;
+import appeng.api.config.FuzzyMode;
+import appeng.api.config.SecurityPermissions;
+import appeng.api.config.Settings;
+import appeng.api.config.StorageFilter;
+import appeng.api.config.Upgrades;
+import appeng.api.config.YesNo;
 import appeng.api.storage.IMEInventory;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
@@ -37,6 +43,9 @@ public class ContainerStorageBus extends ContainerUpgradeable {
 
     @GuiSync(4)
     public StorageFilter storageFilter = StorageFilter.EXTRACTABLE_ONLY;
+
+    @GuiSync(7)
+    public YesNo stickyMode = YesNo.NO;
 
     public ContainerStorageBus(final InventoryPlayer ip, final PartStorageBus te) {
         super(ip, te);
@@ -123,6 +132,7 @@ public class ContainerStorageBus extends ContainerUpgradeable {
                     (AccessRestriction) this.getUpgradeable().getConfigManager().getSetting(Settings.ACCESS));
             this.setStorageFilter(
                     (StorageFilter) this.getUpgradeable().getConfigManager().getSetting(Settings.STORAGE_FILTER));
+            this.setStickyMode((YesNo) this.getUpgradeable().getConfigManager().getSetting(Settings.STICKY_MODE));
         }
 
         this.standardDetectAndSendChanges();
@@ -173,10 +183,6 @@ public class ContainerStorageBus extends ContainerUpgradeable {
         return this.rwMode;
     }
 
-    private void setReadWriteMode(final AccessRestriction rwMode) {
-        this.rwMode = rwMode;
-    }
-
     public StorageFilter getStorageFilter() {
         return this.storageFilter;
     }
@@ -184,4 +190,17 @@ public class ContainerStorageBus extends ContainerUpgradeable {
     private void setStorageFilter(final StorageFilter storageFilter) {
         this.storageFilter = storageFilter;
     }
+
+    public YesNo getStickyMode() {
+        return this.stickyMode;
+    }
+
+    private void setStickyMode(final YesNo stickyMode) {
+        this.stickyMode = stickyMode;
+    }
+
+    private void setReadWriteMode(final AccessRestriction rwMode) {
+        this.rwMode = rwMode;
+    }
+
 }

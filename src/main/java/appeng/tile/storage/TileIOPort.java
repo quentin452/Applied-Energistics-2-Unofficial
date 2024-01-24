@@ -20,7 +20,13 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 import appeng.api.AEApi;
-import appeng.api.config.*;
+import appeng.api.config.Actionable;
+import appeng.api.config.FullnessMode;
+import appeng.api.config.OperationMode;
+import appeng.api.config.RedstoneMode;
+import appeng.api.config.Settings;
+import appeng.api.config.Upgrades;
+import appeng.api.config.YesNo;
 import appeng.api.implementations.IUpgradeableHost;
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGridNode;
@@ -80,6 +86,11 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
     private final int[] output = { OUTPUT_SLOT_INDEX_TOP_LEFT, OUTPUT_SLOT_INDEX_TOP_RIGHT,
             OUTPUT_SLOT_INDEX_CENTER_LEFT, OUTPUT_SLOT_INDEX_CENTER_RIGHT, OUTPUT_SLOT_INDEX_BOTTOM_LEFT,
             OUTPUT_SLOT_INDEX_BOTTOM_RIGHT };
+
+    private final int[] slots = { INPUT_SLOT_INDEX_TOP_LEFT, INPUT_SLOT_INDEX_TOP_RIGHT, INPUT_SLOT_INDEX_CENTER_LEFT,
+            INPUT_SLOT_INDEX_CENTER_RIGHT, INPUT_SLOT_INDEX_BOTTOM_LEFT, INPUT_SLOT_INDEX_BOTTOM_RIGHT,
+            OUTPUT_SLOT_INDEX_TOP_LEFT, OUTPUT_SLOT_INDEX_TOP_RIGHT, OUTPUT_SLOT_INDEX_CENTER_LEFT,
+            OUTPUT_SLOT_INDEX_CENTER_RIGHT, OUTPUT_SLOT_INDEX_BOTTOM_LEFT, OUTPUT_SLOT_INDEX_BOTTOM_RIGHT };
 
     private final AppEngInternalInventory cells;
     private final UpgradeInventory upgrades;
@@ -144,6 +155,12 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
         } catch (final GridAccessException e) {
             // :P
         }
+    }
+
+    @Override
+    public void gridChanged() {
+        super.gridChanged();
+        updateTask();
     }
 
     public void updateRedstoneState() {
@@ -225,13 +242,19 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
     }
 
     @Override
+    public boolean isItemValidForSlot(final int i, final ItemStack itemstack) {
+        return itemstack != null && AEApi.instance().registries().cell().isCellHandled(itemstack);
+    }
+
+    @Override
     public boolean canInsertItem(final int slotIndex, final ItemStack insertingItem, final int side) {
-        for (final int inputSlotIndex : this.input) {
-            if (inputSlotIndex == slotIndex) {
-                return true;
+        if (isItemValidForSlot(slotIndex, insertingItem)) {
+            for (final int inputSlotIndex : this.input) {
+                if (inputSlotIndex == slotIndex) {
+                    return true;
+                }
             }
         }
-
         return false;
     }
 
@@ -242,17 +265,12 @@ public class TileIOPort extends AENetworkInvTile implements IUpgradeableHost, IC
                 return true;
             }
         }
-
         return false;
     }
 
     @Override
     public int[] getAccessibleSlotsBySide(final ForgeDirection d) {
-        if (d == ForgeDirection.UP || d == ForgeDirection.DOWN) {
-            return this.input;
-        }
-
-        return this.output;
+        return slots;
     }
 
     @Override

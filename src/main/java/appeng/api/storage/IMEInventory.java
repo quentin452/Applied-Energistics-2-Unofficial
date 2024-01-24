@@ -13,6 +13,8 @@
 
 package appeng.api.storage;
 
+import javax.annotation.Nonnull;
+
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.BaseActionSource;
 import appeng.api.storage.data.IAEStack;
@@ -50,12 +52,25 @@ public interface IMEInventory<StackType extends IAEStack> {
     StackType extractItems(StackType request, Actionable mode, BaseActionSource src);
 
     /**
-     * request a full report of all available items, storage.
+     * Request a full report of all available items, storage.
      *
      * @param out the IItemList the results will be written too
      * @return returns same list that was passed in, is passed out
      */
     IItemList<StackType> getAvailableItems(IItemList<StackType> out);
+
+    /**
+     * Request a report of how many of a single item type are available in storage. It falls back to
+     * {@link IMEInventory#getAvailableItems} if a more optimized implementation is not present.
+     *
+     * @param request The item type to search for, it does not get modified
+     * @return A new stack with the stack size set to the count of items in storage, or null if none are present
+     */
+    @SuppressWarnings("unchecked") // changing the generic StackType to be correct here is too much of a breaking API
+                                   // change
+    default StackType getAvailableItem(@Nonnull StackType request) {
+        return getAvailableItems((IItemList<StackType>) getChannel().createList()).findPrecise(request);
+    }
 
     /**
      * @return the type of channel your handler should be part of

@@ -93,6 +93,7 @@ public enum ButtonToolTips {
     TerminalStyle_Full,
     TerminalStyle_Tall,
     TerminalStyle_Small,
+    SaveAsImage,
 
     Stash,
     StashDesc,
@@ -179,7 +180,30 @@ public enum ButtonToolTips {
     AdvancedBlockingModeDefault,
     AdvancedBlockingModeDefaultDesc,
     AdvancedBlockingModeAll,
-    AdvancedBlockingModeAllDesc,;
+    AdvancedBlockingModeAllDesc,
+    LockCraftingMode,
+    LockCraftingModeNone,
+    LockCraftingUntilRedstonePulse,
+    LockCraftingWhileRedstoneHigh,
+    LockCraftingWhileRedstoneLow,
+    LockCraftingUntilResultReturned,
+    CraftingModeStandard,
+    CraftingModeStandardDesc,
+    CraftingModeIgnoreMissing,
+    CraftingModeIgnoreMissingDesc,
+    ExtraOptions,
+
+    SwitchBytesInfo,
+    SwitchBytesInfo_Item,
+    SwitchBytesInfo_Fluid,
+    SwitchBytesInfo_Essentia,
+
+    PriorityCardMode,
+    PriorityCardMode_Edit,
+    PriorityCardMode_View,
+    PriorityCardMode_Set,
+    PriorityCardMode_Inc,
+    PriorityCardMode_Dec;
 
     private final String root;
 

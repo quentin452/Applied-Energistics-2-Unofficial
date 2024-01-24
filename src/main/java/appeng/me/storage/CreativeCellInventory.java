@@ -10,6 +10,8 @@
 
 package appeng.me.storage;
 
+import javax.annotation.Nonnull;
+
 import net.minecraft.item.ItemStack;
 
 import appeng.api.AEApi;
@@ -68,6 +70,16 @@ public class CreativeCellInventory implements IMEInventoryHandler<IAEItemStack> 
             out.add(ais);
         }
         return out;
+    }
+
+    @Override
+    public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request) {
+        final IAEItemStack local = this.itemListCache.findPrecise(request);
+        if (local == null) {
+            return null;
+        }
+
+        return request.copy();
     }
 
     @Override

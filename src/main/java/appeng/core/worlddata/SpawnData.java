@@ -14,8 +14,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nonnull;
 
@@ -85,7 +88,7 @@ final class SpawnData implements IWorldSpawnData {
 
     @Override
     public Collection<NBTTagCompound> getNearByMeteorites(final int dim, final int chunkX, final int chunkZ) {
-        final Collection<NBTTagCompound> ll = new LinkedList<>();
+        final Collection<NBTTagCompound> ll = new ArrayList<>();
 
         synchronized (SpawnData.class) {
             for (int x = -1; x <= 1; x++) {
@@ -96,10 +99,12 @@ final class SpawnData implements IWorldSpawnData {
                     final NBTTagCompound data = this.loadSpawnData(dim, cx << 4, cz << 4);
 
                     if (data != null) {
-                        // edit.
                         final int size = data.getInteger("num");
                         for (int s = 0; s < size; s++) {
-                            ll.add(data.getCompoundTag(String.valueOf(s)));
+                            NBTTagCompound compoundTag = data.getCompoundTag(String.valueOf(s));
+                            if (compoundTag != null) {
+                                ll.add(compoundTag);
+                            }
                         }
                     }
                 }
@@ -108,39 +113,28 @@ final class SpawnData implements IWorldSpawnData {
 
         return ll;
     }
+    private final Map<String, NBTTagCompound> cache = new ConcurrentHashMap<>();
 
-    private NBTTagCompound loadSpawnData(final int dim, final int chunkX, final int chunkZ) {
-        if (!Thread.holdsLock(SpawnData.class)) {
-            throw new IllegalStateException("Invalid Request");
+    public NBTTagCompound loadSpawnData(final int dim, final int chunkX, final int chunkZ) {
+        final String fileName = this.encoder.encode(dim, chunkX, chunkZ);
+
+        if (cache.containsKey(fileName)) {
+            return cache.get(fileName);
         }
 
-        NBTTagCompound data = null;
-        final String fileName = this.encoder.encode(dim, chunkX, chunkZ);
         final File file = new File(this.spawnDirectory, fileName);
 
         if (file.isFile()) {
-            FileInputStream fileInputStream = null;
-
-            try {
-                fileInputStream = new FileInputStream(file);
-                data = CompressedStreamTools.readCompressed(fileInputStream);
-            } catch (final Throwable e) {
-                data = new NBTTagCompound();
+            try (FileInputStream fileInputStream = new FileInputStream(file)) {
+                NBTTagCompound data = CompressedStreamTools.readCompressed(fileInputStream);
+                cache.put(fileName, data);
+                return data;
+            } catch (final IOException e) {
                 AELog.debug(e);
-            } finally {
-                if (fileInputStream != null) {
-                    try {
-                        fileInputStream.close();
-                    } catch (final IOException e) {
-                        AELog.debug(e);
-                    }
-                }
             }
-        } else {
-            data = new NBTTagCompound();
         }
 
-        return data;
+        return new NBTTagCompound();
     }
 
     private void writeSpawnData(final int dim, final int chunkX, final int chunkZ, final NBTTagCompound data) {

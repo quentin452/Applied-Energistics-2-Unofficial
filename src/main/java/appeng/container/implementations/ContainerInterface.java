@@ -16,10 +16,20 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
-import appeng.api.config.*;
+import appeng.api.config.AdvancedBlockingMode;
+import appeng.api.config.InsertionMode;
+import appeng.api.config.LockCraftingMode;
+import appeng.api.config.SecurityPermissions;
+import appeng.api.config.Settings;
+import appeng.api.config.Upgrades;
+import appeng.api.config.YesNo;
 import appeng.api.util.IConfigManager;
 import appeng.container.guisync.GuiSync;
-import appeng.container.slot.*;
+import appeng.container.slot.IOptionalSlotHost;
+import appeng.container.slot.OptionalSlotRestrictedInput;
+import appeng.container.slot.SlotFake;
+import appeng.container.slot.SlotNormal;
+import appeng.container.slot.SlotRestrictedInput;
 import appeng.helpers.DualityInterface;
 import appeng.helpers.IInterfaceHost;
 import appeng.util.Platform;
@@ -34,8 +44,11 @@ public class ContainerInterface extends ContainerUpgradeable implements IOptiona
     @GuiSync(4)
     public YesNo iTermMode = YesNo.YES;
 
-    @GuiSync(5)
+    @GuiSync(10)
     public AdvancedBlockingMode advancedBlockingMode = AdvancedBlockingMode.DEFAULT;
+
+    @GuiSync(12)
+    public LockCraftingMode lockCraftingMode = LockCraftingMode.NONE;
 
     @GuiSync(8)
     public InsertionMode insertionMode = InsertionMode.DEFAULT;
@@ -135,6 +148,7 @@ public class ContainerInterface extends ContainerUpgradeable implements IOptiona
         this.setInterfaceTerminalMode((YesNo) cm.getSetting(Settings.INTERFACE_TERMINAL));
         this.setInsertionMode((InsertionMode) cm.getSetting(Settings.INSERTION_MODE));
         this.setAdvancedBlockingMode((AdvancedBlockingMode) cm.getSetting(Settings.ADVANCED_BLOCKING_MODE));
+        this.setLockCraftingMode((LockCraftingMode) cm.getSetting(Settings.LOCK_CRAFTING_MODE));
     }
 
     public YesNo getBlockingMode() {
@@ -167,6 +181,14 @@ public class ContainerInterface extends ContainerUpgradeable implements IOptiona
 
     private void setAdvancedBlockingMode(final AdvancedBlockingMode mode) {
         this.advancedBlockingMode = mode;
+    }
+
+    public LockCraftingMode getLockCraftingMode() {
+        return this.lockCraftingMode;
+    }
+
+    private void setLockCraftingMode(LockCraftingMode mode) {
+        this.lockCraftingMode = mode;
     }
 
     public int getPatternCapacityCardsInstalled() {

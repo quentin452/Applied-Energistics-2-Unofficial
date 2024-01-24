@@ -17,6 +17,7 @@ import appeng.api.movable.IMovableRegistry;
 import appeng.api.networking.IGridCacheRegistry;
 import appeng.api.storage.ICellRegistry;
 import appeng.api.storage.IExternalStorageRegistry;
+import appeng.api.storage.IItemDisplayRegistry;
 
 /**
  * @author AlgorithmX2
@@ -58,6 +59,11 @@ public interface IRegistryContainer {
     ICellRegistry cell();
 
     /**
+     * Allows you to register items to be blacklisted from item terminals.
+     */
+    IItemDisplayRegistry itemDisplay();
+
+    /**
      * Manage grinder recipes via API
      */
     IGrinderRegistry grinder();
@@ -66,6 +72,8 @@ public interface IRegistryContainer {
      * Manage inscriber recipes via API
      */
     IInscriberRegistry inscriber();
+
+    IInterfaceTerminalRegistry interfaceTerminal();
 
     /**
      * get access to the locatable registry

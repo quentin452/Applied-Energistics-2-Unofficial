@@ -46,9 +46,52 @@ import appeng.client.gui.GuiNull;
 import appeng.container.AEBaseContainer;
 import appeng.container.ContainerNull;
 import appeng.container.ContainerOpenContext;
-import appeng.container.implementations.*;
+import appeng.container.implementations.ContainerAdvancedNetworkTool;
+import appeng.container.implementations.ContainerCellWorkbench;
+import appeng.container.implementations.ContainerChest;
+import appeng.container.implementations.ContainerCondenser;
+import appeng.container.implementations.ContainerCraftAmount;
+import appeng.container.implementations.ContainerCraftConfirm;
+import appeng.container.implementations.ContainerCraftingCPU;
+import appeng.container.implementations.ContainerCraftingStatus;
+import appeng.container.implementations.ContainerCraftingTerm;
+import appeng.container.implementations.ContainerDrive;
+import appeng.container.implementations.ContainerFormationPlane;
+import appeng.container.implementations.ContainerGrinder;
+import appeng.container.implementations.ContainerIOPort;
+import appeng.container.implementations.ContainerInscriber;
+import appeng.container.implementations.ContainerInterface;
+import appeng.container.implementations.ContainerInterfaceTerminal;
+import appeng.container.implementations.ContainerLevelEmitter;
+import appeng.container.implementations.ContainerMAC;
+import appeng.container.implementations.ContainerMEMonitorable;
+import appeng.container.implementations.ContainerMEPortableCell;
+import appeng.container.implementations.ContainerNetworkStatus;
+import appeng.container.implementations.ContainerNetworkTool;
+import appeng.container.implementations.ContainerOreFilter;
+import appeng.container.implementations.ContainerPatternTerm;
+import appeng.container.implementations.ContainerPatternTermEx;
+import appeng.container.implementations.ContainerPatternValueAmount;
+import appeng.container.implementations.ContainerPriority;
+import appeng.container.implementations.ContainerPriorityCard;
+import appeng.container.implementations.ContainerQNB;
+import appeng.container.implementations.ContainerQuartzKnife;
+import appeng.container.implementations.ContainerRenamer;
+import appeng.container.implementations.ContainerSecurity;
+import appeng.container.implementations.ContainerSkyChest;
+import appeng.container.implementations.ContainerSpatialIOPort;
+import appeng.container.implementations.ContainerStorageBus;
+import appeng.container.implementations.ContainerUpgradeable;
+import appeng.container.implementations.ContainerVibrationChamber;
+import appeng.container.implementations.ContainerWireless;
+import appeng.container.implementations.ContainerWirelessTerm;
 import appeng.core.stats.Achievements;
-import appeng.helpers.*;
+import appeng.helpers.ICustomNameObject;
+import appeng.helpers.IInterfaceHost;
+import appeng.helpers.IOreFilterable;
+import appeng.helpers.IPriorityHost;
+import appeng.helpers.WirelessTerminalGuiObject;
+import appeng.items.contents.PriorityCardObject;
 import appeng.items.contents.QuartzKnifeObj;
 import appeng.parts.automation.PartFormationPlane;
 import appeng.parts.automation.PartLevelEmitter;
@@ -60,7 +103,11 @@ import appeng.parts.reporting.PartPatternTerminalEx;
 import appeng.tile.crafting.TileCraftingTile;
 import appeng.tile.crafting.TileMolecularAssembler;
 import appeng.tile.grindstone.TileGrinder;
-import appeng.tile.misc.*;
+import appeng.tile.misc.TileCellWorkbench;
+import appeng.tile.misc.TileCondenser;
+import appeng.tile.misc.TileInscriber;
+import appeng.tile.misc.TileSecurity;
+import appeng.tile.misc.TileVibrationChamber;
 import appeng.tile.networking.TileWireless;
 import appeng.tile.qnb.TileQuantumBridge;
 import appeng.tile.spatial.TileSpatialIOPort;
@@ -97,6 +144,10 @@ public enum GuiBridge implements IGuiHandler {
     GUI_CRAFTING_CPU(ContainerCraftingCPU.class, TileCraftingTile.class, GuiHostType.WORLD, SecurityPermissions.CRAFT),
 
     GUI_NETWORK_TOOL(ContainerNetworkTool.class, INetworkTool.class, GuiHostType.ITEM, null),
+
+    GUI_ADVANCED_NETWORK_TOOL(ContainerAdvancedNetworkTool.class, INetworkTool.class, GuiHostType.ITEM, null),
+
+    GUI_PRIORITY_CARD(ContainerPriorityCard.class, PriorityCardObject.class, GuiHostType.ITEM, null),
 
     GUI_QUARTZ_KNIFE(ContainerQuartzKnife.class, QuartzKnifeObj.class, GuiHostType.ITEM, null),
 

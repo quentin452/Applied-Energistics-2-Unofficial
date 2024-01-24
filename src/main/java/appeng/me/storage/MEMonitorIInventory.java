@@ -17,6 +17,8 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import javax.annotation.Nonnull;
+
 import net.minecraft.item.ItemStack;
 
 import appeng.api.AEApi;
@@ -254,6 +256,22 @@ public class MEMonitorIInventory implements IMEMonitor<IAEItemStack> {
         }
 
         return out;
+    }
+
+    @Override
+    public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request) {
+        long count = 0;
+        for (final CachedItemStack is : this.memory.values()) {
+            if (is != null && is.aeStack != null && is.aeStack.getStackSize() > 0 && is.aeStack.isSameType(request)) {
+                count += is.aeStack.getStackSize();
+                if (count < 0) {
+                    // overflow
+                    count = Long.MAX_VALUE;
+                    break;
+                }
+            }
+        }
+        return count == 0 ? null : request.copy().setStackSize(count);
     }
 
     @Override

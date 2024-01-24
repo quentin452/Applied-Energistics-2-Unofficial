@@ -19,11 +19,46 @@ import appeng.api.parts.IPart;
 import appeng.core.features.AEFeature;
 import appeng.core.localization.GuiText;
 import appeng.integration.IntegrationType;
-import appeng.parts.automation.*;
-import appeng.parts.misc.*;
-import appeng.parts.networking.*;
-import appeng.parts.p2p.*;
-import appeng.parts.reporting.*;
+import appeng.parts.automation.PartAnnihilationPlane;
+import appeng.parts.automation.PartExportBus;
+import appeng.parts.automation.PartFormationPlane;
+import appeng.parts.automation.PartIdentityAnnihilationPlane;
+import appeng.parts.automation.PartImportBus;
+import appeng.parts.automation.PartLevelEmitter;
+import appeng.parts.misc.PartCableAnchor;
+import appeng.parts.misc.PartInterface;
+import appeng.parts.misc.PartInvertedToggleBus;
+import appeng.parts.misc.PartStorageBus;
+import appeng.parts.misc.PartToggleBus;
+import appeng.parts.networking.PartCableCovered;
+import appeng.parts.networking.PartCableGlass;
+import appeng.parts.networking.PartCableSmart;
+import appeng.parts.networking.PartDenseCable;
+import appeng.parts.networking.PartDenseCableCovered;
+import appeng.parts.networking.PartQuartzFiber;
+import appeng.parts.networking.PartUltraDenseCableCovered;
+import appeng.parts.networking.PartUltraDenseCableSmart;
+import appeng.parts.p2p.PartP2PGT5Power;
+import appeng.parts.p2p.PartP2PIC2Power;
+import appeng.parts.p2p.PartP2PInterface;
+import appeng.parts.p2p.PartP2PItems;
+import appeng.parts.p2p.PartP2PLight;
+import appeng.parts.p2p.PartP2PLiquids;
+import appeng.parts.p2p.PartP2POpenComputers;
+import appeng.parts.p2p.PartP2PPressure;
+import appeng.parts.p2p.PartP2PRFPower;
+import appeng.parts.p2p.PartP2PRedstone;
+import appeng.parts.p2p.PartP2PTunnelME;
+import appeng.parts.reporting.PartConversionMonitor;
+import appeng.parts.reporting.PartCraftingTerminal;
+import appeng.parts.reporting.PartDarkPanel;
+import appeng.parts.reporting.PartInterfaceTerminal;
+import appeng.parts.reporting.PartPanel;
+import appeng.parts.reporting.PartPatternTerminal;
+import appeng.parts.reporting.PartPatternTerminalEx;
+import appeng.parts.reporting.PartSemiDarkPanel;
+import appeng.parts.reporting.PartStorageMonitor;
+import appeng.parts.reporting.PartTerminal;
 
 public enum PartType {
 
@@ -70,7 +105,7 @@ public enum PartType {
         }
     },
 
-    CableUltraDenseCovered(540, EnumSet.of(AEFeature.Core), EnumSet.noneOf(IntegrationType.class),
+    CableUltraDenseCovered(540, EnumSet.of(AEFeature.UltraDenseCables), EnumSet.noneOf(IntegrationType.class),
             PartUltraDenseCableCovered.class) {
 
         @Override
@@ -78,7 +113,7 @@ public enum PartType {
             return true;
         }
     },
-    CableUltraDenseSmart(560, EnumSet.of(AEFeature.Core), EnumSet.noneOf(IntegrationType.class),
+    CableUltraDenseSmart(560, EnumSet.of(AEFeature.UltraDenseCables), EnumSet.noneOf(IntegrationType.class),
             PartUltraDenseCableSmart.class) {
 
         @Override
@@ -175,12 +210,12 @@ public enum PartType {
     PatternTerminalEx(500, EnumSet.of(AEFeature.Patterns), EnumSet.noneOf(IntegrationType.class),
             PartPatternTerminalEx.class);
 
-    private final int baseDamage;
+    public final int baseDamage;
     private final Set<AEFeature> features;
     private final Set<IntegrationType> integrations;
     private final Class<? extends IPart> myPart;
     private final GuiText extraName;
-    private Constructor<? extends IPart> constructor;
+    public Constructor<? extends IPart> constructor;
 
     PartType(final int baseMetaValue, final Set<AEFeature> features, final Set<IntegrationType> integrations,
             final Class<? extends IPart> c) {

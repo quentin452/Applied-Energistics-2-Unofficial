@@ -26,10 +26,19 @@ import appeng.helpers.IInterfaceHost;
 import appeng.integration.IntegrationRegistry;
 import appeng.integration.IntegrationType;
 import appeng.integration.abstraction.IBetterStorage;
-import appeng.tile.AEBaseInvTile;
+import appeng.parts.p2p.PartP2PItems;
 import appeng.tile.misc.TileInterface;
 import appeng.tile.networking.TileCableBus;
-import appeng.util.inv.*;
+import appeng.tile.storage.TileChest;
+import appeng.util.inv.AdaptorDualityInterface;
+import appeng.util.inv.AdaptorIInventory;
+import appeng.util.inv.AdaptorList;
+import appeng.util.inv.AdaptorMEChest;
+import appeng.util.inv.AdaptorP2PItem;
+import appeng.util.inv.AdaptorPlayerInventory;
+import appeng.util.inv.IInventoryDestination;
+import appeng.util.inv.ItemSlot;
+import appeng.util.inv.WrapperMCISidedInventory;
 
 public abstract class InventoryAdaptor implements Iterable<ItemSlot> {
 
@@ -55,23 +64,21 @@ public abstract class InventoryAdaptor implements Iterable<ItemSlot> {
         } else if (te instanceof TileEntityChest) {
             return new AdaptorIInventory(Platform.GetChestInv(te));
         } else if (te instanceof ISidedInventory si) {
-            final int[] slots = si.getAccessibleSlotsFromSide(d.ordinal());
             if (te instanceof TileInterface) {
                 return new AdaptorDualityInterface(new WrapperMCISidedInventory(si, d), (IInterfaceHost) te);
             } else if (te instanceof TileCableBus) {
                 IPart part = ((TileCableBus) te).getPart(d);
                 if (part instanceof IInterfaceHost host) {
                     return new AdaptorDualityInterface(new WrapperMCISidedInventory(si, d), host);
+                } else if (part instanceof PartP2PItems p2p) {
+                    return new AdaptorP2PItem(p2p);
                 }
+            } else if (te instanceof TileChest) {
+                return new AdaptorMEChest((TileChest) te);
             }
-            int stackLimit = 0;
-            if (te instanceof AEBaseInvTile) {
-                stackLimit = ((AEBaseInvTile) te).getInternalInventory().getInventoryStackLimit();
-            }
+
+            final int[] slots = si.getAccessibleSlotsFromSide(d.ordinal());
             if (si.getSizeInventory() > 0 && slots != null && slots.length > 0) {
-                if (stackLimit > 0) {
-                    return new AdaptorIInventory(new WrapperMCISidedInventory(si, d), stackLimit);
-                }
                 return new AdaptorIInventory(new WrapperMCISidedInventory(si, d));
             }
         } else if (te instanceof IInventory i) {

@@ -11,6 +11,7 @@ import net.minecraft.world.World;
 
 import org.apache.logging.log4j.Level;
 
+import appeng.api.config.CraftingMode;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.crafting.ICraftingCallback;
@@ -52,9 +53,19 @@ public class CraftingJobV2 implements ICraftingJob, Future<ICraftingJob>, ITreeS
 
     public CraftingJobV2(final World world, final IGrid meGrid, final BaseActionSource actionSource,
             final IAEItemStack what, final ICraftingCallback callback) {
+        this(world, meGrid, actionSource, what, CraftingMode.STANDARD, callback);
+    }
+
+    public CraftingJobV2(final World world, final IGrid meGrid, final BaseActionSource actionSource,
+            final IAEItemStack what, final CraftingMode craftingMode, final ICraftingCallback callback) {
         this.context = new CraftingContext(world, meGrid, actionSource);
         this.callback = callback;
-        this.originalRequest = new CraftingRequest<>(what, SubstitutionMode.PRECISE_FRESH, IAEItemStack.class, true);
+        this.originalRequest = new CraftingRequest<>(
+                what,
+                SubstitutionMode.PRECISE_FRESH,
+                IAEItemStack.class,
+                true,
+                craftingMode);
         this.context.addRequest(this.originalRequest);
         this.context.itemModel.ignore(what);
     }

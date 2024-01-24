@@ -10,6 +10,8 @@
 
 package appeng.helpers;
 
+import javax.annotation.Nonnull;
+
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -132,6 +134,14 @@ public class WirelessTerminalGuiObject implements IPortableCell, IActionHost, II
             return this.itemStorage.getAvailableItems(out);
         }
         return out;
+    }
+
+    @Override
+    public IAEItemStack getAvailableItem(@Nonnull IAEItemStack request) {
+        if (this.itemStorage != null) {
+            return this.itemStorage.getAvailableItem(request);
+        }
+        return null;
     }
 
     @Override
